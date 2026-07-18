@@ -1,0 +1,9 @@
+node_modules
+dist
+.next
+turbo-cache
+.env
+.env.local
+*.log
+pnpm-debug.log
+coverage
