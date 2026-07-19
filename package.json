@@ -8,7 +8,11 @@
     "test": "echo \"Error: no test specified\" && exit 1",
     "dev": "turbo dev",
     "build": "turbo build",
-    "type-check": "turbo run type-check"
+    "type-check": "turbo run type-check",
+    "lint": "eslint .",
+    "lint:fix": "eslint . --fix",
+    "format": "prettier --write \"**/*.{ts,js,json}\"",
+    "format:check": "prettier --check \"**/*.{ts,js,json}\""
   },
   "keywords": [],
   "author": "",
@@ -22,10 +26,16 @@
   },
   "type": "module",
   "devDependencies": {
+    "@eslint/js": "^10.0.1",
     "@types/node": "^26.1.1",
+    "@typescript-eslint/eslint-plugin": "^8.64.0",
+    "@typescript-eslint/parser": "^8.64.0",
     "eslint": "^10.7.0",
+    "eslint-config-prettier": "^10.1.8",
+    "eslint-plugin-prettier": "^5.5.6",
+    "globals": "^17.7.0",
     "prettier": "^3.9.5",
     "turbo": "^2.10.5",
-    "typescript": "^7.0.2"
+    "typescript": "^5.9.3"
   }
 }
