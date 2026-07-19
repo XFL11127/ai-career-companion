@@ -1,0 +1,32 @@
+{
+  "completion": {
+    "enabled": true
+  },
+  "diagnostics": {
+    "enabled": true,
+    "sources": ["typescript"]
+  },
+  "references": {
+    "enabled": true
+  },
+  "rename": {
+    "enabled": true
+  },
+  "formatting": {
+    "enabled": true
+  },
+  "symbols": {
+    "enabled": true
+  },
+  "documentLinks": {
+    "enabled": true
+  },
+  "fileWatch": {
+    "enabled": true,
+    "exclusions": ["node_modules", "dist", ".turbo"]
+  },
+  "project": {
+    "includes": ["apps/**/*.ts", "packages/**/*.ts"],
+    "excludes": ["node_modules", "dist", ".turbo"]
+  }
+}
