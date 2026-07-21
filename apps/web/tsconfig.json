@@ -1,0 +1,15 @@
+{
+  "extends": "../../tsconfig.base.json",
+  "compilerOptions": {
+    "outDir": "./dist",
+    "baseUrl": ".",
+    "paths": {
+      "@/*": ["src/*"],
+      "@shared/*": ["../../packages/shared/*"],
+      "@ai-career-companion/types": ["../../packages/types/index.ts"],
+      "@ai-career-companion/utils": ["../../packages/utils/index.ts"]
+    }
+  },
+  "include": ["src/**/*.ts", "src/**/*.vue", "../../packages/types/**/*.ts", "../../packages/utils/**/*.ts"],
+  "exclude": ["node_modules", "dist"]
+}

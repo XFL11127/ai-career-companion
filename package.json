@@ -26,6 +26,7 @@
   },
   "type": "module",
   "devDependencies": {
+    "@babel/parser": "^8.0.4",
     "@eslint/js": "^10.0.1",
     "@types/node": "^26.1.1",
     "@typescript-eslint/eslint-plugin": "^8.64.0",
@@ -36,6 +37,6 @@
     "globals": "^17.7.0",
     "prettier": "^3.9.5",
     "turbo": "^2.10.5",
-    "typescript": "^5.9.3"
+    "typescript": "^7.0.2"
   }
 }
