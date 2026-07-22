@@ -1,0 +1,20 @@
+{
+  "name": "@ai-career-companion/llm",
+  "version": "1.0.0",
+  "description": "共享 LLM 调用层（DeepSeek，env-gated，无 Key 走 stub）— Worker 与 Web BFF 共用",
+  "type": "module",
+  "main": "index.ts",
+  "types": "index.ts",
+  "exports": {
+    ".": "./index.ts"
+  },
+  "scripts": {
+    "type-check": "tsc --noEmit"
+  },
+  "dependencies": {
+    "ai": "^7",
+    "@ai-sdk/deepseek": "^1",
+    "@ai-career-companion/types": "*",
+    "zod": "^3"
+  }
+}

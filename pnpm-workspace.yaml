@@ -1,5 +1,9 @@
 packages:
   - "apps/*"
-  - "packages/*"
+  - "packages/types"
+  - "packages/utils"
 allowBuilds:
-  esbuild: set this to true or false
+  esbuild: true
+  unrs-resolver: false
+  sharp: false
+  workerd: false

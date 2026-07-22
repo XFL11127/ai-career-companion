@@ -1,0 +1,57 @@
+'use client'
+import { useSkill } from '@/lib/useSkill'
+import { Card, Pill, LoadingState, ErrorState, EmptyState } from '@/components/skill-ui'
+
+export default function InfoPage() {
+  const { data, loading, error, run } = useSkill('info')
+
+  return (
+    <main className="mx-auto max-w-3xl px-6 py-12">
+      <h1 className="font-serif text-3xl font-bold text-ink">信息差填平</h1>
+      <p className="mt-2 text-ink/60">聚合双非友好的校招 / 实习 / 竞赛信息</p>
+
+      <Card className="mt-6">
+        <button
+          onClick={() => run({ userId: 'local' })}
+          disabled={loading}
+          className="inline-flex items-center gap-2 rounded-full bg-accent px-5 py-2.5 text-sm font-medium text-paper shadow-lg shadow-accent/20 transition hover:bg-[#c94a23] disabled:opacity-50"
+        >
+          {loading ? '聚合中…' : '聚合双非友好信息'}
+        </button>
+      </Card>
+
+      {error && <ErrorState message={error} onRetry={() => run({ userId: 'local' })} />}
+      {!error && !data && !loading && <EmptyState label="点击上方按钮，获取最新双非友好机会" />}
+      {loading && !data && <LoadingState label="正在聚合信息…" />}
+
+      {data && (
+        <div className="mt-6 space-y-3">
+          {data.jobs?.map((j, i) => (
+            <a
+              key={i}
+              href={j.url}
+              target="_blank"
+              rel="noreferrer"
+              className="card-lift block rounded-3xl border border-ink/10 bg-white/70 p-5 transition hover:border-accent/40"
+            >
+              <div className="flex items-center justify-between">
+                <div className="font-medium text-ink">
+                  {j.role} · {j.company}
+                </div>
+                <Pill tone="forest">{j.salary}</Pill>
+              </div>
+              <div className="mt-2 flex flex-wrap items-center gap-2 text-xs text-ink/60">
+                <span>{j.location}</span>
+                {j.tags?.map((t, ti) => (
+                  <Pill key={ti} tone="gold">
+                    {t}
+                  </Pill>
+                ))}
+              </div>
+            </a>
+          ))}
+        </div>
+      )}
+    </main>
+  )
+}

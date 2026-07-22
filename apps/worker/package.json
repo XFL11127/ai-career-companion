@@ -1,0 +1,22 @@
+{
+  "name": "@ai-career-companion/worker",
+  "version": "1.0.0",
+  "private": true,
+  "main": "src/index.ts",
+  "scripts": {
+    "dev": "wrangler dev",
+    "deploy": "wrangler deploy",
+    "type-check": "tsc --noEmit"
+  },
+  "dependencies": {
+    "hono": "^4",
+    "zod": "^3",
+    "@ai-career-companion/types": "*",
+    "@ai-career-companion/llm": "*"
+  },
+  "devDependencies": {
+    "@cloudflare/workers-types": "^4",
+    "wrangler": "^3",
+    "typescript": "^5"
+  }
+}
