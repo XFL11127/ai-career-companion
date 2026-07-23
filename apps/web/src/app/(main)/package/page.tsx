@@ -1,12 +1,28 @@
 'use client'
-import { useState } from 'react'
+import { useEffect, useState } from 'react'
+import Link from 'next/link'
 import { useSkill } from '@/lib/useSkill'
+import { ArrowRight } from 'lucide-react'
+import { saveUserProfile } from '@/lib/memory'
 import { Card, LoadingState, ErrorState, EmptyState } from '@/components/skill-ui'
 
 export default function PackagePage() {
   const { data, loading, error, run } = useSkill('package')
   const [resumeText, setResumeText] = useState('')
   const [targetRole, setTargetRole] = useState('')
+  const [showBadge, setShowBadge] = useState(false)
+
+  useEffect(() => {
+    if (data) {
+      if (!localStorage.getItem('badge-package-shown')) {
+        setShowBadge(true)
+        localStorage.setItem('badge-package-shown', 'true')
+      }
+      const target = targetRole || '前端开发工程师'
+      const summary = `目标岗位：${target}，已优化简历`
+      saveUserProfile(summary)
+    }
+  }, [data])
 
   const start = () =>
     run({
@@ -18,6 +34,12 @@ export default function PackagePage() {
     <main className="mx-auto max-w-3xl px-6 py-12">
       <h1 className="font-serif text-3xl font-bold text-ink">成果包装</h1>
       <p className="mt-2 text-ink/60">简历优化 / 项目润色 / 面试复盘，把经历讲成故事</p>
+
+      {showBadge && data && (
+        <div className="mt-4 rounded-lg bg-amber-50 border border-amber-200 px-4 py-3 text-sm text-amber-800">
+          🎉 成果包装达成！你的经历已焕然一新
+        </div>
+      )}
 
       <Card className="mt-6 space-y-3">
         <input
@@ -67,6 +89,14 @@ export default function PackagePage() {
               <p className="mt-3 text-ink/70">{data.interviewReview}</p>
             </Card>
           )}
+        </div>
+      )}
+
+      {data && !loading && (
+        <div className="mt-6 text-center">
+          <Link href="/" className="inline-flex items-center gap-2 rounded-full bg-amber-500 px-5 py-2.5 text-sm font-medium text-white transition hover:bg-amber-600">
+            回到首页 <ArrowRight className="h-4 w-4" />
+          </Link>
         </div>
       )}
     </main>

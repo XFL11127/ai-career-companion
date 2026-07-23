@@ -1,6 +1,7 @@
 'use client'
 
-import { useMemo } from 'react'
+import { useEffect, useMemo, useState } from 'react'
+import { getUserProfile } from '@/lib/memory'
 import Link from 'next/link'
 import type { ComponentType } from 'react'
 import type { SkillName } from '@ai-career-companion/types'
@@ -58,6 +59,28 @@ export function Sidebar({
   onDeleteConversation,
 }: SidebarProps) {
   const groups = useMemo(() => groupConversations(conversations), [conversations])
+  const [streak, setStreak] = useState(0)
+
+  useEffect(() => {
+    const today = new Date().toISOString().slice(0, 10)
+    const lastActive = localStorage.getItem('streak-last-active')
+    const currentStreak = parseInt(localStorage.getItem('streak-count') || '0', 10)
+
+    if (lastActive === today) {
+      setStreak(currentStreak)
+      return
+    }
+
+    const yesterday = new Date(Date.now() - 24 * 60 * 60 * 1000).toISOString().slice(0, 10)
+    let newStreak = 1
+    if (lastActive === yesterday) {
+      newStreak = currentStreak + 1
+    }
+
+    localStorage.setItem('streak-last-active', today)
+    localStorage.setItem('streak-count', String(newStreak))
+    setStreak(newStreak)
+  }, [])
 
   const handleSkill = (name: SkillName) => {
     onSkillChange(name)
@@ -156,6 +179,16 @@ export function Sidebar({
         </div>
 
         <div className="border-t border-ink/10 p-2">
+          <div className="px-3 py-2 text-xs text-ink/50">🔥 连续活跃 {streak} 天</div>
+          <div
+            className="px-3 py-2 text-sm text-amber-600 cursor-pointer hover:underline"
+            onClick={() => {
+              const profile = getUserProfile()
+              alert(profile || '暂无记忆')
+            }}
+          >
+            🧠 记忆已开启
+          </div>
           <div className="space-y-0.5">
             <button className="flex w-full items-center gap-2.5 rounded-lg px-3 py-2 text-sm text-ink/70 transition hover:bg-ink/5 hover:text-ink">
               <Settings className="h-4 w-4" />

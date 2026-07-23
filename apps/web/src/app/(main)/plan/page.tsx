@@ -1,7 +1,10 @@
 'use client'
 import { useEffect, useState } from 'react'
+import Link from 'next/link'
 import { useSkill } from '@/lib/useSkill'
 import { loadResult } from '@/lib/db'
+import { ArrowRight } from 'lucide-react'
+import { saveUserProfile } from '@/lib/memory'
 import { Card, Pill, LoadingState, ErrorState, EmptyState } from '@/components/skill-ui'
 import type { DiagnoseOutput } from '@ai-career-companion/types'
 
@@ -19,6 +22,21 @@ const DEFAULT_DIAGNOSE: DiagnoseOutput = {
 export default function PlanPage() {
   const { data, loading, error, run } = useSkill('plan')
   const [diagnose, setDiagnose] = useState<DiagnoseOutput | null>(null)
+  const [showBadge, setShowBadge] = useState(false)
+
+  useEffect(() => {
+    if (data) {
+      if (!localStorage.getItem('badge-plan-shown')) {
+        setShowBadge(true)
+        localStorage.setItem('badge-plan-shown', 'true')
+      }
+      const gaps = diagnose?.radar?.filter(r => r.gap > 20).map(r => r.name) || []
+      const summary = gaps.length > 0
+        ? `已规划路径，重点提升：${gaps.join('、')}`
+        : '已规划成长路径'
+      saveUserProfile(summary)
+    }
+  }, [data])
 
   useEffect(() => {
     loadResult('diagnose')
@@ -32,6 +50,12 @@ export default function PlanPage() {
     <main className="mx-auto max-w-4xl px-6 py-12">
       <h1 className="font-serif text-3xl font-bold text-ink">路径规划</h1>
       <p className="mt-2 text-ink/60">基于你的诊断差距，生成 30 / 60 / 90 天可执行成长路径</p>
+
+      {showBadge && data && (
+        <div className="mt-4 rounded-lg bg-amber-50 border border-amber-200 px-4 py-3 text-sm text-amber-800">
+          🎉 路径规划达成！成长蓝图已就绪
+        </div>
+      )}
 
       <Card className="mt-6">
         <p className="text-sm text-ink/60">
@@ -71,6 +95,14 @@ export default function PlanPage() {
               </ul>
             </Card>
           ))}
+        </div>
+      )}
+
+      {data && !loading && (
+        <div className="mt-6 text-center">
+          <Link href="/practice" className="inline-flex items-center gap-2 rounded-full bg-amber-500 px-5 py-2.5 text-sm font-medium text-white transition hover:bg-amber-600">
+            开始实战练兵 <ArrowRight className="h-4 w-4" />
+          </Link>
         </div>
       )}
     </main>

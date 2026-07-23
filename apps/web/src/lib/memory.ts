@@ -1,3 +1,12 @@
+// L2 交互记忆：localStorage 存储用户画像摘要（跨会话持久化，纯前端实现）。
+export function saveUserProfile(summary: string): void {
+  localStorage.setItem('user_profile', summary)
+}
+
+export function getUserProfile(): string | null {
+  return localStorage.getItem('user_profile')
+}
+
 // L1 会话记忆：IndexedDB 按 skill 存储对话轮次（免登即用，数据存浏览器本地）。
 // 与 db.ts 的「结果缓存」区分：这里存的是「会话上下文」（input+output 轮次），用于注入 prompt。
 

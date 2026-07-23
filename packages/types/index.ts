@@ -89,6 +89,8 @@ export const diagnoseInputSchema = z.object({
     .optional(),
   // L1 会话记忆：召回的近期轮次摘要，注入 prompt 保持连贯
   context: z.array(z.string()).optional(),
+  // L2 交互记忆：用户画像摘要，跨会话持久化
+  profile: z.string().optional(),
 })
 export const diagnoseOutputSchema = z.object({
   reply: z.string().optional(), // 散文式解读（Kimi 式对话感）
@@ -128,6 +130,7 @@ export const planInputSchema = diagnoseOutputSchema
   .extend({
     goal: z.string().optional(),
     context: z.array(z.string()).optional(),
+    profile: z.string().optional(),
   })
 export type PlanInput = z.infer<typeof planInputSchema>
 
@@ -138,6 +141,8 @@ export const practiceInputSchema = z.object({
   topic: z.string().optional(),
   // L1 会话记忆
   context: z.array(z.string()).optional(),
+  // L2 交互记忆：用户画像摘要
+  profile: z.string().optional(),
 })
 export const practiceOutputSchema = z.object({
   reply: z.string().optional(),
@@ -173,6 +178,8 @@ export const packageInputSchema = z.object({
   targetRole: z.string().optional(),
   // L1 会话记忆
   context: z.array(z.string()).optional(),
+  // L2 交互记忆：用户画像摘要
+  profile: z.string().optional(),
 })
 export const packageOutputSchema = z.object({
   reply: z.string().optional(),
@@ -189,7 +196,7 @@ export const skillInputMap = {
   diagnose: diagnoseInputSchema,
   plan: planInputSchema,
   practice: practiceInputSchema,
-  info: z.object({ userId: z.string(), context: z.array(z.string()).optional() }),
+  info: z.object({ userId: z.string(), context: z.array(z.string()).optional(), profile: z.string().optional() }),
   package: packageInputSchema,
 } as const
 

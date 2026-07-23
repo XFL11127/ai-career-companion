@@ -157,6 +157,29 @@ export function ChatShell() {
           </Link>
         </header>
 
+        <section className="px-4 py-4 border-b border-amber-100">
+          <h2 className="font-serif text-sm font-medium text-gray-700 mb-3">📋 今日行动</h2>
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-3">
+            {[
+              { title: '完善职业画像', desc: '详细描述职业背景与目标', action: '立即完善', href: '/diagnose' },
+              { title: '试试破局诊断', desc: 'AI分析职业困境提供方案', action: '开始诊断', href: '/diagnose' },
+              { title: '查看今日成长', desc: '追踪职业发展进度与成就', action: '查看详情', href: '/plan' },
+            ].map((card) => (
+              <Link
+                key={card.title}
+                href={card.href}
+                className="block bg-amber-50 border border-amber-200 rounded-lg p-3 hover:border-amber-300 transition"
+              >
+                <h3 className="font-medium text-gray-900 text-sm mb-1">{card.title}</h3>
+                <p className="text-xs text-gray-600 mb-2">{card.desc}</p>
+                <span className="text-amber-700 hover:text-amber-900 text-xs font-medium">
+                  {card.action} →
+                </span>
+              </Link>
+            ))}
+          </div>
+        </section>
+
         <ChatRoom
           key={`${skill}:${convKey}`}
           skill={skill}
@@ -187,7 +210,12 @@ function ChatRoom({
 }) {
   const { messages, streaming, error, send } = useChat(skill)
   const [text, setText] = useState('')
+  const [hasDiagnosed, setHasDiagnosed] = useState(false)
   const endRef = useRef<HTMLDivElement>(null)
+
+  useEffect(() => {
+    setHasDiagnosed(localStorage.getItem('hasDiagnosed') === 'true')
+  }, [])
 
   useEffect(() => {
     onMessagesChange(messages)
@@ -222,6 +250,13 @@ function ChatRoom({
         ))}
         <div ref={endRef} />
       </section>
+
+      <Link
+        href={hasDiagnosed ? '/plan' : '/diagnose'}
+        className="shrink-0 block border-l-4 border-amber-400 bg-amber-50 px-4 py-2 text-sm text-amber-800"
+      >
+        {hasDiagnosed ? '✅ 你已经完成诊断，去规划你的成长路径吧 →' : '你今天还没诊断哦，试试破局诊断吧 👋'}
+      </Link>
 
       <footer className="shrink-0 border-t border-ink/10 px-4 pb-4 pt-3">
         <div className="mx-auto flex max-w-3xl items-end gap-2">

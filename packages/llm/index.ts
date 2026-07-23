@@ -120,6 +120,12 @@ function withMemory(context?: string[]): string {
   return `\n\n【参考记忆】以下是你与这位用户的近期会话片段，请据此保持回答连贯、避免重复提问：\n${lines}`
 }
 
+// L2 交互记忆注入：把用户画像摘要拼进 prompt（无则忽略）
+function withProfile(profile?: string): string {
+  if (!profile) return ''
+  return `\n\n【用户历史画像】\n${profile}`
+}
+
 function buildDiagnosePrompt(input: DiagnoseInput): string {
   const self = input.messages?.map((m) => `${m.role}: ${m.content}`).join('\n') ?? ''
   return `你是「AI学职同伴」的破局诊断引擎，专门帮助双非院校学生做能力差距分析。
@@ -128,7 +134,7 @@ function buildDiagnosePrompt(input: DiagnoseInput): string {
 用户自述：
 ${self || '（未提供，请基于双非大三学生典型情况合理推断）'}
 请在顶层先输出 reply 字段（2-4 句口语化中文：先共情/鼓励这位双非同学，再给一句下一步行动暗示），再输出 radar 与 recommendedRoles 结构化字段。
-只输出符合 schema 的 JSON，不要额外解释。${withMemory(input.context)}`
+只输出符合 schema 的 JSON，不要额外解释。${withMemory(input.context)}${withProfile(input.profile)}`
 }
 
 function buildPlanPrompt(input: PlanInput): string {
@@ -139,7 +145,7 @@ function buildPlanPrompt(input: PlanInput): string {
 每阶段 1-3 个可执行行动卡（type 取值只能是 study / project / apply / review）。
 ${base}
 请在顶层先输出 reply 字段（2-4 句口语化中文：鼓励这位双非同学 + 一句下一步暗示），再输出 milestones 结构化字段。
-只输出符合 schema 的 JSON，不要额外解释。${withMemory(input.context)}`
+只输出符合 schema 的 JSON，不要额外解释。${withMemory(input.context)}${withProfile(input.profile)}`
 }
 
 function buildPracticePrompt(input: PracticeInput): string {
@@ -147,14 +153,14 @@ function buildPracticePrompt(input: PracticeInput): string {
   return `你是实战练兵引擎。mode=${mode}${input.topic ? `，topic=${input.topic}` : ''}。
 生成 2-4 个针对性问题（questions 数组）与一段纠偏反馈（feedback 字符串）。
 请在顶层先输出 reply 字段（2-4 句口语化中文：鼓励 + 一句练习建议），再输出 questions/feedback。
-只输出符合 schema 的 JSON，不要额外解释。${withMemory(input.context)}`
+只输出符合 schema 的 JSON，不要额外解释。${withMemory(input.context)}${withProfile(input.profile)}`
 }
 
-function buildInfoPrompt(context?: string[]): string {
+function buildInfoPrompt(context?: string[], profile?: string): string {
   return `你是信息差填平引擎。请聚合 2-4 个双非友好的校招 / 实习 / 竞赛信息。
 要求：company、role、salary、location、tags(数组)、url(必须是合法 https URL)、doubleNonFriendly=true。
 请在顶层先输出 reply 字段（2-4 句口语化中文：说明信息价值 + 一句行动暗示），再输出 jobs 结构化字段。
-只输出符合 schema 的 JSON，不要额外解释。${withMemory(context)}`
+只输出符合 schema 的 JSON，不要额外解释。${withMemory(context)}${withProfile(profile)}`
 }
 
 function buildPackagePrompt(input: PackageInput): string {
@@ -164,7 +170,7 @@ function buildPackagePrompt(input: PackageInput): string {
 简历原文：${resume}
 请输出：optimizedResume（优化后的简历文案）、projectBullets（3 条量化项目亮点）、interviewReview（一段面试复盘）。
 请在顶层先输出 reply 字段（2-4 句口语化中文：肯定用户 + 一句包装建议），再输出上述结构化字段。
-只输出符合 schema 的 JSON，不要额外解释。${withMemory(input.context)}`
+只输出符合 schema 的 JSON，不要额外解释。${withMemory(input.context)}${withProfile(input.profile)}`
 }
 
 // ---------- 主入口 ----------
@@ -209,7 +215,7 @@ export async function runSkill(
         const { object } = await generateObject({
           model: deepseek('deepseek-chat'),
           schema: infoOutputSchema,
-          prompt: buildInfoPrompt(infoInput.context),
+          prompt: buildInfoPrompt(infoInput.context, infoInput.profile),
         })
         return infoOutputSchema.parse(object)
       }
@@ -268,7 +274,7 @@ export async function* streamSkill(
       case 'info': {
         const infoInput = skillInputMap.info.parse(rawInput)
         schema = infoOutputSchema
-        promptText = buildInfoPrompt(infoInput.context)
+        promptText = buildInfoPrompt(infoInput.context, infoInput.profile)
         break
       }
       case 'package': {
