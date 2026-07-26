@@ -1,63 +1,115 @@
-import { Hono } from 'hono'
-import { healthSchema, skillInputMap, type SkillName } from '@ai-career-companion/types'
-import { runSkill } from '@ai-career-companion/llm'
+export default {
+  async fetch(request: Request, env: {
+    SUPABASE_URL: string
+    SUPABASE_SERVICE_ROLE_KEY: string
+    AI: Ai
+  }) {
+    const url = new URL(request.url)
+    const path = url.pathname
+    const method = request.method
 
-type Bindings = {
-  SUPABASE_URL: string
-  SUPABASE_ANON_KEY: string
-  DEEPSEEK_API_KEY: string
-}
-
-const app = new Hono<{ Bindings: Bindings }>()
-
-// 健康检查
-app.get('/health', (c) =>
-  c.json(healthSchema.parse({ status: 'ok', time: new Date().toISOString() })),
-)
-
-// 记忆层（P1：L1 会话记忆核心在前端 IndexedDB；本路由预留服务端记忆，M3 接入 Supabase+pgvector）
-// 本地用内存数组兜底演示，Worker 重启即清空（非持久化）。
-let memStore: { id: string; userId: string; content: string; layer: string; createdAt: string }[] = []
-app.get('/memory', (c) => {
-  const userId = c.req.query('userId') ?? ''
-  const items = memStore.filter((m) => m.userId === userId).slice(-20)
-  return c.json({
-    items,
-    note: 'L1 会话记忆由前端 IndexedDB 承载；此处为服务端记忆占位，M3 接入 Supabase+pgvector 后生效',
-  })
-})
-app.post('/memory', async (c) => {
-  const body = (await c.req.json().catch(() => ({}))) as {
-    userId?: string
-    content?: string
-    layer?: string
-  }
-  const item = {
-    id: crypto.randomUUID(),
-    userId: body.userId ?? '',
-    content: body.content ?? '',
-    layer: body.layer ?? 'interaction',
-    createdAt: new Date().toISOString(),
-  }
-  memStore.push(item)
-  return c.json({ ok: true, id: item.id })
-})
-
-const SKILLS: SkillName[] = ['diagnose', 'plan', 'practice', 'info', 'package']
-
-for (const name of SKILLS) {
-  app.post(`/skill/${name}`, async (c) => {
-    const parsed = skillInputMap[name].safeParse(await c.req.json().catch(() => ({})))
-    if (!parsed.success) {
-      return c.json({ code: 400, message: 'invalid input', detail: parsed.error.message }, 400)
+    async function jsonResponse(data: unknown, status = 200) {
+      return new Response(JSON.stringify(data), {
+        headers: { 'Content-Type': 'application/json' },
+        status,
+      })
     }
-    // 真实链路：校验输入 → runSkill 真调 DeepSeek（无 Key 自动回落 stub）→ 输出
-    const data = await runSkill(name, parsed.data, c.env)
-    return c.json({ code: 0, message: 'ok', data })
-  })
+
+    async function parseBody<T = Record<string, unknown>>(): Promise<T> {
+      return await request.json().catch(() => ({} as T))
+    }
+
+    async function getSupabaseClient() {
+      const headers = {
+        'Authorization': `Bearer ${env.SUPABASE_SERVICE_ROLE_KEY}`,
+        'Content-Type': 'application/json',
+      }
+      return {
+        async from(table: string) {
+          return {
+            async insert(data: Record<string, unknown>) {
+              const res = await fetch(`${env.SUPABASE_URL}/rest/v1/${table}`, {
+                method: 'POST',
+                headers,
+                body: JSON.stringify(data),
+              })
+              const json = await res.json()
+              return { data: json, error: res.ok ? null : json }
+            },
+          }
+        },
+        async rpc(name: string, params: Record<string, unknown>) {
+          const res = await fetch(`${env.SUPABASE_URL}/rpc/${name}`, {
+            method: 'POST',
+            headers,
+            body: JSON.stringify(params),
+          })
+          const json = await res.json()
+          return { data: json, error: res.ok ? null : json }
+        },
+      }
+    }
+
+    if (method === 'GET' && path === '/health') {
+      return jsonResponse({ status: 'ok', time: new Date().toISOString() })
+    }
+
+    if (method === 'POST' && path === '/api/embed') {
+      const { text } = await parseBody<{ text?: string }>()
+      if (!text) {
+        return jsonResponse({ error: 'text is required' }, 400)
+      }
+      try {
+        const response = await env.AI.run('@cf/baai/bge-m3', { text })
+        const embedding = response.data[0].embedding
+        return jsonResponse({ embedding })
+      } catch (error) {
+        return jsonResponse({ error: String(error) }, 500)
+      }
+    }
+
+    if (method === 'POST' && path === '/api/memory') {
+      const { user_id, content } = await parseBody<{ user_id?: string; content?: string }>()
+      if (!user_id || !content) {
+        return jsonResponse({ error: 'user_id and content are required' }, 400)
+      }
+      try {
+        const response = await env.AI.run('@cf/baai/bge-m3', { text: content })
+        const embedding = response.data[0].embedding
+        const supabase = await getSupabaseClient()
+        const { data, error } = await supabase.from('memories').insert({
+          user_id,
+          content,
+          embedding,
+        })
+        if (error) throw error
+        return jsonResponse({ ok: true, id: data?.[0]?.id })
+      } catch (error) {
+        return jsonResponse({ error: String(error) }, 500)
+      }
+    }
+
+    if (method === 'POST' && path === '/api/memory/search') {
+      const { user_id, query } = await parseBody<{ user_id?: string; query?: string }>()
+      if (!user_id || !query) {
+        return jsonResponse({ error: 'user_id and query are required' }, 400)
+      }
+      try {
+        const response = await env.AI.run('@cf/baai/bge-m3', { text: query })
+        const queryEmbedding = response.data[0].embedding
+        const supabase = await getSupabaseClient()
+        const { data, error } = await supabase.rpc('match_memories', {
+          query_embedding: queryEmbedding,
+          user_id_param: user_id,
+          match_count: 5,
+        })
+        if (error) throw error
+        return jsonResponse({ results: data })
+      } catch (error) {
+        return jsonResponse({ error: String(error) }, 500)
+      }
+    }
+
+    return jsonResponse({ error: 'Not found' }, 404)
+  },
 }
-
-// 预留：结果持久化到 Supabase skill_sessions（基本功能阶段不连，填 key 即启用）
-// async function saveSkillResult(name: SkillName, data: unknown) { ... }
-
-export default app
