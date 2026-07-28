@@ -11,8 +11,6 @@
   "dependencies": {
     "@ai-career-companion/llm": "*",
     "@ai-career-companion/types": "*",
-    "@supabase/supabase-js": "^2.110.8",
-    "hono": "^4",
     "zod": "^3"
   },
   "devDependencies": {
