@@ -3,22 +3,24 @@ import { useEffect, useState } from 'react'
 import { type SkillName } from '@ai-career-companion/types'
 import { streamSkillCall } from './api'
 import { loadMessages, appendMessage, clearMessages, saveMessages, type ChatMessage } from './memory'
+import { extractUserInfoFromMessage, updateFromSkillResult, loadProfile, type SkillNameInput } from './profile'
 
-/** 把自由文本 + 历史上下文，构造成对应 Skill 的输入。 */
-function buildInput(name: SkillName, text: string, context: string[]): Record<string, unknown> {
+/** 把自由文本 + 历史上下文 + 用户画像，构造成对应 Skill 的输入。 */
+function buildInput(name: SkillName, text: string, context: string[], profile?: string): Record<string, unknown> {
+  const base = { context, profile }
   switch (name) {
     case 'diagnose':
-      return { userId: 'local', messages: [{ role: 'user', content: text }], context }
+      return { userId: 'local', messages: [{ role: 'user', content: text }], ...base }
     case 'plan':
-      return { goal: text, context }
+      return { goal: text, ...base }
     case 'practice': {
       const mode = /算法/.test(text) ? 'algorithm' : /项目/.test(text) ? 'project' : 'interview'
-      return { mode, topic: text, context }
+      return { mode, topic: text, ...base }
     }
     case 'info':
-      return { userId: 'local', context }
+      return { userId: 'local', ...base }
     case 'package':
-      return { resumeText: text, context }
+      return { resumeText: text, ...base }
   }
 }
 
@@ -61,9 +63,15 @@ export function useChat(name: SkillName) {
       ts: Date.now(),
     }
 
+    // L2 交互记忆：从用户消息中提取基本信息（学校/年级/专业/目标岗位）
+    let profileData = loadProfile()
+    profileData = extractUserInfoFromMessage(t, profileData)
+
     // 用历史（用户消息 + 已完成的 AI 消息）拼上下文注入 prompt
     const history = messages.filter((m) => m.role === 'user' || m.done)
-    const context = history.slice(-12).map((m) => (m.role === 'user' ? `用户：${m.content}` : `AI：${m.content}`))
+    const context = history.slice(-12).map((m) => (m.role === 'user' ? '用户：' + m.content : 'AI：' + m.content))
+
+    const enrichedInput = buildInput(name, t, context, profileData.summary || undefined)
 
     setMessages((prev) => [...prev, userMsg, assistantMsg])
     setStreaming(true)
@@ -72,7 +80,7 @@ export function useChat(name: SkillName) {
     let acc: Record<string, unknown> | null = null
     let accReply = ''
     try {
-      for await (const chunk of streamSkillCall(name, buildInput(name, t, context))) {
+      for await (const chunk of streamSkillCall(name, enrichedInput)) {
         if (chunk.error) throw new Error(chunk.error)
         const d = chunk.data as Record<string, unknown> | null
         if (d) {
@@ -88,6 +96,10 @@ export function useChat(name: SkillName) {
       const finalMsg: ChatMessage = { ...assistantMsg, content: accReply, card: acc, done: true }
       setMessages((prev) => prev.map((m) => (m.id === assistantId ? finalMsg : m)))
       await appendMessage(name, finalMsg).catch(() => {})
+      // L2 交互记忆：AI响应成功后自动更新用户画像
+      if (acc) {
+        profileData = updateFromSkillResult(name as SkillNameInput, acc, profileData)
+      }
     } catch (e) {
       setError(e instanceof Error ? e.message : '请求失败')
       const failMsg: ChatMessage = {
