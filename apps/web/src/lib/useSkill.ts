@@ -3,7 +3,7 @@ import { useEffect, useState } from 'react'
 import { type SkillName, type SkillOutput } from '@ai-career-companion/types'
 import { streamSkillCall } from './api'
 import { loadResult, saveResult } from './db'
-import { appendTurn, recallTurns, turnsToContext, getUserProfile } from './memory'
+import { appendTurn, recallTurns, turnsToContext, getUserProfile, bumpStreak } from './memory'
 
 /** 调用某个 Skill 的客户端 Hook：流式发请求 → 渐进渲染 → 本地缓存（IndexedDB）+ L1 会话记忆。 */
 export function useSkill<N extends SkillName>(name: N) {
@@ -39,6 +39,7 @@ export function useSkill<N extends SkillName>(name: N) {
       setData(finalData)
       await saveResult(name, finalData).catch(() => {})
       await appendTurn(name, { input: enriched, output: finalData, ts: Date.now() }).catch(() => {})
+      bumpStreak()
     } catch (e) {
       setError(e instanceof Error ? e.message : '请求失败')
     } finally {

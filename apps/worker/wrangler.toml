@@ -2,9 +2,15 @@ name = "ai-career-companion-worker"
 main = "src/index.ts"
 compatibility_date = "2024-09-23"
 
-# 明文变量（非机密）
-[vars]
-SUPABASE_URL = "https://your-project.supabase.co"
-SUPABASE_ANON_KEY = "your-anon-key"
-
-# 机密用 secret：wrangler secret put DEEPSEEK_API_KEY
+# 注意：DEEPSEEK_API_KEY 用 secret，不要写在这里（勿提交真实值）
+#   部署前执行：wrangler secret put DEEPSEEK_API_KEY
+#
+# Workers AI 绑定（bge-m3 语义 embedding）默认随账号启用，无需在此声明；
+# 本地 `wrangler dev` 未登录 Cloudflare 账号时 env.AI 为空，store 自动回退关键词召回。
+#
+# 可选：长期记忆持久化（memory/store.ts 已接 env.MEMORY_KV，未绑定则退化为进程内内存）
+#   1) 取消下面注释并在 Cloudflare 控制台创建对应 KV namespace，把 id 填上
+#   2) 重新部署即可让记忆跨 Worker 冷启动/多实例不丢
+# [[kv_namespaces]]
+# binding = "MEMORY_KV"
+# id = "your-kv-namespace-id"

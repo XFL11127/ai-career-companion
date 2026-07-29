@@ -2,7 +2,7 @@
 
 > 面向**双非学生**的 AI Copilot 式学职陪伴产品 · iCAN 参赛项目
 
-一个帮助学生完成「破局诊断 → 路径规划 → 实战练兵 → 信息差 → 成果包装」五步闭环的 Web 应用。后端接 DeepSeek 大模型，记忆层基于 Supabase + pgvector，全栈 Serverless 部署。
+一个帮助学生完成「破局诊断 → 路径规划 → 实战练兵 → 信息差 → 成果包装」五步闭环的 Web 应用。后端接 DeepSeek 大模型，记忆层：前端 IndexedDB（L1 会话）+ 服务端 Mem0 兼容 L1 存储（关键词+时间召回，无需 embedding API；pgvector/长期向量按规划推迟），全栈 Serverless 部署。
 
 ---
 
@@ -171,7 +171,7 @@ npm run lint         # eslint
 - **前端 lib**：`api.ts`（BFF 流式调用）、`db.ts`（本地存储）、`memory.ts`（会话历史 Conversation 模型 + L1 记忆）、`useChat.ts`（Kimi 式聊天 hook，按 Skill 构建输入/注入历史/流式渐进渲染）、`useSkill.ts`（Skill 详情页 hook）。
 - **LLM 流式响应（性能优化）**：`packages/llm` 的 `streamSkill` 用 AI SDK `streamObject` 产出 partial；BFF 路由以 NDJSON 逐行推流，前端 `useSkill`/`api.ts` 边收边 `setData`，首字节 ~0.85s 即开始渲染，消除「转圈等 2.4s」的卡顿感。
 - **`packages/llm`**：真实 LLM 调用层（Vercel AI SDK + DeepSeek，env-gated stub 回退），Worker 与 Web 共用。
-- **`apps/worker`**：Hono 路由 `/health` `/memory` `/skill/{5个}`，已接 `runSkill` 真实推理；`runSkill` 通过参数接收 env（Worker 传 `c.env`、Web 回退 `process.env`），解耦 Cloudflare 无 `process.env` 问题。`/memory` 当前为 in-memory 占位，留 M3 接 Supabase。
+- **`apps/worker`**：Hono 路由 `/health` `/memory` `/skill/{5个}`，已接 `runSkill` 真实推理；`runSkill` 通过参数接收 env（Worker 传 `c.env`、Web 回退 `process.env`），解耦 Cloudflare 无 `process.env` 问题。`/memory` 现为 Mem0 兼容 L1 存储（`memory/store.ts`：关键词+时间召回，无需 embedding API）；pgvector/长期向量记忆按 2026-07-21 规划推迟，接口与真 Mem0 对齐可平滑替换。
 - **`packages/types`**：zod 契约（Skill 名 / 画像 / 记忆 / 各 Skill 输入输出）；各 Skill input 新增可选 `context` 字段供记忆注入。
 - **L1 会话记忆（P1 已完成）**：`src/lib/memory.ts` 用 IndexedDB 按 skill 存对话轮次，`useSkill` 调用前召回最近 N 条注入 prompt、调用后追加本轮。契合「免登即用」定位，无需后端账号即可演示记忆召回。
 - **`supabase/migrations/001_init.sql`**：`profiles` / `skill_sessions` / `memories`（pgvector 1536 维 + ivfflat 余弦索引）+ RLS 行级安全。
@@ -180,12 +180,12 @@ npm run lint         # eslint
 
 ### 🚧 占位 / 待填充
 - **`/analytics` 数据看板**（运营端）：骨架占位，待 A+B 填充 Recharts 可视化与 KPI 体系。
-- **首页「今日行动卡片」区域**：待 B 填充。
+- **首页「今日行动卡片」区域**：已完成（基于诊断/规划进度数据驱动，P2）。
 
 ### 团队分工对照
 - **A（队长/基础设施）**：Supabase 项目、Vercel/Cloudflare 部署、`/analytics` 数据层 + KPI。
 - **B（前端）**：卡片引擎、5 Skill 页 UI/交互、首页行动卡片、看板 UI。
-- **C（后端 AI）**：`packages/llm` 健壮化（多 Skill prompt、错误处理）、Mem0 记忆层接 pgvector、Worker 真实 Supabase 持久化。
+- **C（后端 AI）**：`packages/llm` 健壮化（多 Skill prompt、错误处理）、Mem0 兼容 L1 记忆存储（关键词召回，无需 embedding；pgvector/SQL 持久化按规划推迟）、Worker 真实持久化（接 KV/Supabase）。
 - **D（数据测试）**：数据层测试、分析层 ETL / KPI 引擎。
 
 ---
@@ -210,7 +210,7 @@ npm run lint         # eslint
 | 近期 | 填满首页行动卡片；打磨 5 Skill 页交互细节；`packages/llm` 多 Skill prompt + 错误处理 | B / C |
 | 近期 | 统一 ESLint 版本；清理双 lockfile 决策 | A |
 | 中期 | `/analytics` 看板（Recharts + KPI 三层仪表盘） | A + B |
-| 中期 | Mem0 记忆层接 Supabase pgvector；Worker 真实会话持久化 | C + D |
+| 中期 | 服务端记忆升级：配置 embedder 后替换为真 Mem0；持久化接 Cloudflare KV / Supabase（当前进程内） | C + D |
 | 中期 | 数据层测试 + 分析层 ETL/KPI 引擎 | D |
 | 部署 | Vercel 部署前端；Cloudflare Workers 部署后端（`wrangler secret put` 注入 Key）；Supabase 推送 migration | A |
 
@@ -218,9 +218,27 @@ npm run lint         # eslint
 
 ## 九、部署
 
-- **前端 → Vercel**：导入仓库，`build` 命令 `npm run build`（或 `turbo build`），根目录即仓库根。
-- **后端 → Cloudflare Workers**：`cd apps/worker && npm run deploy`（需 `wrangler login`）；机密用 `wrangler secret put DEEPSEEK_API_KEY`。
-- **数据库 → Supabase**：在 Supabase 控制台执行 `supabase/migrations/001_init.sql`，并开启 RLS（已含策略）。
+> 仓库远程为 **Gitee**（`xu-fengling/ai-career-companion`）。Vercel 支持导入 Gitee 仓库。
+
+### 前端 → Vercel
+1. Vercel 导入 Gitee 仓库（或 `vercel link` 后 `vercel --prod`）。
+2. **Root Directory 必须设为 `apps/web`**（monorepo，根目录直接 build 找不到 Next.js，会构建失败）。
+3. Framework Preset = Next.js；Build Command = `npm run build`；Output 默认 `.next`。
+4. Environment Variables 添加：
+   - `DEEPSEEK_API_KEY`（服务端，勿加 `NEXT_PUBLIC_` 前缀）——Worker 未部署时，Web BFF fallback 直连 LLM 需要它；加完必须 **Redeploy** 才生效。
+   - `NEXT_PUBLIC_WORKER_URL`——部署完 Worker 后填其公网地址，BFF 才会优先走 Worker 而非 fallback。
+5. 连上 Git 后，**push 即自动部署**，团队共用同一基线。
+
+### 后端 → Cloudflare Workers
+1. `cd apps/worker && npm install && wrangler login`
+2. `wrangler secret put DEEPSEEK_API_KEY`（机密勿提交；`.env` 已被 gitignore）。
+3. `npm run deploy`（或 `wrangler deploy`）。部署后在 Vercel 填 `NEXT_PUBLIC_WORKER_URL` 指向 `https://<worker>.workers.dev`。
+4. 长期记忆持久化（可选）：在 `wrangler.toml` 启用 `MEMORY_KV` 并改造 `memory/store.ts` 用 KV。
+
+### 数据库 → Supabase（基本功能阶段未接，可按需启用）
+- 在 Supabase 控制台执行 `supabase/migrations/001_init.sql` 并开启 RLS（已含策略）。
+- 当前基本功能阶段不连 pgvector（按 2026-07-21 规划 OUT）。
+
 - CI 机器可使用 pnpm（正常环境无链接故障）；本机开发固定 npm。
 
 ---

@@ -7,6 +7,29 @@ export function getUserProfile(): string | null {
   return localStorage.getItem('user_profile')
 }
 
+// ---------- 连续活跃天数（streak）----------
+// 规则：完成一次 Skill 调用才计为「活跃一天」，当天重复不累加。
+// 由 useChat/useSkill 在调用成功后调用 bumpStreak()，侧边栏仅读取展示。
+const STREAK_LAST = 'streak-last-active'
+const STREAK_COUNT = 'streak-count'
+
+export function getStreak(): number {
+  if (typeof window === 'undefined') return 0
+  return parseInt(window.localStorage.getItem(STREAK_COUNT) || '0', 10) || 0
+}
+
+export function bumpStreak(): void {
+  if (typeof window === 'undefined') return
+  const today = new Date().toISOString().slice(0, 10)
+  const last = window.localStorage.getItem(STREAK_LAST)
+  const cur = parseInt(window.localStorage.getItem(STREAK_COUNT) || '0', 10) || 0
+  if (last === today) return // 今天已记过，不重复累加
+  const yesterday = new Date(Date.now() - 24 * 60 * 60 * 1000).toISOString().slice(0, 10)
+  const next = last === yesterday ? cur + 1 : 1
+  window.localStorage.setItem(STREAK_LAST, today)
+  window.localStorage.setItem(STREAK_COUNT, String(next))
+}
+
 // L1 会话记忆：IndexedDB 按 skill 存储对话轮次（免登即用，数据存浏览器本地）。
 // 与 db.ts 的「结果缓存」区分：这里存的是「会话上下文」（input+output 轮次），用于注入 prompt。
 

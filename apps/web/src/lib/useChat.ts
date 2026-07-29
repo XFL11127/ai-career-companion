@@ -2,7 +2,7 @@
 import { useEffect, useState } from 'react'
 import { type SkillName } from '@ai-career-companion/types'
 import { streamSkillCall } from './api'
-import { loadMessages, appendMessage, clearMessages, saveMessages, type ChatMessage } from './memory'
+import { loadMessages, appendMessage, clearMessages, saveMessages, bumpStreak, type ChatMessage } from './memory'
 
 /** 把自由文本 + 历史上下文，构造成对应 Skill 的输入。 */
 function buildInput(name: SkillName, text: string, context: string[]): Record<string, unknown> {
@@ -63,7 +63,17 @@ export function useChat(name: SkillName) {
 
     // 用历史（用户消息 + 已完成的 AI 消息）拼上下文注入 prompt
     const history = messages.filter((m) => m.role === 'user' || m.done)
-    const context = history.slice(-12).map((m) => (m.role === 'user' ? `用户：${m.content}` : `AI：${m.content}`))
+    const localCtx = history.slice(-12).map((m) => (m.role === 'user' ? `用户：${m.content}` : `AI：${m.content}`))
+    // 召回服务端长期记忆（跨会话/跨设备），并入上下文；失败则忽略，不阻断主链路
+    let serverCtx: string[] = []
+    try {
+      const r = await fetch(`/api/memory?userId=local&q=${encodeURIComponent(t)}&topK=3`)
+      const j = await r.json().catch(() => null)
+      if (j && Array.isArray(j.items)) serverCtx = j.items.map((m: { content: string }) => `[长期记忆] ${m.content}`)
+    } catch {
+      serverCtx = []
+    }
+    const context = [...localCtx, ...serverCtx].slice(-14)
 
     setMessages((prev) => [...prev, userMsg, assistantMsg])
     setStreaming(true)
@@ -88,6 +98,13 @@ export function useChat(name: SkillName) {
       const finalMsg: ChatMessage = { ...assistantMsg, content: accReply, card: acc, done: true }
       setMessages((prev) => prev.map((m) => (m.id === assistantId ? finalMsg : m)))
       await appendMessage(name, finalMsg).catch(() => {})
+      bumpStreak()
+      // 写入服务端长期记忆（fire-and-forget，不阻塞 UI；Worker 未部署时静默失败）
+      fetch('/api/memory', {
+        method: 'POST',
+        headers: { 'content-type': 'application/json' },
+        body: JSON.stringify({ userId: 'local', content: `用户：${t} | AI：${accReply}`, layer: 'interaction' }),
+      }).catch(() => {})
     } catch (e) {
       setError(e instanceof Error ? e.message : '请求失败')
       const failMsg: ChatMessage = {
