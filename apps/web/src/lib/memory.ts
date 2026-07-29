@@ -7,6 +7,18 @@ export function getUserProfile(): string | null {
   return localStorage.getItem('user_profile')
 }
 
+// 免登模型下的稳定匿名 ID：用于 Supabase 按浏览器分桶（记忆/看板数据隔离）。
+const ANON_ID = 'anon_user_id'
+export function getAnonUserId(): string {
+  if (typeof window === 'undefined') return 'anon'
+  let id = window.localStorage.getItem(ANON_ID)
+  if (!id) {
+    id = crypto.randomUUID()
+    window.localStorage.setItem(ANON_ID, id)
+  }
+  return id
+}
+
 // ---------- 连续活跃天数（streak）----------
 // 规则：完成一次 Skill 调用才计为「活跃一天」，当天重复不累加。
 // 由 useChat/useSkill 在调用成功后调用 bumpStreak()，侧边栏仅读取展示。

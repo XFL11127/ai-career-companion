@@ -99,6 +99,24 @@ async function sbDeleteMemory(id: string, env: Bindings): Promise<boolean> {
   return res.ok
 }
 
+async function sbInsertSkillEvent(
+  row: { id: string; user_id: string; skill_name: string; payload: object; created_at: string },
+  env: Bindings,
+): Promise<boolean> {
+  const res = await fetch(`${env.SUPABASE_URL}/rest/v1/skill_events`, {
+    method: 'POST',
+    headers: sbHeaders(env),
+    body: JSON.stringify({
+      id: row.id,
+      user_id: row.user_id,
+      skill_name: row.skill_name,
+      payload: row.payload,
+      created_at: row.created_at,
+    }),
+  })
+  return res.ok
+}
+
 function cosine(a: number[], b: number[]): number {
   if (a.length !== b.length) return 0
   let dot = 0
@@ -179,7 +197,11 @@ async function handleSkill(name: string, req: Request, env: Bindings): Promise<R
   const skillName = name as SkillName
   const schema = skillInputMap[skillName]
   if (!schema) return json({ code: 404, message: 'unknown skill' }, 404)
-  const parsed = schema.safeParse(await parseBody(req))
+  const body = (await parseBody(req)) as Record<string, unknown>
+  const userId = (body.userId as string) ?? 'anon'
+  // 剥掉 userId 再校验，避免严格 schema 因多余字段报错
+  const { userId: _drop, ...rest } = body
+  const parsed = schema.safeParse(rest)
   if (!parsed.success) {
     return json({ code: 400, message: 'invalid input', detail: parsed.error.message }, 400)
   }
@@ -188,6 +210,34 @@ async function handleSkill(name: string, req: Request, env: Bindings): Promise<R
     SUPABASE_URL: env.SUPABASE_URL ?? '',
     SUPABASE_ANON_KEY: env.SUPABASE_ANON_KEY ?? '',
   })
+  // 记录 Skill 调用事件（看板使用分布 / 活跃天数趋势），失败静默（Supabase 未配置时）
+  if (sbReady(env)) {
+    await sbInsertSkillEvent(
+      {
+        id: crypto.randomUUID(),
+        user_id: userId,
+        skill_name: skillName,
+        payload: (rest as object) ?? {},
+        created_at: new Date().toISOString(),
+      },
+      env,
+    ).catch(() => {})
+    // 诊断 Skill 把五维雷达写入 memory(layer=diagnosis)，供看板真实雷达图
+    const radar = (data as { radar?: { dimension: string; value: number }[] })?.radar
+    if (skillName === 'diagnose' && Array.isArray(radar)) {
+      await sbInsertMemory(
+        {
+          id: crypto.randomUUID(),
+          user_id: userId,
+          content: JSON.stringify(radar),
+          layer: 'diagnosis',
+          embedding: null,
+          created_at: new Date().toISOString(),
+        },
+        env,
+      ).catch(() => {})
+    }
+  }
   return json({ code: 0, message: 'ok', data })
 }
 

@@ -5,7 +5,7 @@ import { getUserProfile, getStreak } from '@/lib/memory'
 import Link from 'next/link'
 import type { ComponentType } from 'react'
 import type { SkillName } from '@ai-career-companion/types'
-import { MessageSquarePlus, Settings, HelpCircle, LogIn, X, Trash2, Flame, Brain } from 'lucide-react'
+import { MessageSquarePlus, Settings, HelpCircle, LogIn, X, Trash2, Flame, Brain, BarChart3 } from 'lucide-react'
 import type { Conversation } from '@/lib/memory'
 
 interface SkillItem {
@@ -176,6 +176,13 @@ export function Sidebar({
             <Brain className="h-4 w-4" />
             记忆已开启
           </button>
+          <Link
+            href="/analytics"
+            className="flex w-full items-center gap-2.5 rounded-lg px-3 py-2 text-sm text-ink/70 transition hover:bg-ink/5 hover:text-ink"
+          >
+            <BarChart3 className="h-4 w-4" />
+            数据看板
+          </Link>
           <div className="space-y-0.5">
             <button className="flex w-full items-center gap-2.5 rounded-lg px-3 py-2 text-sm text-ink/70 transition hover:bg-ink/5 hover:text-ink">
               <Settings className="h-4 w-4" />

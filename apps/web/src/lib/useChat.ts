@@ -2,13 +2,13 @@
 import { useEffect, useState } from 'react'
 import { type SkillName } from '@ai-career-companion/types'
 import { streamSkillCall } from './api'
-import { loadMessages, appendMessage, clearMessages, saveMessages, bumpStreak, type ChatMessage } from './memory'
+import { loadMessages, appendMessage, clearMessages, saveMessages, bumpStreak, getAnonUserId, type ChatMessage } from './memory'
 
 /** 把自由文本 + 历史上下文，构造成对应 Skill 的输入。 */
 function buildInput(name: SkillName, text: string, context: string[]): Record<string, unknown> {
   switch (name) {
     case 'diagnose':
-      return { userId: 'local', messages: [{ role: 'user', content: text }], context }
+      return { userId: getAnonUserId(), messages: [{ role: 'user', content: text }], context }
     case 'plan':
       return { goal: text, context }
     case 'practice': {
@@ -16,7 +16,7 @@ function buildInput(name: SkillName, text: string, context: string[]): Record<st
       return { mode, topic: text, context }
     }
     case 'info':
-      return { userId: 'local', context }
+      return { userId: getAnonUserId(), context }
     case 'package':
       return { resumeText: text, context }
   }
@@ -67,7 +67,7 @@ export function useChat(name: SkillName) {
     // 召回服务端长期记忆（跨会话/跨设备），并入上下文；失败则忽略，不阻断主链路
     let serverCtx: string[] = []
     try {
-      const r = await fetch(`/api/memory?userId=local&q=${encodeURIComponent(t)}&topK=3`)
+      const r = await fetch(`/api/memory?userId=${encodeURIComponent(getAnonUserId())}&q=${encodeURIComponent(t)}&topK=3`)
       const j = await r.json().catch(() => null)
       if (j && Array.isArray(j.items)) serverCtx = j.items.map((m: { content: string }) => `[长期记忆] ${m.content}`)
     } catch {
@@ -103,7 +103,7 @@ export function useChat(name: SkillName) {
       fetch('/api/memory', {
         method: 'POST',
         headers: { 'content-type': 'application/json' },
-        body: JSON.stringify({ userId: 'local', content: `用户：${t} | AI：${accReply}`, layer: 'interaction' }),
+        body: JSON.stringify({ userId: getAnonUserId(), content: `用户：${t} | AI：${accReply}`, layer: 'interaction' }),
       }).catch(() => {})
     } catch (e) {
       setError(e instanceof Error ? e.message : '请求失败')
