@@ -43,7 +43,7 @@ const SAMPLE: Analytic = {
   profileOverall: 76,
 }
 
-function sbHeaders(url: string, key: string) {
+function sbHeaders(key: string) {
   return { Authorization: `Bearer ${key}`, apikey: key, 'Content-Type': 'application/json' }
 }
 
@@ -58,7 +58,7 @@ export async function GET() {
     // 差距雷达：memory 表 layer='diagnosis' 的最新一条（worker 写入）
     const mRes = await fetch(
       `${url}/rest/v1/memory?layer=eq.diagnosis&order=created_at.desc&limit=1`,
-      { headers: sbHeaders(url, key) },
+      { headers: sbHeaders(key) },
     )
     if (mRes.ok) {
       const rows = (await mRes.json()) as { content: string }[]
@@ -76,7 +76,7 @@ export async function GET() {
     const since = new Date(Date.now() - 13 * 86400000).toISOString()
     const sRes = await fetch(
       `${url}/rest/v1/skill_events?select=created_at&created_at=gte.${since}`,
-      { headers: sbHeaders(url, key) },
+      { headers: sbHeaders(key) },
     )
     if (sRes.ok) {
       const rows = (await sRes.json()) as { created_at: string }[]
@@ -102,7 +102,7 @@ export async function GET() {
 
     // 画像完成度
     const pRes = await fetch(`${url}/rest/v1/user_profiles?select=profile,completeness&limit=1`, {
-      headers: sbHeaders(url, key),
+      headers: sbHeaders(key),
     })
     if (pRes.ok) {
       const rows = (await pRes.json()) as { profile?: Record<string, unknown>; completeness?: number }[]

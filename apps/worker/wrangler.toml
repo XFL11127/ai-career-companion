@@ -5,6 +5,10 @@ compatibility_date = "2024-09-23"
 # 注意：DEEPSEEK_API_KEY 用 secret，不要写在这里（勿提交真实值）
 #   部署前执行：wrangler secret put DEEPSEEK_API_KEY
 #
+# 本机调试（wrangler dev）注入 Key 的方式：
+#   复制 .dev.vars.example 为 .dev.vars，填入 DEEPSEEK_API_KEY（.dev.vars 已被 .gitignore 忽略）。
+#   `wrangler dev` 会自动读取 .dev.vars 注入 c.env，五 Skill 即可用真实 DeepSeek；不填则回落 stub。
+#
 # Workers AI 绑定（bge-m3 语义 embedding）默认随账号启用，无需在此声明；
 # 本地 `wrangler dev` 未登录 Cloudflare 账号时 env.AI 为空，store 自动回退关键词召回。
 #

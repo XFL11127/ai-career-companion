@@ -19,7 +19,33 @@ export async function POST(req: Request, { params }: { params: { path: string[] 
       body: raw,
     })
     if (!res.ok) throw new Error(`worker ${res.status}`)
-    return Response.json(await res.json())
+    const ct = res.headers.get('content-type') ?? ''
+    if (ct.includes('ndjson') && res.body) {
+      // Worker 返回 NDJSON 流 → 直接透传，前端边生成边渲染
+      return new Response(res.body, {
+        headers: {
+          'content-type': 'application/x-ndjson; charset=utf-8',
+          'cache-control': 'no-cache, no-transform',
+          'x-accel-buffering': 'no',
+        },
+      })
+    }
+    // Worker 返回一次性 JSON（兼容旧逻辑）→ 包装成单 chunk NDJSON，前端统一走流式分支
+    const json = await res.json()
+    const encoder = new TextEncoder()
+    const wrapped = new ReadableStream<Uint8Array>({
+      start(controller) {
+        controller.enqueue(encoder.encode(JSON.stringify({ done: true, data: (json.data ?? null) as unknown }) + '\n'))
+        controller.close()
+      },
+    })
+    return new Response(wrapped, {
+      headers: {
+        'content-type': 'application/x-ndjson; charset=utf-8',
+        'cache-control': 'no-cache, no-transform',
+        'x-accel-buffering': 'no',
+      },
+    })
   } catch {
     // Worker 不可达 → 直连 LLM 兜底（本地开发默认走这里），流式返回 partial
     let body: unknown = {}

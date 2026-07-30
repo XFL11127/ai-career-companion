@@ -1,6 +1,6 @@
 import type { Ai } from '@cloudflare/workers-types'
 import { healthSchema, skillInputMap, type SkillName } from '@ai-career-companion/types'
-import { runSkill } from '@ai-career-companion/llm'
+import { streamSkill } from '@ai-career-companion/llm'
 
 // 统一 Worker（零框架依赖，原生 fetch）。
 // 合并自两队实现：
@@ -55,7 +55,7 @@ async function embed(text: string, env: Bindings): Promise<number[] | null> {
 }
 
 function sbReady(env: Bindings): boolean {
-  return !!env.SUPABASE_URL && !!env.SUPABASE_ANON_KEY
+  return !!env.SUPABASE_URL && (!!env.SUPABASE_ANON_KEY || !!env.SUPABASE_SERVICE_ROLE_KEY)
 }
 function sbHeaders(env: Bindings, anon = false): Record<string, string> {
   const key = anon
@@ -205,40 +205,65 @@ async function handleSkill(name: string, req: Request, env: Bindings): Promise<R
   if (!parsed.success) {
     return json({ code: 400, message: 'invalid input', detail: parsed.error.message }, 400)
   }
-  const data = await runSkill(skillName, parsed.data, {
-    DEEPSEEK_API_KEY: env.DEEPSEEK_API_KEY ?? '',
-    SUPABASE_URL: env.SUPABASE_URL ?? '',
-    SUPABASE_ANON_KEY: env.SUPABASE_ANON_KEY ?? '',
+  // 流式输出：用 streamSkill 生成 NDJSON 流（边生成边返回），前端 streamSkillCall 已支持逐行渲染。
+  // 副作用（写 skill_events / 诊断雷达 memory）在流结束后用最终完整结果执行，保证 Supabase 落库一次。
+  const encoder = new TextEncoder()
+  const stream = new ReadableStream<Uint8Array>({
+    async start(controller) {
+      try {
+        let finalData: unknown = null
+        for await (const chunk of streamSkill(skillName, parsed.data, {
+          DEEPSEEK_API_KEY: env.DEEPSEEK_API_KEY ?? '',
+          SUPABASE_URL: env.SUPABASE_URL ?? '',
+          SUPABASE_ANON_KEY: env.SUPABASE_ANON_KEY ?? '',
+        })) {
+          controller.enqueue(encoder.encode(JSON.stringify(chunk) + '\n'))
+          if (chunk.done && chunk.data) finalData = chunk.data
+        }
+        if (sbReady(env) && finalData) {
+          await sbInsertSkillEvent(
+            {
+              id: crypto.randomUUID(),
+              user_id: userId,
+              skill_name: skillName,
+              payload: (rest as object) ?? {},
+              created_at: new Date().toISOString(),
+            },
+            env,
+          ).catch(() => {})
+          const radar = (finalData as { radar?: { dimension: string; value: number }[] })?.radar
+          if (skillName === 'diagnose' && Array.isArray(radar)) {
+            await sbInsertMemory(
+              {
+                id: crypto.randomUUID(),
+                user_id: userId,
+                content: JSON.stringify(radar),
+                layer: 'diagnosis',
+                embedding: null,
+                created_at: new Date().toISOString(),
+              },
+              env,
+            ).catch(() => {})
+          }
+        }
+      } catch (e) {
+        controller.enqueue(
+          encoder.encode(
+            JSON.stringify({ done: true, data: null, error: e instanceof Error ? e.message : String(e) }) + '\n',
+          ),
+        )
+      } finally {
+        controller.close()
+      }
+    },
   })
-  // 记录 Skill 调用事件（看板使用分布 / 活跃天数趋势），失败静默（Supabase 未配置时）
-  if (sbReady(env)) {
-    await sbInsertSkillEvent(
-      {
-        id: crypto.randomUUID(),
-        user_id: userId,
-        skill_name: skillName,
-        payload: (rest as object) ?? {},
-        created_at: new Date().toISOString(),
-      },
-      env,
-    ).catch(() => {})
-    // 诊断 Skill 把五维雷达写入 memory(layer=diagnosis)，供看板真实雷达图
-    const radar = (data as { radar?: { dimension: string; value: number }[] })?.radar
-    if (skillName === 'diagnose' && Array.isArray(radar)) {
-      await sbInsertMemory(
-        {
-          id: crypto.randomUUID(),
-          user_id: userId,
-          content: JSON.stringify(radar),
-          layer: 'diagnosis',
-          embedding: null,
-          created_at: new Date().toISOString(),
-        },
-        env,
-      ).catch(() => {})
-    }
-  }
-  return json({ code: 0, message: 'ok', data })
+  return new Response(stream, {
+    headers: {
+      'content-type': 'application/x-ndjson; charset=utf-8',
+      'cache-control': 'no-cache, no-transform',
+      'x-accel-buffering': 'no',
+    },
+  })
 }
 
 export default {

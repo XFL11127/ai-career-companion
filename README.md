@@ -136,12 +136,15 @@ workspace 内部依赖用 `"*"`（如 `"@ai-career-companion/types": "*"`），n
 
 ### 命令行
 ```bash
-# 仅起前端（最常用，避开 Worker 的 Cloudflare 配置）
+# 仅起前端（最常用）
 npm run web          # 或 npm start
 #   → http://localhost:3000
 
-# 前端 + 后端一起（需 Worker 的 wrangler 配置 / Cloudflare 账号）
-npm run dev          # = turbo dev → 前端 :3000 + Worker :8787
+# 仅起后端 Worker（wrangler dev，本地 :8787）
+npm run worker
+
+# 前端 + 后端一起（turbo dev → 前端 :3000 + Worker :8787）
+npm run dev
 
 # 生产构建 / 类型检查 / 规范
 npm run build        # turbo build（前端 next build）
@@ -149,8 +152,28 @@ npm run check        # = turbo run type-check（web + worker 均 0 错）
 npm run lint         # eslint
 ```
 
+### 本机联调（前端 + Worker，无需 Cloudflare 账号）
+> 部署目标在云端，但本机就能完整调试。**不需要 Cloudflare 账号**即可 `wrangler dev` 本地起 Worker。
+
+1. **起前端**（终端 A）：
+   ```bash
+   npm run web        # http://localhost:3000
+   ```
+2. **起 Worker**（终端 B）：
+   ```bash
+   cp apps/worker/.dev.vars.example apps/worker/.dev.vars
+   # 编辑 apps/worker/.dev.vars，填入真实 DEEPSEEK_API_KEY
+   npm run worker     # wrangler dev → http://localhost:8787
+   ```
+   - 不填 Key：五 Skill 回落 **stub**（结构化假数据，链路可演示）。
+   - 填了 Key：五 Skill 调用**真实 DeepSeek**。
+3. **前端 → Worker 代理**：前端 BFF 默认打 `http://localhost:8787`（见 `NEXT_PUBLIC_WORKER_URL`，已在 `.env.example` 配好，不配也走默认值）。两个服务都起后，页面里的五 Skill / 记忆 / 看板均走真实本地链路。
+4. **本地降级说明**（不影响调试）：
+   - `wrangler dev` 未登录 Cloudflare 时 `env.AI` 为空 → `/memory` 语义召回自动回退**关键词+时间**，不影响功能。
+   - 未配 Supabase（`.dev.vars` 里留空）→ 记忆退化为进程内、`/api/analytics` 返回**示例数据**（看板带「示例数据」标）。
+
 ### IDEA 零打字
-左侧 / 底部 **npm scripts** 面板（View → Tool Windows → npm）→ 点 `web` / `dev` / `build` / `check` 按钮即可。
+左侧 / 底部 **npm scripts** 面板（View → Tool Windows → npm）→ 点 `web` / `worker` / `dev` / `build` / `check` 按钮即可。
 
 > 打开后你会看到：首页是 **Kimi 式对话入口**（左侧栏 + 聊天流），5 个 Skill 详情页仍可直接访问（URL 如 `/diagnose`）；无登录时历史会话存浏览器 IndexedDB，刷新/重进不丢失。`/analytics` 看板与首页「今日行动卡片」目前是占位骨架，属预期状态。
 >

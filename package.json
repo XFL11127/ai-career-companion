@@ -10,6 +10,7 @@
     "test": "echo \"Error: no test specified\" && exit 1",
     "dev": "turbo dev",
     "web": "npm --workspace @ai-career-companion/web run dev",
+    "worker": "npm --workspace @ai-career-companion/worker run dev",
     "start": "npm run web",
     "build": "turbo build",
     "type-check": "turbo run type-check",
