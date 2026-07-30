@@ -4,6 +4,7 @@ import { type SkillName } from '@ai-career-companion/types'
 import { streamSkillCall } from './api'
 import { loadMessages, appendMessage, clearMessages, saveMessages, type ChatMessage } from './memory'
 import { extractUserInfoFromMessage, updateFromSkillResult, loadProfile, type SkillNameInput } from './profile'
+import { searchL3Knowledge } from './l3-knowledge'
 
 /** 把自由文本 + 历史上下文 + 用户画像，构造成对应 Skill 的输入。 */
 function buildInput(name: SkillName, text: string, context: string[], profile?: string): Record<string, unknown> {
@@ -26,7 +27,7 @@ function buildInput(name: SkillName, text: string, context: string[], profile?: 
 
 /**
  * Kimi 式对话 Hook：管理某 Skill 下的消息流，调用流式端点，边生成边渲染，
- * 并把历史 transcript 注入 prompt（L1 会话记忆），同时持久化到 IndexedDB（免登即用）。
+ * 并把历史 transcript（L1）、用户画像（L2）、知识检索（L3）三层注入 prompt。
  */
 export function useChat(name: SkillName) {
   const [messages, setMessages] = useState<ChatMessage[]>([])
@@ -67,9 +68,13 @@ export function useChat(name: SkillName) {
     let profileData = loadProfile()
     profileData = extractUserInfoFromMessage(t, profileData)
 
-    // 用历史（用户消息 + 已完成的 AI 消息）拼上下文注入 prompt
+    // L1 会话记忆：用历史（用户消息 + 已完成的 AI 消息）拼上下文
     const history = messages.filter((m) => m.role === 'user' || m.done)
-    const context = history.slice(-12).map((m) => (m.role === 'user' ? '用户：' + m.content : 'AI：' + m.content))
+    const historyContext = history.slice(-12).map((m) => (m.role === 'user' ? '用户：' + m.content : 'AI：' + m.content))
+
+    // L3 知识记忆：关键词匹配，注入 prompt
+    const l3Items = searchL3Knowledge(t, name)
+    const context = [...historyContext, ...(l3Items.length ? ['【L3知识检索】', ...l3Items.slice(0, 2)] : [])]
 
     const enrichedInput = buildInput(name, t, context, profileData.summary || undefined)
 
