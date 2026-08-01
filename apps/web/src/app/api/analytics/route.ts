@@ -1,5 +1,8 @@
 import { NextResponse } from 'next/server'
 
+// Cloudflare Pages 要求所有非静态路由跑 Edge Runtime（next-on-pages 校验）
+export const runtime = 'edge'
+
 // 看板数据聚合（服务端）。
 // Supabase 已配置 → 真查 skill_events / memory / user_profiles；
 // 未配置 → 返回示例数据(demo:true)，保证界面可预览，上线接 Supabase 后自动变真数据。
