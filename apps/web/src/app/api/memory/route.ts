@@ -1,5 +1,8 @@
 import { NextRequest, NextResponse } from 'next/server'
 
+// Cloudflare Pages 要求所有非静态路由跑 Edge Runtime（next-on-pages 校验）
+export const runtime = 'edge'
+
 // 透传前端记忆读写到 Worker（服务端 L1 长期记忆）。
 // Worker 未部署（NEXT_PUBLIC_WORKER_URL 未配）时优雅降级：GET 返回空、POST/DELETE 返回 ok:false，
 // 不阻断主链路；上线 Worker 后自动生效。

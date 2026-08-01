@@ -1,6 +1,9 @@
 import { skillNameSchema } from '@ai-career-companion/types'
 import { streamSkill } from '@ai-career-companion/llm'
 
+// Cloudflare Pages 要求所有非静态路由跑 Edge Runtime（next-on-pages 校验）
+export const runtime = 'edge'
+
 // BFF 代理层：前端 → 本路由 → Cloudflare Worker(/skill/*) → DeepSeek
 // 本地未起 wrangler（Worker 不可达）时，直连 streamSkill（Node 兜底），以 NDJSON 流式返回，消除等待感。
 export async function POST(req: Request, { params }: { params: { path: string[] } }) {
