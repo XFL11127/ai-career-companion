@@ -6,6 +6,7 @@ import { loadResult } from '@/lib/db'
 import { ArrowRight, PartyPopper } from 'lucide-react'
 import { saveUserProfile } from '@/lib/memory'
 import { Card, Pill, LoadingState, ErrorState, EmptyState } from '@/components/skill-ui'
+import { MemoryPanel } from '@/components/MemoryPanel'
 import type { DiagnoseOutput } from '@ai-career-companion/types'
 
 const DEFAULT_DIAGNOSE: DiagnoseOutput = {
@@ -51,6 +52,7 @@ export default function PlanPage() {
     <main className="mx-auto max-w-4xl px-6 py-12">
       <h1 className="font-serif text-3xl font-bold text-ink">路径规划</h1>
       <p className="mt-2 text-ink/60">基于你的诊断差距，生成 30 / 60 / 90 天可执行成长路径</p>
+      <MemoryPanel skill="plan" />
 
       {showBadge && data && (
         <div className="mt-4 flex items-center gap-2 rounded-lg bg-amber-50 border border-amber-200 px-4 py-3 text-sm text-amber-800">

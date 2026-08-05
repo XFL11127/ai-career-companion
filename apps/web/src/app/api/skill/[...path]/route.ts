@@ -3,8 +3,9 @@ import { streamSkill } from '@ai-career-companion/llm'
 
 // 服务端 BFF：前端 → 本路由（Node 运行时）→ DeepSeek，以 NDJSON 流式返回（消除等待感）。
 // 不再经由 Cloudflare Worker；DEEPSEEK_API_KEY 经 process.env 注入（部署平台环境变量）。
-export async function POST(req: Request, { params }: { params: { path: string[] } }) {
-  const name = params.path?.[0]
+export async function POST(req: Request, { params }: { params: Promise<{ path: string[] }> }) {
+  const { path } = await params
+  const name = path?.[0]
   const parsed = skillNameSchema.safeParse(name)
   if (!parsed.success) {
     return Response.json({ code: 404, message: 'unknown skill' }, { status: 404 })

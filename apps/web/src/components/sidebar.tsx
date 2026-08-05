@@ -1,8 +1,9 @@
 'use client'
 
 import { useEffect, useMemo, useState } from 'react'
-import { getUserProfile, getStreak } from '@/lib/memory'
 import Link from 'next/link'
+import { useRouter } from 'next/navigation'
+import { getUserProfile, getStreak } from '@/lib/memory'
 import type { ComponentType } from 'react'
 import type { SkillName } from '@ai-career-companion/types'
 import { MessageSquarePlus, Settings, HelpCircle, LogIn, X, Trash2, Flame, Brain, BarChart3 } from 'lucide-react'
@@ -58,6 +59,7 @@ export function Sidebar({
   onSelectConversation,
   onDeleteConversation,
 }: SidebarProps) {
+  const router = useRouter()
   const groups = useMemo(() => groupConversations(conversations), [conversations])
   const [streak, setStreak] = useState(0)
   const [showMemory, setShowMemory] = useState(false)
@@ -184,11 +186,17 @@ export function Sidebar({
             数据看板
           </Link>
           <div className="space-y-0.5">
-            <button className="flex w-full items-center gap-2.5 rounded-lg px-3 py-2 text-sm text-ink/70 transition hover:bg-ink/5 hover:text-ink">
+            <button
+              onClick={() => router.push('/settings')}
+              className="flex w-full items-center gap-2.5 rounded-lg px-3 py-2 text-sm text-ink/70 transition hover:bg-ink/5 hover:text-ink"
+            >
               <Settings className="h-4 w-4" />
               设置
             </button>
-            <button className="flex w-full items-center gap-2.5 rounded-lg px-3 py-2 text-sm text-ink/70 transition hover:bg-ink/5 hover:text-ink">
+            <button
+              onClick={() => router.push('/help')}
+              className="flex w-full items-center gap-2.5 rounded-lg px-3 py-2 text-sm text-ink/70 transition hover:bg-ink/5 hover:text-ink"
+            >
               <HelpCircle className="h-4 w-4" />
               帮助
             </button>

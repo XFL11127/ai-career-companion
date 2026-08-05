@@ -5,6 +5,7 @@ import { useSkill } from '@/lib/useSkill'
 import { ArrowRight, PartyPopper } from 'lucide-react'
 import { saveUserProfile } from '@/lib/memory'
 import { Card, Pill, LoadingState, ErrorState, EmptyState } from '@/components/skill-ui'
+import { MemoryPanel } from '@/components/MemoryPanel'
 
 export default function InfoPage() {
   const { data, loading, error, run } = useSkill('info')
@@ -28,6 +29,7 @@ export default function InfoPage() {
     <main className="mx-auto max-w-3xl px-6 py-12">
       <h1 className="font-serif text-3xl font-bold text-ink">信息差填平</h1>
       <p className="mt-2 text-ink/60">聚合双非友好的校招 / 实习 / 竞赛信息</p>
+      <MemoryPanel skill="info" />
 
       {showBadge && data && (
         <div className="mt-4 rounded-lg bg-amber-50 border border-amber-200 px-4 py-3 text-sm text-amber-800">
