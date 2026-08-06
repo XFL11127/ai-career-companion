@@ -2,8 +2,9 @@
 import { useEffect, useRef, useState } from 'react'
 import type { ComponentType } from 'react'
 import Link from 'next/link'
+import { useRouter } from 'next/navigation'
 import { type SkillName } from '@ai-career-companion/types'
-import { Radar, Route, Target, Newspaper, Briefcase, Send, Trash2, Menu, ClipboardList, CheckCircle2, Sparkles } from 'lucide-react'
+import { Radar, Route, Target, Newspaper, Briefcase, Send, Trash2, Menu, ClipboardList, CheckCircle2, Sparkles, Brain, Compass, Sword, Globe, Award } from 'lucide-react'
 import { useChat } from '@/lib/useChat'
 import { Sidebar } from '@/components/sidebar'
 import {
@@ -31,13 +32,83 @@ const SKILLS: {
   { name: 'package', label: '成果包装', icon: Briefcase, placeholder: '粘贴你的简历原文，并说明目标岗位…' },
 ]
 
+// ---------- 每个 Skill 的差异化卡片配置 ----------
+// actionType: 'navigate' → 跳转详情页 | 'chat' → 在对话框内触发任务（自动填入 prompt）
+
+type SkillCardConfig = {
+  title: string
+  desc: string
+  action: string
+} & (
+  | { actionType: 'navigate'; href: string }
+  | { actionType: 'chat'; chatPrompt: string }
+)
+
+const SKILL_CARDS: Record<SkillName, { sectionTitle: string; cards: SkillCardConfig[] }> = {
+  diagnose: {
+    sectionTitle: '破局诊断',
+    cards: [
+      { title: '开始五维诊断', desc: 'AI 分析你的能力差距，生成雷达图与推荐岗位', action: '开始诊断 →', actionType: 'chat', chatPrompt: '帮我做一次五维差距诊断，我是双非大三计算机专业学生' },
+      { title: '查看诊断报告', desc: '回顾你的五维雷达图与岗位匹配分析', action: '查看详情 →', actionType: 'navigate', href: '/diagnose' },
+      { title: '诊断 FAQ', desc: '什么是五维诊断？需要准备什么？', action: '了解更多 →', actionType: 'navigate', href: '/help#diagnose' },
+    ],
+  },
+  plan: {
+    sectionTitle: '路径规划',
+    cards: [
+      { title: '生成成长路径', desc: '基于诊断结果，生成 0-90 天可执行行动卡', action: '开始规划 →', actionType: 'chat', chatPrompt: '帮我制定一个 90 天的成长路径，目标是前端开发工程师' },
+      { title: '查看行动卡进度', desc: '追踪你的里程碑完成情况', action: '查看进度 →', actionType: 'navigate', href: '/plan' },
+      { title: '基于诊断结果规划', desc: '用已有的雷达数据做精准规划', action: '智能规划 →', actionType: 'chat', chatPrompt: '根据我之前的诊断结果，制定一个落地的提升计划' },
+    ],
+  },
+  practice: {
+    sectionTitle: '实战练兵',
+    cards: [
+      { title: '模拟面试', desc: '技术 + 行为混合面试，贴近校招真实节奏', action: '开始面试 →', actionType: 'chat', chatPrompt: '来一场模拟面试，综合模式' },
+      { title: '算法刷题', desc: '出 1-2 道校招常见算法题，考思路与编码', action: '刷题 →', actionType: 'chat', chatPrompt: '出几道算法题练练，数组或字符串相关的' },
+      { title: '项目深挖', desc: '围绕你做过的项目问技术细节与量化结果', action: '项目复盘 →', actionType: 'chat', chatPrompt: '深挖一下我的项目经历，像面试官那样追问' },
+    ],
+  },
+  info: {
+    sectionTitle: '信息差填平',
+    cards: [
+      { title: '最新校招资讯', desc: '获取双非友好的实习 / 校招 / 竞赛机会', action: '获取资讯 →', actionType: 'chat', chatPrompt: '' },
+      { title: '双非友好企业清单', desc: '不卡学历的公司和岗位汇总', action: '查看列表 →', actionType: 'navigate', href: '/info' },
+      { title: '秋招时间线', desc: '关键节点与投递策略指南', action: '了解时间线 →', actionType: 'navigate', href: '/help#recruitment' },
+    ],
+  },
+  package: {
+    sectionTitle: '成果包装',
+    cards: [
+      { title: '优化我的简历', desc: '粘贴简历原文，AI 帮你改写成 ATS 友好版', action: '开始优化 →', actionType: 'chat', chatPrompt: '帮我把简历优化一下，目标岗位是前端开发' },
+      { title: '项目亮点提炼', desc: '把经历讲成 STAR 结构的量化成果', action: '提炼亮点 →', actionType: 'chat', chatPrompt: '帮我把项目经历包装成面试能用的亮点' },
+      { title: '面试复盘模板', desc: '被问到学校时怎么接？表达模板在这里', action: '查看模板 →', actionType: 'navigate', href: '/package' },
+    ],
+  },
+}
+
+/** 获取当前 Skill 的图标（用于卡片区域标题装饰） */
+function SkillIcon({ name, className }: { name: SkillName; className?: string }) {
+  const iconMap: Record<SkillName, ComponentType<{ className?: string }>> = {
+    diagnose: Brain,
+    plan: Compass,
+    practice: Sword,
+    info: Globe,
+    package: Award,
+  }
+  const Icon = iconMap[name] ?? Radar
+  return <Icon className={className} />
+}
+
 export function ChatShell() {
+  const router = useRouter()
   const [skill, setSkill] = useState<SkillName>('diagnose')
   const [open, setOpen] = useState(false)
   const [conversations, setConversations] = useState<Conversation[]>([])
   const [convKey, setConvKey] = useState(0)
   const [activeConvId, setActiveConvId] = useState<string | null>(null)
   const [progress, setProgress] = useState({ diagnosed: false, planned: false })
+  const [pendingPrompt, setPendingPrompt] = useState<string | null>(null)
   const msgsRef = useRef<ChatMessage[]>([])
   const current = SKILLS.find((s) => s.name === skill)!
 
@@ -132,6 +203,15 @@ export function ChatShell() {
     setConvKey((k) => k + 1)
   }
 
+  /** 处理 Skill 卡片点击：跳转页面对话框内触发 */
+  const handleCardClick = (card: SkillCardConfig) => {
+    if (card.actionType === 'navigate') {
+      router.push(card.href)
+    } else {
+      setPendingPrompt(card.chatPrompt)
+    }
+  }
+
   return (
     <div className="flex h-[100dvh]">
       <Sidebar
@@ -168,30 +248,22 @@ export function ChatShell() {
 
         <section className="px-4 py-4 border-b border-amber-100">
           <h2 className="flex items-center gap-1.5 font-serif text-sm font-medium text-gray-700 mb-3">
-            <ClipboardList className="h-4 w-4 text-amber-600" />
-            今日行动
+            <SkillIcon name={skill} className="h-4 w-4 text-amber-600" />
+            {SKILL_CARDS[skill].sectionTitle}
           </h2>
           <div className="grid grid-cols-1 md:grid-cols-3 gap-3">
-            {([
-              { title: '完善职业画像', desc: '详细描述职业背景与目标', action: '立即完善', href: '/diagnose' },
-              progress.diagnosed
-                ? { title: '回顾你的五维雷达', desc: '查看能力差距与推荐岗位', action: '查看诊断', href: '/diagnose' }
-                : { title: '试试破局诊断', desc: 'AI 分析职业困境并提供方案', action: '开始诊断', href: '/diagnose' },
-              progress.planned
-                ? { title: '追踪成长进度', desc: '查看你的里程碑完成情况', action: '查看进度', href: '/plan' }
-                : { title: '规划成长路径', desc: '生成 0-90 天行动卡', action: '开始规划', href: '/plan' },
-            ] as { title: string; desc: string; action: string; href: string }[]).map((card) => (
-              <Link
+            {SKILL_CARDS[skill].cards.map((card) => (
+              <button
                 key={card.title}
-                href={card.href}
-                className="block bg-amber-50 border border-amber-200 rounded-lg p-3 hover:border-amber-300 transition"
+                onClick={() => handleCardClick(card)}
+                className="block w-full text-left bg-amber-50 border border-amber-200 rounded-lg p-3 hover:border-amber-300 transition cursor-pointer"
               >
                 <h3 className="font-medium text-gray-900 text-sm mb-1">{card.title}</h3>
                 <p className="text-xs text-gray-600 mb-2">{card.desc}</p>
                 <span className="text-amber-700 hover:text-amber-900 text-xs font-medium">
-                  {card.action} →
+                  {card.action}
                 </span>
-              </Link>
+              </button>
             ))}
           </div>
         </section>
@@ -201,6 +273,8 @@ export function ChatShell() {
           skill={skill}
           placeholder={current.placeholder}
           activeConversationId={activeConvId}
+          pendingPrompt={pendingPrompt}
+          onPendingPromptConsumed={() => setPendingPrompt(null)}
           onMessagesChange={(m) => {
             msgsRef.current = m
           }}
@@ -215,12 +289,16 @@ function ChatRoom({
   skill,
   placeholder,
   activeConversationId,
+  pendingPrompt,
+  onPendingPromptConsumed,
   onMessagesChange,
   onClear,
 }: {
   skill: SkillName
   placeholder: string
   activeConversationId: string | null
+  pendingPrompt: string | null
+  onPendingPromptConsumed: () => void
   onMessagesChange: (m: ChatMessage[]) => void
   onClear: () => void
 }) {
@@ -242,6 +320,14 @@ function ChatRoom({
   useEffect(() => {
     endRef.current?.scrollIntoView({ behavior: 'smooth' })
   }, [messages, streaming])
+
+  // 处理从 Skill 卡片触发的对话（pendingPrompt 由父组件传入）
+  useEffect(() => {
+    if (pendingPrompt && pendingPrompt.trim() && !streaming) {
+      onPendingPromptConsumed()
+      send(pendingPrompt)
+    }
+  }, [pendingPrompt]) // eslint-disable-line react-hooks/exhaustive-deps
 
   const submit = () => {
     if (!text.trim() || streaming) return

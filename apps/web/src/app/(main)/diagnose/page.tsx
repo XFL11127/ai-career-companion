@@ -5,6 +5,7 @@ import { useSkill } from '@/lib/useSkill'
 import { ArrowRight, PartyPopper } from 'lucide-react'
 import { saveUserProfile } from '@/lib/memory'
 import { RadarChart, Card, Pill, LoadingState, ErrorState, EmptyState } from '@/components/skill-ui'
+import { MemoryPanel } from '@/components/MemoryPanel'
 
 export default function DiagnosePage() {
   const { data, loading, error, run } = useSkill('diagnose')
@@ -45,6 +46,7 @@ export default function DiagnosePage() {
     <main className="mx-auto max-w-5xl px-6 py-12">
       <h1 className="font-serif text-3xl font-bold text-ink">破局诊断</h1>
       <p className="mt-2 text-ink/60">五维差距扫描 · 能力雷达图</p>
+      <MemoryPanel skill="diagnose" />
 
       {showBadge && data && (
         <div className="mt-4 flex items-center gap-2 rounded-lg bg-amber-50 border border-amber-200 p-4 font-bold text-amber-800">

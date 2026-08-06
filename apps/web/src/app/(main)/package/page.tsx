@@ -5,6 +5,7 @@ import { useSkill } from '@/lib/useSkill'
 import { ArrowRight, PartyPopper } from 'lucide-react'
 import { saveUserProfile } from '@/lib/memory'
 import { Card, LoadingState, ErrorState, EmptyState } from '@/components/skill-ui'
+import { MemoryPanel } from '@/components/MemoryPanel'
 
 export default function PackagePage() {
   const { data, loading, error, run } = useSkill('package')
@@ -34,6 +35,7 @@ export default function PackagePage() {
     <main className="mx-auto max-w-3xl px-6 py-12">
       <h1 className="font-serif text-3xl font-bold text-ink">成果包装</h1>
       <p className="mt-2 text-ink/60">简历优化 / 项目润色 / 面试复盘，把经历讲成故事</p>
+      <MemoryPanel skill="package" />
 
       {showBadge && data && (
         <div className="mt-4 rounded-lg bg-amber-50 border border-amber-200 px-4 py-3 text-sm text-amber-800">

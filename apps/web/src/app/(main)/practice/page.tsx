@@ -5,6 +5,7 @@ import { useSkill } from '@/lib/useSkill'
 import { ArrowRight, PartyPopper } from 'lucide-react'
 import { saveUserProfile } from '@/lib/memory'
 import { Card, LoadingState, ErrorState, EmptyState } from '@/components/skill-ui'
+import { MemoryPanel } from '@/components/MemoryPanel'
 
 type Mode = 'interview' | 'algorithm' | 'project'
 
@@ -35,6 +36,7 @@ export default function PracticePage() {
     <main className="mx-auto max-w-3xl px-6 py-12">
       <h1 className="font-serif text-3xl font-bold text-ink">实战练兵</h1>
       <p className="mt-2 text-ink/60">模拟面试 / 算法刷题 / 项目实战，边练边纠偏</p>
+      <MemoryPanel skill="practice" />
 
       {showBadge && data && (
         <div className="mt-4 rounded-lg bg-amber-50 border border-amber-200 px-4 py-3 text-sm text-amber-800">

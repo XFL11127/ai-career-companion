@@ -43,7 +43,7 @@ export interface UserProfileData {
 
 // ---------- 默认画像 ----------
 
-function defaultProfile(): UserProfileData {
+export function defaultProfile(): UserProfileData {
   return {
     totalDiagnoses: 0,
     totalPlans: 0,

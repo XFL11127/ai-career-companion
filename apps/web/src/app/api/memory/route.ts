@@ -1,8 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server'
 
-// 透传前端记忆读写到 Worker（服务端 L1 长期记忆）。
-// Worker 未部署（NEXT_PUBLIC_WORKER_URL 未配）时优雅降级：GET 返回空、POST/DELETE 返回 ok:false，
-// 不阻断主链路；上线 Worker 后自动生效。
+// 记忆读写透传层。当前服务端持久化（Cloudflare Worker）已弃用，未配置 NEXT_PUBLIC_WORKER_URL 时
+// 优雅降级：GET 返回空、POST/DELETE 返回 ok:false，不阻断主链路；前端 L1 记忆走 localStorage。
 const WORKER_URL = process.env.NEXT_PUBLIC_WORKER_URL ?? ''
 
 export async function GET(req: NextRequest) {
