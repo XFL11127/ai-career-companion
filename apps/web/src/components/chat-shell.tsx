@@ -3,7 +3,7 @@ import { useEffect, useRef, useState } from 'react'
 import type { ComponentType } from 'react'
 import Link from 'next/link'
 import { type SkillName } from '@ai-career-companion/types'
-import { Radar, Route, Target, Newspaper, Briefcase, Send, Trash2, Menu } from 'lucide-react'
+import { Radar, Route, Target, Newspaper, Briefcase, Send, Trash2, Menu, ClipboardList, CheckCircle2, Sparkles } from 'lucide-react'
 import { useChat } from '@/lib/useChat'
 import { Sidebar } from '@/components/sidebar'
 import {
@@ -37,6 +37,7 @@ export function ChatShell() {
   const [conversations, setConversations] = useState<Conversation[]>([])
   const [convKey, setConvKey] = useState(0)
   const [activeConvId, setActiveConvId] = useState<string | null>(null)
+  const [progress, setProgress] = useState({ diagnosed: false, planned: false })
   const msgsRef = useRef<ChatMessage[]>([])
   const current = SKILLS.find((s) => s.name === skill)!
 
@@ -51,6 +52,14 @@ export function ChatShell() {
     return () => {
       alive = false
     }
+  }, [])
+
+  // 读取进度标志，驱动「今日行动」卡与轻提醒（数据驱动，不再写死）
+  useEffect(() => {
+    setProgress({
+      diagnosed: localStorage.getItem('hasDiagnosed') === 'true',
+      planned: localStorage.getItem('hasPlanned') === 'true',
+    })
   }, [])
 
   const refreshConversations = async () => {
@@ -158,13 +167,20 @@ export function ChatShell() {
         </header>
 
         <section className="px-4 py-4 border-b border-amber-100">
-          <h2 className="font-serif text-sm font-medium text-gray-700 mb-3">📋 今日行动</h2>
+          <h2 className="flex items-center gap-1.5 font-serif text-sm font-medium text-gray-700 mb-3">
+            <ClipboardList className="h-4 w-4 text-amber-600" />
+            今日行动
+          </h2>
           <div className="grid grid-cols-1 md:grid-cols-3 gap-3">
-            {[
+            {([
               { title: '完善职业画像', desc: '详细描述职业背景与目标', action: '立即完善', href: '/diagnose' },
-              { title: '试试破局诊断', desc: 'AI分析职业困境提供方案', action: '开始诊断', href: '/diagnose' },
-              { title: '查看今日成长', desc: '追踪职业发展进度与成就', action: '查看详情', href: '/plan' },
-            ].map((card) => (
+              progress.diagnosed
+                ? { title: '回顾你的五维雷达', desc: '查看能力差距与推荐岗位', action: '查看诊断', href: '/diagnose' }
+                : { title: '试试破局诊断', desc: 'AI 分析职业困境并提供方案', action: '开始诊断', href: '/diagnose' },
+              progress.planned
+                ? { title: '追踪成长进度', desc: '查看你的里程碑完成情况', action: '查看进度', href: '/plan' }
+                : { title: '规划成长路径', desc: '生成 0-90 天行动卡', action: '开始规划', href: '/plan' },
+            ] as { title: string; desc: string; action: string; href: string }[]).map((card) => (
               <Link
                 key={card.title}
                 href={card.href}
@@ -211,10 +227,12 @@ function ChatRoom({
   const { messages, streaming, error, send } = useChat(skill)
   const [text, setText] = useState('')
   const [hasDiagnosed, setHasDiagnosed] = useState(false)
+  const [hasPlanned, setHasPlanned] = useState(false)
   const endRef = useRef<HTMLDivElement>(null)
 
   useEffect(() => {
     setHasDiagnosed(localStorage.getItem('hasDiagnosed') === 'true')
+    setHasPlanned(localStorage.getItem('hasPlanned') === 'true')
   }, [])
 
   useEffect(() => {
@@ -253,9 +271,24 @@ function ChatRoom({
 
       <Link
         href={hasDiagnosed ? '/plan' : '/diagnose'}
-        className="shrink-0 block border-l-4 border-amber-400 bg-amber-50 px-4 py-2 text-sm text-amber-800"
+        className="shrink-0 flex items-center gap-1.5 border-l-4 border-amber-400 bg-amber-50 px-4 py-2 text-sm text-amber-800"
       >
-        {hasDiagnosed ? '✅ 你已经完成诊断，去规划你的成长路径吧 →' : '你今天还没诊断哦，试试破局诊断吧 👋'}
+        {!hasDiagnosed ? (
+          <>
+            <Sparkles className="h-4 w-4" />
+            你今天还没诊断哦，试试破局诊断吧 →
+          </>
+        ) : hasPlanned ? (
+          <>
+            <CheckCircle2 className="h-4 w-4" />
+            诊断与规划都完成啦，保持节奏持续成长 →
+          </>
+        ) : (
+          <>
+            <CheckCircle2 className="h-4 w-4" />
+            你已经完成诊断，去规划你的成长路径吧 →
+          </>
+        )}
       </Link>
 
       <footer className="shrink-0 border-t border-ink/10 px-4 pb-4 pt-3">

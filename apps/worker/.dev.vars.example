@@ -1,0 +1,9 @@
+# 本机调试用：复制为 .dev.vars 并填入真实 Key（.dev.vars 已被 .gitignore 忽略，不会提交）
+# `wrangler dev` 启动时会自动读取 .dev.vars，将其作为 text 变量注入 c.env
+# 填入后本机五 Skill 即可调用真实 DeepSeek；不填则回落 stub（演示可用）
+DEEPSEEK_API_KEY=sk-你的deepseekkey
+
+# 可选：Supabase（看板/记忆持久化），留空则记忆退化为进程内、看板返回示例数据
+SUPABASE_URL=
+SUPABASE_ANON_KEY=
+SUPABASE_SERVICE_ROLE_KEY=

@@ -4,6 +4,7 @@ dist
 .turbo*
 .env
 .env.local
+.dev.vars
 *.log
 pnpm-debug.log
 *.ndjson

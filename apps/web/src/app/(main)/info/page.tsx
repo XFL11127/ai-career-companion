@@ -2,7 +2,7 @@
 import { useEffect, useState } from 'react'
 import Link from 'next/link'
 import { useSkill } from '@/lib/useSkill'
-import { ArrowRight } from 'lucide-react'
+import { ArrowRight, PartyPopper } from 'lucide-react'
 import { saveUserProfile } from '@/lib/memory'
 import { Card, Pill, LoadingState, ErrorState, EmptyState } from '@/components/skill-ui'
 
@@ -31,7 +31,7 @@ export default function InfoPage() {
 
       {showBadge && data && (
         <div className="mt-4 rounded-lg bg-amber-50 border border-amber-200 px-4 py-3 text-sm text-amber-800">
-          🎉 信息聚合达成！双非友好机会已为你准备
+          <PartyPopper className="mr-1.5 inline h-5 w-5 align-[-2px]" />信息聚合达成！双非友好机会已为你准备
         </div>
       )}
 

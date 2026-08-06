@@ -2,7 +2,7 @@
 import { useEffect, useState } from 'react'
 import Link from 'next/link'
 import { useSkill } from '@/lib/useSkill'
-import { ArrowRight } from 'lucide-react'
+import { ArrowRight, PartyPopper } from 'lucide-react'
 import { saveUserProfile } from '@/lib/memory'
 import { RadarChart, Card, Pill, LoadingState, ErrorState, EmptyState } from '@/components/skill-ui'
 
@@ -47,8 +47,9 @@ export default function DiagnosePage() {
       <p className="mt-2 text-ink/60">五维差距扫描 · 能力雷达图</p>
 
       {showBadge && data && (
-        <div className="mt-4 rounded-lg bg-amber-50 border border-amber-200 p-4 font-bold text-amber-800">
-          🎉 初次诊断达成！你已迈出破局第一步
+        <div className="mt-4 flex items-center gap-2 rounded-lg bg-amber-50 border border-amber-200 p-4 font-bold text-amber-800">
+          <PartyPopper className="h-5 w-5 shrink-0" />
+          初次诊断达成！你已迈出破局第一步
         </div>
       )}
 
