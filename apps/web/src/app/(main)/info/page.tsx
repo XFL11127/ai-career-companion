@@ -52,11 +52,9 @@ export default function InfoPage() {
       {data && (
         <div className="mt-6 space-y-3">
           {data.jobs?.map((j, i) => (
-            <a
+            <Link
               key={i}
-              href={j.url}
-              target="_blank"
-              rel="noreferrer"
+              href={`/company/${encodeURIComponent(j.company)}`}
               className="card-lift block rounded-3xl border border-ink/10 bg-white/70 p-5 transition hover:border-accent/40"
             >
               <div className="flex items-center justify-between">
@@ -73,7 +71,7 @@ export default function InfoPage() {
                   </Pill>
                 ))}
               </div>
-            </a>
+            </Link>
           ))}
         </div>
       )}
