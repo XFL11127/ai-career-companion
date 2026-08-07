@@ -7,6 +7,33 @@ export function getUserProfile(): string | null {
   return localStorage.getItem('user_profile')
 }
 
+// ---------- 云端同步辅助 ----------
+
+async function getSupabaseUserId(): Promise<string | null> {
+  try {
+    const mod = await import('./supabase')
+    const { data } = await mod.supabase.auth.getSession()
+    return data.session?.user?.id ?? null
+  } catch {
+    return null
+  }
+}
+
+/** 尝试将会话轮次同步到 Supabase（已登录时生效） */
+async function syncTurnToCloud(skill: string, input: unknown, output: unknown): Promise<void> {
+  try {
+    const userId = await getSupabaseUserId()
+    if (!userId) return
+    const mod = await import('./supabase')
+    await mod.supabase.from('skill_sessions').insert({
+      user_id: userId,
+      skill_name: skill,
+      input,
+      output,
+    })
+  } catch { /* 云端写入失败不阻塞 */ }
+}
+
 // L1 会话记忆：IndexedDB 按 skill 存储对话轮次（免登即用，数据存浏览器本地）。
 // 与 db.ts 的「结果缓存」区分：这里存的是「会话上下文」（input+output 轮次），用于注入 prompt。
 
@@ -70,6 +97,8 @@ export async function appendTurn(skill: string, turn: MemoryTurn): Promise<void>
   } finally {
     db.close()
   }
+  // 登录后自动同步到云端
+  syncTurnToCloud(skill, turn.input, turn.output)
 }
 
 /** 召回最近 limit 轮（调用 Skill 前调用，用于注入 prompt）。 */

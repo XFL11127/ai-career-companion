@@ -1,39 +1,140 @@
 'use client'
-import Link from 'next/link'
-import { Lock, ArrowLeft } from 'lucide-react'
+
+import { useState } from 'react'
+import { useAuth } from '@/lib/auth'
+import { useRouter } from 'next/navigation'
 
 export default function LoginPage() {
+  const { signUp, signIn, continueAsGuest, user, loading } = useAuth()
+  const router = useRouter()
+  const [email, setEmail] = useState('')
+  const [password, setPassword] = useState('')
+  const [isRegister, setIsRegister] = useState(false)
+  const [error, setError] = useState('')
+  const [submitting, setSubmitting] = useState(false)
+
+  // 已登录则直接跳转首页
+  if (!loading && user) {
+    router.push('/')
+    return null
+  }
+
+  const handleSubmit = async (e: React.FormEvent) => {
+    e.preventDefault()
+    setError('')
+    setSubmitting(true)
+    const result = isRegister ? await signUp(email, password) : await signIn(email, password)
+    setSubmitting(false)
+    if (result.error) {
+      setError(result.error)
+    } else if (isRegister) {
+      setError('注册成功！请检查邮箱确认链接（或直接尝试登录）')
+    } else {
+      router.push('/')
+    }
+  }
+
+  const handleGuest = () => {
+    continueAsGuest()
+    router.push('/')
+  }
+
+  if (loading) {
+    return (
+      <div className="flex min-h-screen items-center justify-center bg-zinc-950">
+        <div className="h-8 w-8 animate-spin rounded-full border-2 border-zinc-600 border-t-emerald-400" />
+      </div>
+    )
+  }
+
   return (
-    <main className="flex min-h-[100dvh] flex-col items-center justify-center px-4 py-10">
-      <div className="w-full max-w-sm rounded-3xl border border-ink/10 bg-paper/80 p-8 text-center shadow-sm">
-        <div className="mx-auto flex h-14 w-14 items-center justify-center rounded-2xl bg-accent/10 text-accent">
-          <Lock className="h-7 w-7" />
+    <div className="flex min-h-screen items-center justify-center bg-zinc-950 px-4">
+      <div className="w-full max-w-sm">
+        {/* Logo */}
+        <div className="mb-10 text-center">
+          <div className="mx-auto mb-3 flex h-14 w-14 items-center justify-center rounded-2xl bg-gradient-to-br from-emerald-400 to-teal-500 text-2xl">
+            🎓
+          </div>
+          <h1 className="text-xl font-bold text-white">AI 学职同伴</h1>
+          <p className="mt-1 text-sm text-zinc-500">面向双非学生的 AI 成长陪伴</p>
         </div>
-        <h1 className="mt-5 font-serif text-2xl font-bold text-ink">登录功能开发中</h1>
-        <p className="mt-3 text-sm leading-relaxed text-ink/60">
-          账号体系正在打磨中。当前所有对话均<strong className="text-ink">免登录本地保存</strong>
-          （存于你的浏览器 IndexedDB），无需登录即可使用全部学职 Skill。
+
+        {/* 表单 */}
+        <form onSubmit={handleSubmit} className="space-y-4">
+          <div>
+            <label className="mb-1 block text-sm text-zinc-400">邮箱</label>
+            <input
+              type="email"
+              value={email}
+              onChange={(e) => setEmail(e.target.value)}
+              placeholder="your@email.com"
+              required
+              className="w-full rounded-lg border border-zinc-700 bg-zinc-800/50 px-4 py-2.5 text-sm text-white placeholder:text-zinc-500 focus:border-emerald-500 focus:outline-none focus:ring-1 focus:ring-emerald-500/30"
+            />
+          </div>
+
+          <div>
+            <label className="mb-1 block text-sm text-zinc-400">密码</label>
+            <input
+              type="password"
+              value={password}
+              onChange={(e) => setPassword(e.target.value)}
+              placeholder="至少 6 位"
+              required
+              minLength={6}
+              className="w-full rounded-lg border border-zinc-700 bg-zinc-800/50 px-4 py-2.5 text-sm text-white placeholder:text-zinc-500 focus:border-emerald-500 focus:outline-none focus:ring-1 focus:ring-emerald-500/30"
+            />
+          </div>
+
+          {error && (
+            <p className={`text-sm ${error.includes('成功') ? 'text-emerald-400' : 'text-red-400'}`}>
+              {error}
+            </p>
+          )}
+
+          <button
+            type="submit"
+            disabled={submitting}
+            className="w-full rounded-lg bg-gradient-to-r from-emerald-500 to-teal-500 py-2.5 text-sm font-medium text-white transition-opacity hover:opacity-90 disabled:opacity-50"
+          >
+            {submitting ? '处理中…' : isRegister ? '注册' : '登录'}
+          </button>
+        </form>
+
+        {/* 切换登录/注册 */}
+        <p className="mt-3 text-center text-sm text-zinc-500">
+          {isRegister ? '已有账号？' : '没有账号？'}
+          <button
+            type="button"
+            onClick={() => { setIsRegister(!isRegister); setError('') }}
+            className="ml-1 text-emerald-400 hover:underline"
+          >
+            {isRegister ? '去登录' : '去注册'}
+          </button>
         </p>
 
-        <div className="mt-6 rounded-2xl border border-dashed border-ink/15 bg-ink/[0.02] px-4 py-3 text-left text-xs leading-relaxed text-ink/55">
-          <p className="font-medium text-ink/70">即将支持</p>
-          <ul className="mt-1.5 space-y-1">
-            <li>· 跨设备同步你的学职会话与画像</li>
-            <li>· 双非垂直记忆的云端持久化</li>
-            <li>· 团队协作与导师连线</li>
-          </ul>
+        {/* 匿名继续 */}
+        <div className="mt-6">
+          <div className="relative">
+            <div className="absolute inset-0 flex items-center">
+              <div className="w-full border-t border-zinc-800" />
+            </div>
+            <div className="relative flex justify-center text-xs">
+              <span className="bg-zinc-950 px-3 text-zinc-600">或</span>
+            </div>
+          </div>
+          <button
+            type="button"
+            onClick={handleGuest}
+            className="mt-4 w-full rounded-lg border border-zinc-700 bg-transparent py-2.5 text-sm text-zinc-400 transition-colors hover:border-zinc-500 hover:text-zinc-200"
+          >
+            跳过登录，继续使用
+          </button>
+          <p className="mt-2 text-center text-xs text-zinc-600">
+            不登录也能正常使用，数据保存在本地浏览器
+          </p>
         </div>
-
-        <Link
-          href="/"
-          className="mt-7 inline-flex items-center gap-1.5 rounded-xl bg-accent px-5 py-2.5 text-sm font-medium text-paper transition hover:bg-[#c94a23]"
-        >
-          <ArrowLeft className="h-4 w-4" />
-          返回对话
-        </Link>
       </div>
-
-      <p className="mt-6 text-xs text-ink/40">AI学职同伴 · 面向双非学生的学职陪伴 Copilot</p>
-    </main>
+    </div>
   )
 }

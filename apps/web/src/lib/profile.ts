@@ -11,6 +11,7 @@
 
 import type { DiagnoseOutput, PlanOutput, PracticeOutput } from '@ai-career-companion/types'
 import { saveUserProfile } from './memory'
+import { supabase } from './supabase'
 
 // ---------- 结构化画像数据结构 ----------
 
@@ -73,6 +74,26 @@ export function saveProfile(profile: UserProfileData): void {
   profile.updatedAt = Date.now()
   localStorage.setItem(PROFILE_KEY, JSON.stringify(profile))
   saveUserProfile(profile.summary)
+  // 登录后自动同步到云端（fire-and-forget，不阻塞）
+  syncProfileToCloud(profile)
+}
+
+/** 尝试将画像同步到 Supabase（已登录时生效，未登录静默忽略） */
+async function syncProfileToCloud(profile: UserProfileData): Promise<void> {
+  try {
+    const { data } = await supabase.auth.getSession()
+    const userId = data.session?.user?.id
+    if (!userId) return
+    await supabase.from('profiles').upsert({
+      id: userId,
+      nickname: profile.nickname || '',
+      school: profile.school || '',
+      grade: profile.grade || '大一',
+      major: profile.major || '',
+      target_role: profile.targetRole || '',
+      streak_days: 0,
+    })
+  } catch { /* 云端写入失败不阻塞本地 */ }
 }
 
 // ---------- 从用户消息中提取基本信息 ----------

@@ -27,6 +27,24 @@ export async function saveResult(name: string, data: unknown): Promise<void> {
   } finally {
     db.close()
   }
+  // 登录后自动同步到云端
+  syncResultToCloud(name, data)
+}
+
+/** 尝试将 Skill 结果同步到 Supabase（已登录时生效） */
+async function syncResultToCloud(skillName: string, data: unknown): Promise<void> {
+  try {
+    const { supabase } = await import('./supabase')
+    const { data: sessionData } = await supabase.auth.getSession()
+    const userId = sessionData.session?.user?.id
+    if (!userId) return
+    await supabase.from('skill_sessions').insert({
+      user_id: userId,
+      skill_name: skillName,
+      input: {},
+      output: data,
+    })
+  } catch { /* 云端写入失败不阻塞 */ }
 }
 
 export async function loadResult(name: string): Promise<unknown | null> {
