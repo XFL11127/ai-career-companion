@@ -1,12 +1,14 @@
 'use client'
 
 import { useEffect, useMemo, useState } from 'react'
-import { getUserProfile } from '@/lib/memory'
 import Link from 'next/link'
 import type { ComponentType } from 'react'
 import type { SkillName } from '@ai-career-companion/types'
-import { MessageSquarePlus, Settings, HelpCircle, LogIn, X, Trash2 } from 'lucide-react'
+import { MessageSquarePlus, Settings, HelpCircle, LogIn, LogOut, X, Trash2, BarChart3 } from 'lucide-react'
 import type { Conversation } from '@/lib/memory'
+import { useRouter } from 'next/navigation'
+import { useAuth } from '@/lib/auth'
+import { MemoryPanel } from '@/components/memory-panel'
 
 interface SkillItem {
   name: SkillName
@@ -60,6 +62,9 @@ export function Sidebar({
 }: SidebarProps) {
   const groups = useMemo(() => groupConversations(conversations), [conversations])
   const [streak, setStreak] = useState(0)
+  const [memoryOpen, setMemoryOpen] = useState(false)
+  const { user, signOut } = useAuth()
+  const router = useRouter()
 
   useEffect(() => {
     const today = new Date().toISOString().slice(0, 10)
@@ -182,32 +187,59 @@ export function Sidebar({
           <div className="px-3 py-2 text-xs text-ink/50">🔥 连续活跃 {streak} 天</div>
           <div
             className="px-3 py-2 text-sm text-amber-600 cursor-pointer hover:underline"
-            onClick={() => {
-              const profile = getUserProfile()
-              alert(profile || '暂无记忆')
-            }}
+            onClick={() => setMemoryOpen(true)}
           >
             🧠 记忆已开启
           </div>
           <div className="space-y-0.5">
-            <button className="flex w-full items-center gap-2.5 rounded-lg px-3 py-2 text-sm text-ink/70 transition hover:bg-ink/5 hover:text-ink">
+            <button
+              onClick={() => router.push('/analytics')}
+              className="flex w-full items-center gap-2.5 rounded-lg px-3 py-2 text-sm text-ink/70 transition hover:bg-ink/5 hover:text-ink"
+            >
+              <BarChart3 className="h-4 w-4" />
+              数据看板
+            </button>
+            <button
+              onClick={() => router.push('/dashboard')}
+              className="flex w-full items-center gap-2.5 rounded-lg px-3 py-2 text-sm text-ink/70 transition hover:bg-ink/5 hover:text-ink"
+            >
               <Settings className="h-4 w-4" />
               设置
             </button>
-            <button className="flex w-full items-center gap-2.5 rounded-lg px-3 py-2 text-sm text-ink/70 transition hover:bg-ink/5 hover:text-ink">
+            <button
+              onClick={() =>
+                alert('AI 学职同伴 · 帮助中心\n\n1. 在左侧选择学职技能开始对话\n2. 对话会被自动记忆，形成你的成长画像\n3. 在「成长仪表盘」查看能力雷达与活跃日历\n4. 登录后数据将云端同步，换设备不丢失')
+              }
+              className="flex w-full items-center gap-2.5 rounded-lg px-3 py-2 text-sm text-ink/70 transition hover:bg-ink/5 hover:text-ink"
+            >
               <HelpCircle className="h-4 w-4" />
               帮助
             </button>
           </div>
-          <Link
-            href="/login"
-            className="mt-2 flex w-full items-center gap-2.5 rounded-lg px-3 py-2 text-sm font-medium text-ink transition hover:bg-ink/5"
-          >
-            <LogIn className="h-4 w-4" />
-            登录
-          </Link>
+          {user ? (
+            <button
+              onClick={async () => {
+                await signOut()
+                router.push('/login')
+              }}
+              className="mt-2 flex w-full items-center gap-2.5 rounded-lg px-3 py-2 text-sm font-medium text-ink transition hover:bg-ink/5 hover:text-accent"
+            >
+              <LogOut className="h-4 w-4" />
+              退出账号
+            </button>
+          ) : (
+            <Link
+              href="/login"
+              className="mt-2 flex w-full items-center gap-2.5 rounded-lg px-3 py-2 text-sm font-medium text-ink transition hover:bg-ink/5"
+            >
+              <LogIn className="h-4 w-4" />
+              登录
+            </Link>
+          )}
         </div>
       </aside>
+
+      <MemoryPanel open={memoryOpen} onClose={() => setMemoryOpen(false)} />
 
       {open && <div className="fixed inset-0 z-40 bg-black/30 lg:hidden" onClick={onClose} aria-hidden="true" />}
     </>

@@ -6,6 +6,7 @@ import { loadResult, saveResult } from './db'
 import { appendTurn, recallTurns, turnsToContext, getUserProfile } from './memory'
 import { updateFromSkillResult, loadProfile, type SkillNameInput } from './profile'
 import { searchL3Knowledge } from './l3-knowledge'
+import { searchMemory, storeMemory } from './memory-api'
 
 /** 从 input 中提取可搜索的文本片段（用于 L3 关键词匹配）。 */
 function inputTextFromUnknown(input: unknown): string {
@@ -44,10 +45,16 @@ export function useSkill<N extends SkillName>(name: N) {
       const profileData = loadProfile()
       const profile = profileData.summary || getUserProfile() || undefined
 
-      // L3 知识记忆：关键词匹配静态知识库（MVP 降级方案，未来升级为 pgvector 语义搜索）
+      // L3 知识记忆：关键词匹配 + Worker 语义召回（未登录/Worker 不可用时静默降级）
       const inputText = inputTextFromUnknown(input)
       const l3Items = searchL3Knowledge(inputText, name)
-      const context = [...l1Context, ...(l3Items.length ? [`【L3知识检索】`, ...l3Items.slice(0, 2)] : [])]
+      const semantic = await searchMemory(inputText || String(name), 3).catch(() => ({ results: [] }))
+      const semanticItems = (semantic.results ?? []).map((r) => r.content)
+      const context = [
+        ...l1Context,
+        ...(semanticItems.length ? ['【L3语义记忆】', ...semanticItems.slice(0, 2)] : []),
+        ...(l3Items.length ? ['【L3知识检索】', ...l3Items.slice(0, 2)] : []),
+      ]
 
       const enriched = { ...(input as Record<string, unknown>), context, profile }
       let finalData: SkillOutput<N> | null = null
@@ -62,6 +69,8 @@ export function useSkill<N extends SkillName>(name: N) {
       await appendTurn(name, { input: enriched, output: finalData, ts: Date.now() }).catch(() => {})
       // L2 交互记忆：Skill 成功后自动更新用户画像
       updateFromSkillResult(name as SkillNameInput, finalData, profileData)
+      // L3 语义记忆：写入 Worker /memory（fire-and-forget，失败不阻塞）
+      storeMemory(inputText || String(name)).catch(() => {})
     } catch (e) {
       setError(e instanceof Error ? e.message : '请求失败')
     } finally {

@@ -8,7 +8,7 @@
  */
 
 import { supabase } from './supabase'
-import { loadProfile, type UserProfileData } from './profile'
+import { loadProfile, saveProfile, type UserProfileData } from './profile'
 import type { ChatMessage, Conversation, MemoryTurn } from './memory'
 
 // ---------- 首次登录：上传本地限量数据 ----------
@@ -62,7 +62,7 @@ export async function uploadLocalToCloud(userId: string): Promise<UploadResult> 
       await supabase.from('skill_sessions').insert({
         user_id: userId,
         skill_name: conv.skill,
-        input: { title: conv.title, type: 'conversation_archive' },
+        input: { id: conv.id, title: conv.title, type: 'conversation_archive' },
         output: { messages: conv.messages },
       })
     }
@@ -103,6 +103,67 @@ export async function pullFromCloud(userId: string): Promise<UserProfileData | n
   }
 }
 
+/**
+ * 从云端拉取历史会话列表（skill_sessions 中 type=conversation_archive 的行）。
+ * 返回重建后的 Conversation[]；无数据或失败返回 null。
+ */
+export async function pullConversationsFromCloud(userId: string): Promise<Conversation[] | null> {
+  try {
+    const { data, error } = await supabase
+      .from('skill_sessions')
+      .select('id, skill_name, input, output, created_at')
+      .eq('user_id', userId)
+      .filter('input->>type', 'eq', 'conversation_archive')
+      .order('created_at', { ascending: false })
+      .limit(50)
+
+    if (error || !data) return null
+
+    const convs: Conversation[] = []
+    for (const row of data as Array<Record<string, any>>) {
+      const input = row.input ?? {}
+      const output = row.output ?? {}
+      const messages = (output.messages ?? []) as ChatMessage[]
+      if (!messages.length) continue
+      const ts = new Date(row.created_at).getTime()
+      convs.push({
+        id: String(input.id ?? row.id),
+        skill: row.skill_name,
+        title: input.title ?? '历史会话',
+        messages,
+        createdAt: ts,
+        updatedAt: ts,
+      })
+    }
+    return convs
+  } catch {
+    return null
+  }
+}
+
+/**
+ * 登录后一次性双向同步：上传本地 → 拉取云端画像与历史会话并合并到本地。
+ * 云端优先，本地作为缺失字段/离线兜底。
+ */
+export async function syncFromCloud(userId: string): Promise<void> {
+  // 1. 上传本地数据到云端
+  await uploadLocalToCloud(userId).catch(() => {})
+
+  // 2. 拉取并合并画像
+  const cloudProfile = await pullFromCloud(userId)
+  if (cloudProfile) {
+    const merged = { ...loadProfile(), ...cloudProfile, updatedAt: Date.now() }
+    saveProfile(merged)
+  }
+
+  // 3. 拉取并合并历史会话
+  const cloudConvs = await pullConversationsFromCloud(userId)
+  if (cloudConvs && cloudConvs.length) {
+    const { importConversations } = await import('./memory')
+    await importConversations(cloudConvs)
+  }
+}
+
 // ---------- 实时双写辅助函数 ----------
 
 /**
@@ -118,6 +179,24 @@ export async function syncSkillSession(userId: string, skill: string, input: unk
       output,
     })
   } catch { /* 云端写入失败不阻塞本地 */ }
+}
+
+/**
+ * 记录一次 Skill 调用到 skill_sessions（运营看板 /analytics 的「Skill 调用统计」埋点）。
+ * 自动取当前登录 userId；未登录（免登模式）不上报。fire-and-forget。
+ */
+export async function recordSkillSession(skill: string, input: unknown, output: unknown): Promise<void> {
+  try {
+    const { data } = await supabase.auth.getSession()
+    const userId = data.session?.user?.id
+    if (!userId) return
+    await supabase.from('skill_sessions').insert({
+      user_id: userId,
+      skill_name: skill,
+      input,
+      output,
+    })
+  } catch { /* 埋点失败不阻塞 */ }
 }
 
 /**

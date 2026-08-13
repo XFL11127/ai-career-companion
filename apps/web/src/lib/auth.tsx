@@ -73,26 +73,20 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     if (error) {
       const msg = error.message.includes('Invalid login')
         ? '邮箱或密码错误'
-        : '登录失败，请稍后重试'
+        : error.message.includes('Email not confirmed')
+          ? '邮箱未确认，请先确认邮箱'
+          : error.message.includes('rate limit') || error.message.includes('Too Many')
+            ? '请求过于频繁，请稍后再试'
+            : `登录失败：${error.message}`
       return { error: msg }
     }
 
-    // 登录成功 → 跨设备同步
+    // 登录成功 → 跨设备同步（上传本地 + 拉取云端画像与历史会话）
     const session = (await supabase.auth.getSession()).data.session
     if (session?.user) {
       try {
-        const { uploadLocalToCloud, pullFromCloud } = await import('./sync')
-        // 1. 先上传本地数据到云端
-        await uploadLocalToCloud(session.user.id)
-        // 2. 从云端拉取最新画像
-        const cloudProfile = await pullFromCloud(session.user.id)
-        if (cloudProfile) {
-          const { saveProfile, loadProfile } = await import('./profile')
-          const localProfile = loadProfile()
-          // 合并策略：云端优先，本地作为缺失字段的补充
-          const merged = { ...localProfile, ...cloudProfile, updatedAt: Date.now() }
-          saveProfile(merged)
-        }
+        const { syncFromCloud } = await import('./sync')
+        await syncFromCloud(session.user.id)
       } catch { /* 同步失败不阻塞登录 */ }
     }
 

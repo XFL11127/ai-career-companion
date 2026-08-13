@@ -5,6 +5,8 @@ import { streamSkillCall } from './api'
 import { loadMessages, appendMessage, clearMessages, saveMessages, type ChatMessage } from './memory'
 import { extractUserInfoFromMessage, updateFromSkillResult, loadProfile, type SkillNameInput } from './profile'
 import { searchL3Knowledge } from './l3-knowledge'
+import { searchMemory, storeMemory } from './memory-api'
+import { recordSkillSession } from './sync'
 
 /** 把自由文本 + 历史上下文 + 用户画像，构造成对应 Skill 的输入。 */
 function buildInput(name: SkillName, text: string, context: string[], profile?: string): Record<string, unknown> {
@@ -72,9 +74,15 @@ export function useChat(name: SkillName) {
     const history = messages.filter((m) => m.role === 'user' || m.done)
     const historyContext = history.slice(-12).map((m) => (m.role === 'user' ? '用户：' + m.content : 'AI：' + m.content))
 
-    // L3 知识记忆：关键词匹配，注入 prompt
+    // L3 知识记忆：关键词匹配 + Worker 语义召回（未登录/Worker 不可用时静默降级）
     const l3Items = searchL3Knowledge(t, name)
-    const context = [...historyContext, ...(l3Items.length ? ['【L3知识检索】', ...l3Items.slice(0, 2)] : [])]
+    const semantic = await searchMemory(t, 3).catch(() => ({ results: [] }))
+    const semanticItems = (semantic.results ?? []).map((r) => r.content)
+    const context = [
+      ...historyContext,
+      ...(semanticItems.length ? ['【L3语义记忆】', ...semanticItems.slice(0, 2)] : []),
+      ...(l3Items.length ? ['【L3知识检索】', ...l3Items.slice(0, 2)] : []),
+    ]
 
     const enrichedInput = buildInput(name, t, context, profileData.summary || undefined)
 
@@ -105,6 +113,10 @@ export function useChat(name: SkillName) {
       if (acc) {
         profileData = updateFromSkillResult(name as SkillNameInput, acc, profileData)
       }
+      // L3 语义记忆：写入 Worker /memory（fire-and-forget，失败不阻塞）
+      storeMemory(t).catch(() => {})
+      // 埋点：记录一次 Skill 调用到 skill_sessions（运营看板统计用，fire-and-forget）
+      recordSkillSession(name, enrichedInput, acc ?? {}).catch(() => {})
     } catch (e) {
       setError(e instanceof Error ? e.message : '请求失败')
       const failMsg: ChatMessage = {
