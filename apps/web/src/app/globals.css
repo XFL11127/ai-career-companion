@@ -28,14 +28,14 @@ body {
     radial-gradient(1100px 560px at 88% -8%, rgba(224, 168, 62, 0.12), transparent 60%),
     radial-gradient(900px 480px at -8% 108%, rgba(46, 94, 71, 0.1), transparent 55%);
   background-attachment: fixed;
-  font-family: "Noto Sans SC", system-ui, sans-serif;
+  font-family: system-ui, -apple-system, "PingFang SC", "Microsoft YaHei", sans-serif;
 }
 
 h1,
 h2,
 h3,
 .font-serif {
-  font-family: "Noto Serif SC", Georgia, serif;
+  font-family: Georgia, "Songti SC", "SimSun", serif;
 }
 
 /* 卡片悬停微交互：上浮 + 暖色描边 */

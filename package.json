@@ -3,6 +3,7 @@
   "version": "1.0.0",
   "description": "AI学职同伴 - 面向双非学生的AI Copilot式学职陪伴产品",
   "private": true,
+  "packageManager": "npm@11.16.0",
   "engines": {
     "node": ">=18.17.0"
   },
