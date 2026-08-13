@@ -26,9 +26,10 @@ create table if not exists skill_sessions (
 );
 
 -- 记忆层（三层 + 向量，Mem0 + pgvector）
+-- user_id 允许为 NULL：NULL 表示系统级共享知识（跨用户通用，不属于任何单一用户）
 create table if not exists memories (
   id uuid primary key default gen_random_uuid(),
-  user_id uuid not null references auth.users(id) on delete cascade,
+  user_id uuid references auth.users(id) on delete cascade,
   content text not null,
   layer text not null check (layer in ('perception','interaction','knowledge')),
   embedding vector(1536),

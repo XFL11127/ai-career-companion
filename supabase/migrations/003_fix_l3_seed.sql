@@ -1,10 +1,11 @@
--- L3 知识记忆层迁移（对齐参赛方案 v3.6）
--- 1. 补充 Worker 调用的 match_memories RPC 函数
--- 2. 预置 L3 静态知识种子数据（MVP 阶段降级方案，未来升级为 pgvector 动态向量检索）
+-- L3 种子数据修复补丁（针对已按 001/002 建库但种子数据因外键报错未插入的环境）
+-- 背景：memories.user_id 原为 NOT NULL 且引用 auth.users(id)，而共享知识使用系统保留 UUID 导致外键冲突。
+-- 修复：将 user_id 改为可空（NULL 表示系统级共享知识），并用 NULL 重插种子数据。
 
--- =================================================================
--- 1. match_memories：向量余弦相似度检索（Worker POST /api/memory/search 调用）
--- =================================================================
+-- 1. 解除 user_id 非空约束（NULL = 系统级共享知识，不属于任何单一用户）
+alter table memories alter column user_id drop not null;
+
+-- 2. 更新 match_memories 使共享知识（user_id IS NULL）也参与向量检索
 create or replace function match_memories(
   query_embedding vector(1536),
   user_id_param uuid,
@@ -30,14 +31,8 @@ begin
 end;
 $$;
 
--- =================================================================
--- 2. L3 知识种子数据（双非学生专属职业知识图谱）
--- =================================================================
--- 使用 NULL user_id 存储跨用户共享知识（系统级，不属于任何单一用户）
--- 这些种子数据在 MVP 阶段也通过前端 l3-knowledge.ts 提供，此处作为向量检索数据源（需 Worker 生成嵌入后生效）
-
--- 注意：以下插入的 embedding 为 null，需要 Worker 后台任务或首次调用时生成向量。
--- MVP 阶段前端优先使用 l3-knowledge.ts 静态匹配，Worker API 作为兼容预留。
+-- 3. 幂等重插 L3 知识种子数据（先清空旧的系统级 knowledge，再插入，避免重复）
+delete from memories where user_id is null and layer = 'knowledge';
 
 insert into memories (user_id, content, layer, embedding) values
   (null, '前端开发是双非计算机专业学生最容易切入的岗位方向，核心技能包括HTML CSS JavaScript基础、React或Vue框架、TypeScript。建议在校期间完成2到3个完整项目并部署上线。', 'knowledge', null),
@@ -54,5 +49,4 @@ insert into memories (user_id, content, layer, embedding) values
   (null, '产品经理岗位对专业背景包容度高，双非文理科学生都可以尝试。核心能力包括需求分析、原型设计Figma、数据分析、沟通协作。建议参加iCAN等产品类比赛积累作品集。', 'knowledge', null),
   (null, '运营岗位是双非文科学生最友好选择，不限专业门槛适中。细分方向包括内容运营、用户运营、社群运营、新媒体运营。建议在校运营个人自媒体账号用真实数据证明能力。', 'knowledge', null),
   (null, '双非友好企业类型包括快速增长的独角兽、传统行业数字化转型企业、外包驻场公司、二线城市本地企业、外企在华研发中心。建议关注牛客网双非上岸板块获取真实信息。', 'knowledge', null),
-  (null, '学科竞赛是双非学生重要简历加分项，推荐蓝桥杯门槛适中双非友好，ACM含金量高但门槛也高。至少拿一个省级以上奖项作为简历亮点，但不能替代项目和实习。', 'knowledge', null)
-on conflict do nothing;
+  (null, '学科竞赛是双非学生重要简历加分项，推荐蓝桥杯门槛适中双非友好，ACM含金量高但门槛也高。至少拿一个省级以上奖项作为简历亮点，但不能替代项目和实习。', 'knowledge', null);
