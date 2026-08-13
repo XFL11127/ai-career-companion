@@ -15,6 +15,8 @@ interface AuthContextType extends AuthState {
   signUp: (email: string, password: string) => Promise<{ error?: string }>
   /** 邮箱登录 */
   signIn: (email: string, password: string) => Promise<{ error?: string }>
+  /** GitHub OAuth 登录 */
+  signInWithGitHub: () => Promise<{ error?: string }>
   /** 退出登录 */
   signOut: () => Promise<void>
   /** 设置为匿名用户（不登录继续使用） */
@@ -31,9 +33,18 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
   useEffect(() => {
     // 监听登录状态变化
-    const { data: { subscription } } = supabase.auth.onAuthStateChange((_event, session) => {
+    const { data: { subscription } } = supabase.auth.onAuthStateChange((event, session) => {
       setState({ user: session?.user ?? null, session, loading: false })
-      if (session?.user) setIsGuest(false)
+      if (session?.user) {
+        setIsGuest(false)
+        // 任意登录方式（邮箱/OAuth）成功建立会话后，统一触发跨设备同步。
+        // OAuth 是跳转式登录，signInWithOAuth 返回时尚未有 session，必须在这里处理。
+        if (event === 'SIGNED_IN') {
+          import('./sync')
+            .then(({ syncFromCloud }) => syncFromCloud(session.user.id))
+            .catch(() => {})
+        }
+      }
     })
 
     // 初始会话检查
@@ -80,16 +91,19 @@ export function AuthProvider({ children }: { children: ReactNode }) {
             : `登录失败：${error.message}`
       return { error: msg }
     }
+    // 同步已统一由 onAuthStateChange 的 SIGNED_IN 事件处理
+    return {}
+  }
 
-    // 登录成功 → 跨设备同步（上传本地 + 拉取云端画像与历史会话）
-    const session = (await supabase.auth.getSession()).data.session
-    if (session?.user) {
-      try {
-        const { syncFromCloud } = await import('./sync')
-        await syncFromCloud(session.user.id)
-      } catch { /* 同步失败不阻塞登录 */ }
-    }
-
+  const signInWithGitHub = async () => {
+    const { error } = await supabase.auth.signInWithOAuth({
+      provider: 'github',
+      options: {
+        // 授权完成后跳回当前站点首页，Supabase 会从 URL hash 恢复会话
+        redirectTo: typeof window !== 'undefined' ? `${window.location.origin}/` : undefined,
+      },
+    })
+    if (error) return { error: error.message }
     return {}
   }
 
@@ -113,7 +127,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   }
 
   return (
-    <AuthContext.Provider value={{ ...state, signUp, signIn, signOut, continueAsGuest, isGuest }}>
+    <AuthContext.Provider value={{ ...state, signUp, signIn, signInWithGitHub, signOut, continueAsGuest, isGuest }}>
       {children}
     </AuthContext.Provider>
   )
