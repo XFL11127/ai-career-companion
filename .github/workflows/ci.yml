@@ -2,9 +2,9 @@ name: CI
 
 on:
   pull_request:
-    branches: [main]
+    branches: [基础骨架]
   push:
-    branches: [main]
+    branches: [基础骨架]
 
 jobs:
   lint:

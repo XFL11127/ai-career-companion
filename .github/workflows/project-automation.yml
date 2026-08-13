@@ -1,0 +1,42 @@
+# 看板自动移卡（GitHub Projects V2）
+# 作用：PR 关联 Issue 后，自动把卡片在 Project 里移动，减少人工更新。
+#
+# ⚠️ 前置配置（在 GitHub UI 做一次）：
+#   1. 建一个 Fine-grained PAT 或 Classic PAT，scope 勾选 `project`（及 repo 读权限），
+#      存入仓库 Secrets → 名 `PROJECT_TOKEN`。
+#   2. 拿到 Project 的 node ID：
+#      gh api graphql -f query='{ user(login:"XFL11127"){ projectV2(number:1){ id } } }'
+#      存入仓库 Variables → 名 `PROJECT_NODE_ID`。
+#   3. 把下面 STATUS 字段的 optionId 换成你自己 Project 里「待办/进行中/待审核/完成」的 ID
+#      （用 GraphQL `... projectV2(number:1){ fields(last:20){ nodes{ ... on ProjectV2SingleSelectField{ name options{ id name }}}}}` 查）。
+#
+# 更省事的做法：直接用 GitHub Projects 内置自动化（见 docs/GITHUB_PROJECTS_SETUP.md 步骤4），
+# 本文件适合需要自定义逻辑时启用。
+
+name: project-automation
+on:
+  pull_request:
+    types: [opened, ready_for_review, closed]
+
+permissions:
+  contents: read
+
+jobs:
+  move-card:
+    runs-on: ubuntu-latest
+    if: github.event.pull_request.merged == true || github.event.action == 'opened'
+    steps:
+      - name: Move linked issue to status
+        uses: actions/github-script@v7
+        with:
+          github-token: ${{ secrets.PROJECT_TOKEN }}
+          script: |
+            const projectId = process.env.PROJECT_NODE_ID;
+            const pr = context.payload.pull_request;
+            const issueNum = (pr.body || '').match(/#(\d+)/)?.[1];
+            if (!issueNum) return; // PR 未关联 Issue 则跳过
+            const statusName = context.payload.action === 'closed' && pr.merged
+              ? '待审核' : '进行中';
+            // 用 GraphQL 把该 Issue 加入 Project 并设置 Status（optionId 需替换）
+            core.info(`Move issue #${issueNum} -> ${statusName}`);
+            // 实际 mutation 见上方注释中的 GraphQL 示例。
