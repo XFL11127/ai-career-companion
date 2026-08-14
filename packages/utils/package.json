@@ -1,8 +1,12 @@
 {
-  "name": "utils",
-  "version": "1.0.0",
+  "name": "@ai-career-companion/utils",
+  "version": "0.1.0",
   "description": "",
-  "main": "index.js",
+  "main": "index.ts",
+  "types": "index.ts",
+  "exports": {
+    ".": "./index.ts"
+  },
   "scripts": {
     "test": "echo \"Error: no test specified\" && exit 1",
     "type-check": "tsc --noEmit"

@@ -1,15 +1,46 @@
 {
-  "extends": "../../tsconfig.base.json",
   "compilerOptions": {
-    "outDir": "./dist",
-    "baseUrl": ".",
+    "lib": [
+      "dom",
+      "dom.iterable",
+      "esnext"
+    ],
+    "allowJs": true,
+    "skipLibCheck": true,
+    "strict": true,
+    "noEmit": true,
+    "esModuleInterop": true,
+    "module": "esnext",
+    "moduleResolution": "bundler",
+    "resolveJsonModule": true,
+    "isolatedModules": true,
+    "jsx": "preserve",
+    "incremental": true,
+    "plugins": [
+      {
+        "name": "next"
+      }
+    ],
     "paths": {
-      "@/*": ["src/*"],
-      "@shared/*": ["../../packages/shared/*"],
-      "@ai-career-companion/types": ["../../packages/types/index.ts"],
-      "@ai-career-companion/utils": ["../../packages/utils/index.ts"]
-    }
+      "@/*": [
+        "./src/*"
+      ],
+      "@ai-career-companion/types": [
+        "../../packages/types/index.ts"
+      ],
+      "@ai-career-companion/llm": [
+        "../../packages/llm/index.ts"
+      ]
+    },
+    "target": "ES2017"
   },
-  "include": ["src/**/*.ts", "src/**/*.vue", "../../packages/types/**/*.ts", "../../packages/utils/**/*.ts"],
-  "exclude": ["node_modules", "dist"]
+  "include": [
+    "next-env.d.ts",
+    "**/*.ts",
+    "**/*.tsx",
+    ".next/types/**/*.ts"
+  ],
+  "exclude": [
+    "node_modules"
+  ]
 }

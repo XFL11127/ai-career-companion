@@ -1,0 +1,8 @@
+blank_issues_enabled: false
+contact_links:
+  - name: 进度看板（先查是否已有同类任务）
+    url: https://github.com/XFL11127/ai-career-companion/projects
+    about: 在 GitHub Projects 看板确认任务状态，避免重复提单
+  - name: 路线图与里程碑
+    url: https://github.com/XFL11127/ai-career-companion/blob/基础骨架/docs/ROADMAP.md
+    about: 查看当前迭代循环与待办 backlog
