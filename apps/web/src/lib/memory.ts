@@ -232,6 +232,28 @@ export async function loadConversations(): Promise<Conversation[]> {
   }
 }
 
+/** 把云端拉取的会话合并进本地会话列表（按 skill+title+createdAt 去重，避免重复）。 */
+export async function importConversations(incoming: Conversation[]): Promise<void> {
+  if (!incoming.length) return;
+  const db = await openDB();
+  try {
+    const existing = (await getChat<Conversation[]>(db, CONVERSATIONS_KEY)) ?? [];
+    const merged: Conversation[] = [...existing];
+    const seen = new Set(existing.map((c) => `${c.skill}:${c.title}:${c.createdAt}`));
+    for (const c of incoming) {
+      const key = `${c.skill}:${c.title}:${c.createdAt}`;
+      if (!seen.has(key)) {
+        seen.add(key);
+        merged.push(c);
+      }
+    }
+    merged.sort((a, b) => b.updatedAt - a.updatedAt);
+    await putChat(db, CONVERSATIONS_KEY, merged.slice(0, MAX_CONVERSATIONS));
+  } finally {
+    db.close();
+  }
+}
+
 export async function archiveCurrentConversation(
   skill: string,
   messages: ChatMessage[]
