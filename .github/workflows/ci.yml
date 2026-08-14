@@ -6,6 +6,9 @@ on:
   push:
     branches: [基础骨架]
 
+# 说明：本仓库 monorepo 的 workspace 内部依赖使用 `*` 写法（npm 专用），
+# 与 pnpm 的 `workspace:*` 协议冲突（pnpm 会把 `*` 当 registry 版本拉取报 404）。
+# 因此 CI 一律使用 npm，与本地开发环境保持一致，避免双包管理器版本冲突。
 jobs:
   lint:
     name: Lint
@@ -17,14 +20,14 @@ jobs:
       - name: Setup Node.js
         uses: actions/setup-node@v4
         with:
-          node-version: 20
-          cache: 'pnpm'
+          node-version: 22
+          cache: 'npm'
 
       - name: Install dependencies
-        run: pnpm install
+        run: npm install
 
       - name: Run lint
-        run: pnpm lint
+        run: npm run lint
 
   typecheck:
     name: Type Check
@@ -36,14 +39,14 @@ jobs:
       - name: Setup Node.js
         uses: actions/setup-node@v4
         with:
-          node-version: 20
-          cache: 'pnpm'
+          node-version: 22
+          cache: 'npm'
 
       - name: Install dependencies
-        run: pnpm install
+        run: npm install
 
       - name: Run type check
-        run: pnpm type-check
+        run: npm run type-check
 
   build:
     name: Build
@@ -55,11 +58,11 @@ jobs:
       - name: Setup Node.js
         uses: actions/setup-node@v4
         with:
-          node-version: 20
-          cache: 'pnpm'
+          node-version: 22
+          cache: 'npm'
 
       - name: Install dependencies
-        run: pnpm install
+        run: npm install
 
       - name: Run build
-        run: pnpm build
+        run: npm run build
