@@ -1,7 +1,7 @@
-import NextAuth from 'next-auth'
-import GitHub from 'next-auth/providers/github'
-import Credentials from 'next-auth/providers/credentials'
-import { findUser, verifyPassword } from '@/lib/auth-users'
+import NextAuth from 'next-auth';
+import GitHub from 'next-auth/providers/github';
+import Credentials from 'next-auth/providers/credentials';
+import { findUser, verifyPassword } from '@/lib/auth-users';
 
 export const { handlers, auth, signIn, signOut } = NextAuth({
   // Vercel / 任意托管平台均把 Host 交给框架判断，避免部署时 trustHost 报错
@@ -29,27 +29,27 @@ export const { handlers, auth, signIn, signOut } = NextAuth({
         password: { label: '密码', type: 'password' },
       },
       authorize: async (credentials) => {
-        const email = String(credentials?.email ?? '').toLowerCase()
-        const password = String(credentials?.password ?? '')
-        if (!email || !password) return null
-        const user = findUser(email)
-        if (!user) return null
-        const ok = verifyPassword(password, user.passwordHash)
-        if (!ok) return null
-        return { id: user.id, email: user.email, name: user.name }
+        const email = String(credentials?.email ?? '').toLowerCase();
+        const password = String(credentials?.password ?? '');
+        if (!email || !password) return null;
+        const user = findUser(email);
+        if (!user) return null;
+        const ok = verifyPassword(password, user.passwordHash);
+        if (!ok) return null;
+        return { id: user.id, email: user.email, name: user.name };
       },
     }),
   ],
   callbacks: {
     jwt({ token, user }) {
-      if (user) token.uid = (user as { id: string }).id
-      return token
+      if (user) token.uid = (user as { id: string }).id;
+      return token;
     },
     session({ session, token }) {
       if (session.user) {
-        ;(session.user as { id?: string }).id = token.uid as string
+        (session.user as { id?: string }).id = token.uid as string;
       }
-      return session
+      return session;
     },
   },
-})
+});
