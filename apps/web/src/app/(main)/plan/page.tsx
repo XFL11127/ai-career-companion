@@ -1,13 +1,13 @@
-'use client'
-import { useEffect, useState } from 'react'
-import Link from 'next/link'
-import { useSkill } from '@/lib/useSkill'
-import { loadResult } from '@/lib/db'
-import { ArrowRight, PartyPopper } from 'lucide-react'
-import { saveUserProfile } from '@/lib/memory'
-import { Card, Pill, LoadingState, ErrorState, EmptyState } from '@/components/skill-ui'
-import { MemoryPanel } from '@/components/MemoryPanel'
-import type { DiagnoseOutput } from '@ai-career-companion/types'
+'use client';
+import { useEffect, useState } from 'react';
+import Link from 'next/link';
+import { useSkill } from '@/lib/useSkill';
+import { loadResult } from '@/lib/db';
+import { ArrowRight, PartyPopper } from 'lucide-react';
+import { saveUserProfile } from '@/lib/memory';
+import { Card, Pill, LoadingState, ErrorState, EmptyState } from '@/components/skill-ui';
+import { MemoryPanel } from '@/components/MemoryPanel';
+import type { DiagnoseOutput } from '@ai-career-companion/types';
 
 const DEFAULT_DIAGNOSE: DiagnoseOutput = {
   radar: [
@@ -18,35 +18,34 @@ const DEFAULT_DIAGNOSE: DiagnoseOutput = {
     { name: '信息差', current: 25, target: 65, gap: 40 },
   ],
   recommendedRoles: [],
-}
+};
 
 export default function PlanPage() {
-  const { data, loading, error, run } = useSkill('plan')
-  const [diagnose, setDiagnose] = useState<DiagnoseOutput | null>(null)
-  const [showBadge, setShowBadge] = useState(false)
+  const { data, loading, error, run } = useSkill('plan');
+  const [diagnose, setDiagnose] = useState<DiagnoseOutput | null>(null);
+  const [showBadge, setShowBadge] = useState(false);
 
   useEffect(() => {
     if (data) {
       if (!localStorage.getItem('badge-plan-shown')) {
-        setShowBadge(true)
-        localStorage.setItem('badge-plan-shown', 'true')
+        setShowBadge(true);
+        localStorage.setItem('badge-plan-shown', 'true');
       }
-      localStorage.setItem('hasPlanned', 'true')
-      const gaps = diagnose?.radar?.filter(r => r.gap > 20).map(r => r.name) || []
-      const summary = gaps.length > 0
-        ? `已规划路径，重点提升：${gaps.join('、')}`
-        : '已规划成长路径'
-      saveUserProfile(summary)
+      localStorage.setItem('hasPlanned', 'true');
+      const gaps = diagnose?.radar?.filter((r) => r.gap > 20).map((r) => r.name) || [];
+      const summary =
+        gaps.length > 0 ? `已规划路径，重点提升：${gaps.join('、')}` : '已规划成长路径';
+      saveUserProfile(summary);
     }
-  }, [data])
+  }, [data]);
 
   useEffect(() => {
     loadResult('diagnose')
       .then((d) => setDiagnose((d as DiagnoseOutput) ?? null))
-      .catch(() => {})
-  }, [])
+      .catch(() => {});
+  }, []);
 
-  const start = () => run(diagnose ?? DEFAULT_DIAGNOSE)
+  const start = () => run(diagnose ?? DEFAULT_DIAGNOSE);
 
   return (
     <main className="mx-auto max-w-4xl px-6 py-12">
@@ -63,7 +62,9 @@ export default function PlanPage() {
 
       <Card className="mt-6">
         <p className="text-sm text-ink/60">
-          {diagnose ? '已读取你的破局诊断结果，将据此生成路径。' : '未找到诊断结果，将使用示例差距生成默认路径。'}
+          {diagnose
+            ? '已读取你的破局诊断结果，将据此生成路径。'
+            : '未找到诊断结果，将使用示例差距生成默认路径。'}
         </p>
         <button
           onClick={start}
@@ -89,7 +90,13 @@ export default function PlanPage() {
               <ul className="mt-3 space-y-2">
                 {m.actions?.map((a) => (
                   <li key={a.id} className="flex items-start gap-3 rounded-2xl bg-paper p-3">
-                    <Pill tone={a.type === 'project' ? 'accent' : a.type === 'apply' ? 'forest' : 'gold'}>{a.type}</Pill>
+                    <Pill
+                      tone={
+                        a.type === 'project' ? 'accent' : a.type === 'apply' ? 'forest' : 'gold'
+                      }
+                    >
+                      {a.type}
+                    </Pill>
                     <div>
                       <div className="font-medium text-ink">{a.title}</div>
                       <div className="text-sm text-ink/60">{a.description}</div>
@@ -104,11 +111,14 @@ export default function PlanPage() {
 
       {data && !loading && (
         <div className="mt-6 text-center">
-          <Link href="/practice" className="inline-flex items-center gap-2 rounded-full bg-amber-500 px-5 py-2.5 text-sm font-medium text-white transition hover:bg-amber-600">
+          <Link
+            href="/practice"
+            className="inline-flex items-center gap-2 rounded-full bg-amber-500 px-5 py-2.5 text-sm font-medium text-white transition hover:bg-amber-600"
+          >
             开始实战练兵 <ArrowRight className="h-4 w-4" />
           </Link>
         </div>
       )}
     </main>
-  )
+  );
 }

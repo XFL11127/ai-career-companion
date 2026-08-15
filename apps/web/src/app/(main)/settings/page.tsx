@@ -1,101 +1,129 @@
-'use client'
+'use client';
 
-import { useState, useEffect, useCallback } from 'react'
-import Link from 'next/link'
-import { useSession, signOut } from 'next-auth/react'
-import { Settings, Trash2, Database, User, Palette, Info, Download, AlertTriangle, CheckCircle2, UserCircle2, LogOut, LogIn } from 'lucide-react'
+import { useState, useEffect, useCallback } from 'react';
+import Link from 'next/link';
+import { useSession, signOut } from 'next-auth/react';
 import {
-  getUserProfile,
-  getStreak,
-} from '@/lib/memory'
-import {
-  loadProfile,
-  defaultProfile,
-  type UserProfileData,
-} from '@/lib/profile'
+  Settings,
+  Trash2,
+  Database,
+  User,
+  Palette,
+  Info,
+  Download,
+  AlertTriangle,
+  CheckCircle2,
+  UserCircle2,
+  LogOut,
+  LogIn,
+} from 'lucide-react';
+import { getUserProfile, getStreak } from '@/lib/memory';
+import { loadProfile, defaultProfile, type UserProfileData } from '@/lib/profile';
 
 /** 估算 IndexedDB 存储大小（近似值） */
 async function estimateDBSize(): Promise<string> {
   try {
     const db = await new Promise<IDBDatabase>((resolve, reject) => {
-      const req = indexedDB.open('ai-career-companion', 2)
-      req.onsuccess = () => resolve(req.result)
-      req.onerror = () => reject(req.error)
-    })
-    let total = 0
+      const req = indexedDB.open('ai-career-companion', 2);
+      req.onsuccess = () => resolve(req.result);
+      req.onerror = () => reject(req.error);
+    });
+    let total = 0;
     // 遍历所有 object store
     for (const name of Array.from(db.objectStoreNames)) {
-      const tx = db.transaction(name, 'readonly')
-      const store = tx.objectStore(name)
-      const req = store.getAll()
-      await new Promise((resolve) => { req.onsuccess = resolve; req.onerror = resolve })
+      const tx = db.transaction(name, 'readonly');
+      const store = tx.objectStore(name);
+      const req = store.getAll();
+      await new Promise((resolve) => {
+        req.onsuccess = resolve;
+        req.onerror = resolve;
+      });
       if (req.result) {
-        const json = JSON.stringify(req.result)
-        total += new Blob([json]).size
+        const json = JSON.stringify(req.result);
+        total += new Blob([json]).size;
       }
     }
-    db.close()
-    if (total < 1024) return `${total} B`
-    if (total < 1024 * 1024) return `${(total / 1024).toFixed(1)} KB`
-    return `${(total / 1024 / 1024).toFixed(1)} MB`
+    db.close();
+    if (total < 1024) return `${total} B`;
+    if (total < 1024 * 1024) return `${(total / 1024).toFixed(1)} KB`;
+    return `${(total / 1024 / 1024).toFixed(1)} MB`;
   } catch {
-    return '无法读取'
+    return '无法读取';
   }
 }
 
 export default function SettingsPage() {
-  const { data: session } = useSession()
-  const [profile, setProfile] = useState<UserProfileData | null>(null)
-  const [dbSize, setDbSize] = useState('计算中…')
-  const [streak, setStreak] = useState(0)
-  const [clearing, setClearing] = useState(false)
-  const [cleared, setCleared] = useState(false)
+  const { data: session } = useSession();
+  const [profile, setProfile] = useState<UserProfileData | null>(null);
+  const [dbSize, setDbSize] = useState('计算中…');
+  const [streak, setStreak] = useState(0);
+  const [clearing, setClearing] = useState(false);
+  const [cleared, setCleared] = useState(false);
 
   const handleClearAll = useCallback(async () => {
-    if (!confirm('确定要清空所有本地数据吗？\n\n这将删除：\n· 所有对话历史\n· Skill 结果缓存\n· 用户画像\n· 连续活跃天数\n\n此操作不可撤销！')) return
-    setClearing(true)
+    if (
+      !confirm(
+        '确定要清空所有本地数据吗？\n\n这将删除：\n· 所有对话历史\n· Skill 结果缓存\n· 用户画像\n· 连续活跃天数\n\n此操作不可撤销！'
+      )
+    )
+      return;
+    setClearing(true);
     try {
       // 清空 IndexedDB
       const db = await new Promise<IDBDatabase>((resolve, reject) => {
-        const req = indexedDB.open('ai-career-companion', 2)
-        req.onsuccess = () => resolve(req.result)
-        req.onerror = () => reject(req.error)
-      })
+        const req = indexedDB.open('ai-career-companion', 2);
+        req.onsuccess = () => resolve(req.result);
+        req.onerror = () => reject(req.error);
+      });
       for (const name of Array.from(db.objectStoreNames)) {
-        const tx = db.transaction(name, 'readwrite')
-        tx.objectStore(name).clear()
-        await new Promise((resolve) => { tx.oncomplete = resolve; tx.onerror = resolve })
+        const tx = db.transaction(name, 'readwrite');
+        tx.objectStore(name).clear();
+        await new Promise((resolve) => {
+          tx.oncomplete = resolve;
+          tx.onerror = resolve;
+        });
       }
-      db.close()
+      db.close();
       // 清空 localStorage 相关 key
       const keysToRemove = [
-        'user_profile', 'user_profile_data', 'anon_user_id',
-        'streak-last-active', 'streak-count',
-        'hasDiagnosed', 'hasPlanned',
-      ]
-      keysToRemove.forEach((k) => localStorage.removeItem(k))
-      setProfile(defaultProfile())
-      setStreak(0)
-      setCleared(true)
-      setTimeout(() => { estimateDBSize().then(setDbSize) }, 100)
+        'user_profile',
+        'user_profile_data',
+        'anon_user_id',
+        'streak-last-active',
+        'streak-count',
+        'hasDiagnosed',
+        'hasPlanned',
+      ];
+      keysToRemove.forEach((k) => localStorage.removeItem(k));
+      setProfile(defaultProfile());
+      setStreak(0);
+      setCleared(true);
+      setTimeout(() => {
+        estimateDBSize().then(setDbSize);
+      }, 100);
     } catch (e) {
-      alert('清空失败：' + (e instanceof Error ? e.message : String(e)))
+      alert('清空失败：' + (e instanceof Error ? e.message : String(e)));
     } finally {
-      setClearing(false)
+      setClearing(false);
     }
-  }, [])
+  }, []);
 
   const handleDeleteAccount = useCallback(async () => {
-    if (!confirm('确定注销账号吗？\n\n将退出登录并清空本设备的所有本地数据。\n（云端账号删除功能将在接入 Supabase 后开放）')) return
-    await handleClearAll()
-    await signOut({ callbackUrl: '/' })
-  }, [handleClearAll])
+    if (
+      !confirm(
+        '确定注销账号吗？\n\n将退出登录并清空本设备的所有本地数据。\n（云端账号删除功能将在接入 Supabase 后开放）'
+      )
+    )
+      return;
+    await handleClearAll();
+    await signOut({ callbackUrl: '/' });
+  }, [handleClearAll]);
 
   useEffect(() => {
-    setProfile(loadProfile())
-    setStreak(getStreak())
-    estimateDBSize().then(setDbSize)
-  }, [])
+    setProfile(loadProfile());
+    setStreak(getStreak());
+    estimateDBSize().then(setDbSize);
+  }, []);
 
   return (
     <div className="mx-auto max-w-3xl px-4 py-8">
@@ -119,7 +147,9 @@ export default function SettingsPage() {
             <div className="flex items-center gap-3 rounded-md bg-ink/5 px-3 py-2">
               <UserCircle2 className="h-8 w-8 text-ink/40" />
               <div className="min-w-0">
-                <p className="truncate text-sm font-medium text-ink">{session.user.name || '已登录用户'}</p>
+                <p className="truncate text-sm font-medium text-ink">
+                  {session.user.name || '已登录用户'}
+                </p>
                 <p className="truncate text-xs text-ink/50">{session.user.email}</p>
               </div>
             </div>
@@ -151,7 +181,8 @@ export default function SettingsPage() {
         ) : (
           <div className="space-y-3">
             <p className="text-xs text-ink/50">
-              你当前处于<strong className="text-ink">匿名模式</strong>，所有数据存于本地浏览器。登录后可跨设备同步学职记忆。
+              你当前处于<strong className="text-ink">匿名模式</strong>
+              ，所有数据存于本地浏览器。登录后可跨设备同步学职记忆。
             </p>
             <Link
               href="/login"
@@ -230,7 +261,9 @@ export default function SettingsPage() {
           关于
         </h2>
         <div className="space-y-1 text-xs text-ink/60 leading-relaxed">
-          <p><strong>AI 学职同伴</strong> — iCAN 参赛项目</p>
+          <p>
+            <strong>AI 学职同伴</strong> — iCAN 参赛项目
+          </p>
           <p>面向双非学生的 AI Copilot 式学职陪伴产品。</p>
           <p>技术栈：Next.js + React + Tailwind CSS + DeepSeek AI</p>
           <p className="flex items-center gap-1 pt-1">
@@ -240,14 +273,26 @@ export default function SettingsPage() {
         </div>
       </section>
     </div>
-  )
+  );
 }
 
-function InfoField({ label, value, highlight }: { label: string; value: string; highlight?: boolean }) {
+function InfoField({
+  label,
+  value,
+  highlight,
+}: {
+  label: string;
+  value: string;
+  highlight?: boolean;
+}) {
   return (
-    <div className={`rounded-md border px-2.5 py-1.5 ${highlight ? 'border-amber-200 bg-amber-50' : 'border-ink/10 bg-ink/[0.02]'}`}>
+    <div
+      className={`rounded-md border px-2.5 py-1.5 ${highlight ? 'border-amber-200 bg-amber-50' : 'border-ink/10 bg-ink/[0.02]'}`}
+    >
       <p className="text-[10px] uppercase tracking-wide text-ink/40">{label}</p>
-      <p className={`text-sm font-medium ${highlight ? 'text-amber-700' : 'text-ink'}`}>{value || '—'}</p>
+      <p className={`text-sm font-medium ${highlight ? 'text-amber-700' : 'text-ink'}`}>
+        {value || '—'}
+      </p>
     </div>
-  )
+  );
 }

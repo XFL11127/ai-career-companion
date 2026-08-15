@@ -1,51 +1,61 @@
-'use client'
+'use client';
 
-import { useEffect, useMemo, useState } from 'react'
-import Link from 'next/link'
-import { useRouter } from 'next/navigation'
-import { getUserProfile, getStreak } from '@/lib/memory'
-import type { ComponentType } from 'react'
-import type { SkillName } from '@ai-career-companion/types'
-import { MessageSquarePlus, Settings, HelpCircle, LogIn, X, Trash2, Flame, Brain, BarChart3 } from 'lucide-react'
-import type { Conversation } from '@/lib/memory'
+import { useEffect, useMemo, useState } from 'react';
+import Link from 'next/link';
+import { useRouter } from 'next/navigation';
+import { getUserProfile, getStreak } from '@/lib/memory';
+import type { ComponentType } from 'react';
+import type { SkillName } from '@ai-career-companion/types';
+import {
+  MessageSquarePlus,
+  Settings,
+  HelpCircle,
+  LogIn,
+  X,
+  Trash2,
+  Flame,
+  Brain,
+  BarChart3,
+} from 'lucide-react';
+import type { Conversation } from '@/lib/memory';
 
 interface SkillItem {
-  name: SkillName
-  label: string
-  icon: ComponentType<{ className?: string }>
+  name: SkillName;
+  label: string;
+  icon: ComponentType<{ className?: string }>;
 }
 
 interface SidebarProps {
-  open: boolean
-  onClose: () => void
-  skills: SkillItem[]
-  activeSkill: SkillName
-  onSkillChange: (name: SkillName) => void
-  conversations: Conversation[]
-  onNewConversation: () => void
-  onSelectConversation: (conv: Conversation) => void
-  onDeleteConversation: (id: string) => void
+  open: boolean;
+  onClose: () => void;
+  skills: SkillItem[];
+  activeSkill: SkillName;
+  onSkillChange: (name: SkillName) => void;
+  conversations: Conversation[];
+  onNewConversation: () => void;
+  onSelectConversation: (conv: Conversation) => void;
+  onDeleteConversation: (id: string) => void;
 }
 
 function groupConversations(convs: Conversation[]) {
-  const now = new Date()
-  const today = new Date(now.getFullYear(), now.getMonth(), now.getDate()).getTime()
-  const yesterday = today - 24 * 60 * 60 * 1000
-  const weekAgo = today - 7 * 24 * 60 * 60 * 1000
+  const now = new Date();
+  const today = new Date(now.getFullYear(), now.getMonth(), now.getDate()).getTime();
+  const yesterday = today - 24 * 60 * 60 * 1000;
+  const weekAgo = today - 7 * 24 * 60 * 60 * 1000;
   const groups = [
     { label: '今天', items: [] as Conversation[] },
     { label: '昨天', items: [] as Conversation[] },
     { label: '7 天内', items: [] as Conversation[] },
     { label: '更早', items: [] as Conversation[] },
-  ]
+  ];
   for (const c of convs) {
-    const t = c.updatedAt
-    if (t >= today) groups[0].items.push(c)
-    else if (t >= yesterday) groups[1].items.push(c)
-    else if (t >= weekAgo) groups[2].items.push(c)
-    else groups[3].items.push(c)
+    const t = c.updatedAt;
+    if (t >= today) groups[0].items.push(c);
+    else if (t >= yesterday) groups[1].items.push(c);
+    else if (t >= weekAgo) groups[2].items.push(c);
+    else groups[3].items.push(c);
   }
-  return groups.filter((g) => g.items.length > 0)
+  return groups.filter((g) => g.items.length > 0);
 }
 
 export function Sidebar({
@@ -59,25 +69,25 @@ export function Sidebar({
   onSelectConversation,
   onDeleteConversation,
 }: SidebarProps) {
-  const router = useRouter()
-  const groups = useMemo(() => groupConversations(conversations), [conversations])
-  const [streak, setStreak] = useState(0)
-  const [showMemory, setShowMemory] = useState(false)
+  const router = useRouter();
+  const groups = useMemo(() => groupConversations(conversations), [conversations]);
+  const [streak, setStreak] = useState(0);
+  const [showMemory, setShowMemory] = useState(false);
 
   // 仅读取展示（streak 的实际累加在 useChat/useSkill 调用成功时完成）
   useEffect(() => {
-    setStreak(getStreak())
-  }, [])
+    setStreak(getStreak());
+  }, []);
 
   const handleSkill = (name: SkillName) => {
-    onSkillChange(name)
-    onClose()
-  }
+    onSkillChange(name);
+    onClose();
+  };
 
   const handleSelect = (conv: Conversation) => {
-    onSelectConversation(conv)
-    onClose()
-  }
+    onSelectConversation(conv);
+    onClose();
+  };
 
   return (
     <>
@@ -88,18 +98,24 @@ export function Sidebar({
       >
         <div className="flex items-center justify-between px-4 py-3">
           <div className="flex items-center gap-2">
-            <div className="flex h-7 w-7 items-center justify-center rounded-lg bg-accent text-xs font-bold text-paper">AI</div>
+            <div className="flex h-7 w-7 items-center justify-center rounded-lg bg-accent text-xs font-bold text-paper">
+              AI
+            </div>
             <span className="font-serif text-sm font-bold text-ink">学职同伴</span>
           </div>
-          <button onClick={onClose} className="rounded p-1 text-ink/50 hover:bg-ink/5 lg:hidden" aria-label="关闭侧边栏">
+          <button
+            onClick={onClose}
+            className="rounded p-1 text-ink/50 hover:bg-ink/5 lg:hidden"
+            aria-label="关闭侧边栏"
+          >
             <X className="h-5 w-5" />
           </button>
         </div>
 
         <button
           onClick={() => {
-            onNewConversation()
-            onClose()
+            onNewConversation();
+            onClose();
           }}
           className="mx-3 mb-2 flex items-center justify-center gap-2 rounded-xl border border-ink/15 bg-paper py-2 text-sm font-medium text-ink transition hover:border-accent/40 hover:text-accent"
         >
@@ -110,20 +126,22 @@ export function Sidebar({
         <nav className="px-2">
           <div className="space-y-0.5">
             {skills.map((s) => {
-              const Icon = s.icon
-              const active = s.name === activeSkill
+              const Icon = s.icon;
+              const active = s.name === activeSkill;
               return (
                 <button
                   key={s.name}
                   onClick={() => handleSkill(s.name)}
                   className={`flex w-full items-center gap-2.5 rounded-lg px-3 py-2 text-sm transition ${
-                    active ? 'bg-accent/10 font-medium text-accent' : 'text-ink/70 hover:bg-ink/5 hover:text-ink'
+                    active
+                      ? 'bg-accent/10 font-medium text-accent'
+                      : 'text-ink/70 hover:bg-ink/5 hover:text-ink'
                   }`}
                 >
                   <Icon className="h-4 w-4 shrink-0" />
                   {s.label}
                 </button>
-              )
+              );
             })}
           </div>
         </nav>
@@ -144,13 +162,16 @@ export function Sidebar({
                     key={conv.id}
                     className="group flex items-center justify-between rounded-lg px-3 py-2 text-sm text-ink/80 hover:bg-ink/5 hover:text-ink"
                   >
-                    <button onClick={() => handleSelect(conv)} className="flex-1 truncate text-left">
+                    <button
+                      onClick={() => handleSelect(conv)}
+                      className="flex-1 truncate text-left"
+                    >
                       {conv.title}
                     </button>
                     <button
                       onClick={(e) => {
-                        e.stopPropagation()
-                        onDeleteConversation(conv.id)
+                        e.stopPropagation();
+                        onDeleteConversation(conv.id);
                       }}
                       className="rounded p-1 text-ink/40 opacity-0 transition hover:text-red-500 group-hover:opacity-100"
                       title="删除"
@@ -211,7 +232,13 @@ export function Sidebar({
         </div>
       </aside>
 
-      {open && <div className="fixed inset-0 z-40 bg-black/30 lg:hidden" onClick={onClose} aria-hidden="true" />}
+      {open && (
+        <div
+          className="fixed inset-0 z-40 bg-black/30 lg:hidden"
+          onClick={onClose}
+          aria-hidden="true"
+        />
+      )}
 
       {showMemory && (
         <div
@@ -246,5 +273,5 @@ export function Sidebar({
         </div>
       )}
     </>
-  )
+  );
 }

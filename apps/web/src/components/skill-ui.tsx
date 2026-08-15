@@ -1,23 +1,28 @@
-'use client'
-import type { ReactNode } from 'react'
-import type { GapDimension, SkillName } from '@ai-career-companion/types'
+'use client';
+import type { ReactNode } from 'react';
+import type { GapDimension, SkillName } from '@ai-career-companion/types';
 
 /** 轻量 SVG 五维雷达图（不依赖 recharts，符合依赖克制）。 */
 export function RadarChart({ radar, size = 300 }: { radar: GapDimension[]; size?: number }) {
-  const cx = size / 2
-  const cy = size / 2
-  const R = size / 2 - 42
-  const n = radar.length
-  const angle = (i: number) => -Math.PI / 2 + (i * 2 * Math.PI) / n
+  const cx = size / 2;
+  const cy = size / 2;
+  const R = size / 2 - 42;
+  const n = radar.length;
+  const angle = (i: number) => -Math.PI / 2 + (i * 2 * Math.PI) / n;
   const pt = (i: number, v: number): [number, number] => {
-    const r = (Math.max(0, Math.min(100, v)) / 100) * R
-    return [cx + r * Math.cos(angle(i)), cy + r * Math.sin(angle(i))]
-  }
+    const r = (Math.max(0, Math.min(100, v)) / 100) * R;
+    return [cx + r * Math.cos(angle(i)), cy + r * Math.sin(angle(i))];
+  };
   const poly = (key: 'current' | 'target') =>
-    radar.map((d, i) => pt(i, d[key]).join(',')).join(' ')
+    radar.map((d, i) => pt(i, d[key]).join(',')).join(' ');
 
   return (
-    <svg viewBox={`0 0 ${size} ${size}`} className="mx-auto h-auto w-full max-w-[320px]" role="img" aria-label="五维能力雷达图">
+    <svg
+      viewBox={`0 0 ${size} ${size}`}
+      className="mx-auto h-auto w-full max-w-[320px]"
+      role="img"
+      aria-label="五维能力雷达图"
+    >
       {[1, 0.66, 0.33].map((f, gi) => (
         <polygon
           key={gi}
@@ -28,40 +33,82 @@ export function RadarChart({ radar, size = 300 }: { radar: GapDimension[]; size?
         />
       ))}
       {radar.map((_, i) => {
-        const [x, y] = pt(i, 100)
-        return <line key={i} x1={cx} y1={cy} x2={x} y2={y} stroke="rgb(var(--ink) / 0.12)" strokeWidth={1} />
-      })}
-      <polygon points={poly('target')} fill="rgb(var(--forest) / 0.08)" stroke="rgb(var(--forest) / 0.6)" strokeWidth={1.5} strokeDasharray="4 3" />
-      <polygon points={poly('current')} fill="rgb(var(--accent) / 0.18)" stroke="rgb(var(--accent))" strokeWidth={2} />
-      {radar.map((d, i) => {
-        const [x, y] = pt(i, 118)
+        const [x, y] = pt(i, 100);
         return (
-          <text key={i} x={x} y={y} textAnchor="middle" dominantBaseline="middle" className="fill-ink text-[11px]">
+          <line
+            key={i}
+            x1={cx}
+            y1={cy}
+            x2={x}
+            y2={y}
+            stroke="rgb(var(--ink) / 0.12)"
+            strokeWidth={1}
+          />
+        );
+      })}
+      <polygon
+        points={poly('target')}
+        fill="rgb(var(--forest) / 0.08)"
+        stroke="rgb(var(--forest) / 0.6)"
+        strokeWidth={1.5}
+        strokeDasharray="4 3"
+      />
+      <polygon
+        points={poly('current')}
+        fill="rgb(var(--accent) / 0.18)"
+        stroke="rgb(var(--accent))"
+        strokeWidth={2}
+      />
+      {radar.map((d, i) => {
+        const [x, y] = pt(i, 118);
+        return (
+          <text
+            key={i}
+            x={x}
+            y={y}
+            textAnchor="middle"
+            dominantBaseline="middle"
+            className="fill-ink text-[11px]"
+          >
             {d.name}
             <tspan className="fill-accent"> {d.current}</tspan>
           </text>
-        )
+        );
       })}
     </svg>
-  )
+  );
 }
 
 export function Card({ className = '', children }: { className?: string; children: ReactNode }) {
   return (
-    <div className={`card-lift rounded-3xl border border-ink/10 bg-white/70 p-6 backdrop-blur ${className}`}>
+    <div
+      className={`card-lift rounded-3xl border border-ink/10 bg-white/70 p-6 backdrop-blur ${className}`}
+    >
       {children}
     </div>
-  )
+  );
 }
 
-export function Pill({ tone = 'accent', children }: { tone?: 'accent' | 'forest' | 'gold'; children: ReactNode }) {
+export function Pill({
+  tone = 'accent',
+  children,
+}: {
+  tone?: 'accent' | 'forest' | 'gold';
+  children: ReactNode;
+}) {
   const cls =
     tone === 'forest'
       ? 'bg-forest/10 text-forest'
       : tone === 'gold'
         ? 'bg-gold/10 text-forest'
-        : 'bg-accent/10 text-accent'
-  return <span className={`inline-flex items-center rounded-full px-2.5 py-0.5 text-xs font-medium ${cls}`}>{children}</span>
+        : 'bg-accent/10 text-accent';
+  return (
+    <span
+      className={`inline-flex items-center rounded-full px-2.5 py-0.5 text-xs font-medium ${cls}`}
+    >
+      {children}
+    </span>
+  );
 }
 
 export function LoadingState({ label }: { label: string }) {
@@ -69,7 +116,7 @@ export function LoadingState({ label }: { label: string }) {
     <div className="mt-6 animate-fade-in rounded-3xl border border-ink/10 bg-white/70 p-10 text-center text-ink/50">
       <span className="animate-pulse">{label}</span>
     </div>
-  )
+  );
 }
 
 export function ErrorState({ message, onRetry }: { message: string; onRetry?: () => void }) {
@@ -82,7 +129,7 @@ export function ErrorState({ message, onRetry }: { message: string; onRetry?: ()
         </button>
       )}
     </div>
-  )
+  );
 }
 
 export function EmptyState({ label }: { label: string }) {
@@ -90,7 +137,7 @@ export function EmptyState({ label }: { label: string }) {
     <div className="mt-6 rounded-3xl border border-dashed border-ink/15 bg-white/40 p-10 text-center text-ink/40">
       {label}
     </div>
-  )
+  );
 }
 
 // ---------- Kimi 式对话组件 ----------
@@ -100,26 +147,28 @@ export function ProseBubble({
   children,
   tone = 'assistant',
 }: {
-  children: ReactNode
-  tone?: 'user' | 'assistant'
+  children: ReactNode;
+  tone?: 'user' | 'assistant';
 }) {
   const cls =
     tone === 'user'
       ? 'ml-auto bg-accent text-paper'
-      : 'mr-auto bg-white/80 border border-ink/10 text-ink'
+      : 'mr-auto bg-white/80 border border-ink/10 text-ink';
   return (
-    <div className={`max-w-[85%] whitespace-pre-wrap rounded-3xl px-4 py-3 text-sm leading-relaxed ${cls}`}>
+    <div
+      className={`max-w-[85%] whitespace-pre-wrap rounded-3xl px-4 py-3 text-sm leading-relaxed ${cls}`}
+    >
       {children}
     </div>
-  )
+  );
 }
 
-type AnyObj = Record<string, any>
+type AnyObj = Record<string, any>;
 
 /** 把某个 Skill 的结构化卡片（流式 partial 也安全）渲染成富卡片。 */
 export function SkillCardView({ name, data }: { name: SkillName; data: unknown }) {
-  const d = data as AnyObj | null
-  if (!d) return null
+  const d = data as AnyObj | null;
+  if (!d) return null;
 
   switch (name) {
     case 'diagnose':
@@ -145,7 +194,7 @@ export function SkillCardView({ name, data }: { name: SkillName; data: unknown }
             </div>
           </Card>
         </div>
-      )
+      );
 
     case 'plan':
       return (
@@ -160,14 +209,16 @@ export function SkillCardView({ name, data }: { name: SkillName; data: unknown }
                 {(m?.actions ?? []).map((a: AnyObj, ai: number) => (
                   <li key={ai} className="rounded-2xl border border-ink/10 bg-paper p-3">
                     <div className="font-medium text-ink">{a?.title}</div>
-                    {a?.description && <div className="mt-1 text-sm text-ink/60">{a.description}</div>}
+                    {a?.description && (
+                      <div className="mt-1 text-sm text-ink/60">{a.description}</div>
+                    )}
                   </li>
                 ))}
               </ul>
             </Card>
           ))}
         </div>
-      )
+      );
 
     case 'practice':
       return (
@@ -187,7 +238,7 @@ export function SkillCardView({ name, data }: { name: SkillName; data: unknown }
             </Card>
           )}
         </div>
-      )
+      );
 
     case 'info':
       return (
@@ -212,7 +263,7 @@ export function SkillCardView({ name, data }: { name: SkillName; data: unknown }
             </a>
           ))}
         </div>
-      )
+      );
 
     case 'package':
       return (
@@ -240,7 +291,7 @@ export function SkillCardView({ name, data }: { name: SkillName; data: unknown }
             </Card>
           )}
         </div>
-      )
+      );
   }
-  return null
+  return null;
 }

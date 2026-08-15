@@ -1,47 +1,47 @@
-'use client'
+'use client';
 
-import { useEffect, useState } from 'react'
-import { useParams } from 'next/navigation'
-import Link from 'next/link'
-import { ArrowLeft, ExternalLink, MapPin, Clock } from 'lucide-react'
+import { useEffect, useState } from 'react';
+import { useParams } from 'next/navigation';
+import Link from 'next/link';
+import { ArrowLeft, ExternalLink, MapPin, Clock } from 'lucide-react';
 
 interface JobDetail {
-  company: string
-  role: string
-  salary: string
-  location: string
-  tags: string[]
-  url: string
-  description: string
-  requirements: string[]
-  deadline: string
+  company: string;
+  role: string;
+  salary: string;
+  location: string;
+  tags: string[];
+  url: string;
+  description: string;
+  requirements: string[];
+  deadline: string;
 }
 
 export default function CompanyPage() {
-  const params = useParams()
-  const id = decodeURIComponent(params.id as string)
-  const [job, setJob] = useState<JobDetail | null>(null)
-  const [loading, setLoading] = useState(true)
-  const [error, setError] = useState<string | null>(null)
+  const params = useParams();
+  const id = decodeURIComponent(params.id as string);
+  const [job, setJob] = useState<JobDetail | null>(null);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
 
   useEffect(() => {
-    if (!id) return
-    setLoading(true)
-    setError(null)
+    if (!id) return;
+    setLoading(true);
+    setError(null);
     fetch(`/api/job/${encodeURIComponent(id)}`)
       .then(async (res) => {
-        if (!res.ok) throw new Error('请求失败')
-        return res.json()
+        if (!res.ok) throw new Error('请求失败');
+        return res.json();
       })
       .then((data) => {
-        setJob(data)
-        setLoading(false)
+        setJob(data);
+        setLoading(false);
       })
       .catch(() => {
-        setError('该岗位信息暂时无法加载，请稍后重试')
-        setLoading(false)
-      })
-  }, [id])
+        setError('该岗位信息暂时无法加载，请稍后重试');
+        setLoading(false);
+      });
+  }, [id]);
 
   if (loading) {
     return (
@@ -51,36 +51,43 @@ export default function CompanyPage() {
           <p className="mt-3 text-sm text-ink/60">正在加载岗位详情…</p>
         </div>
       </main>
-    )
+    );
   }
 
   if (error || !job) {
     return (
       <main className="mx-auto max-w-3xl px-6 py-12">
-        <Link href="/info" className="mb-4 inline-flex items-center gap-1 text-sm text-accent hover:underline">
+        <Link
+          href="/info"
+          className="mb-4 inline-flex items-center gap-1 text-sm text-accent hover:underline"
+        >
           <ArrowLeft className="h-4 w-4" /> 返回信息差
         </Link>
         <div className="rounded-2xl border border-ink/10 bg-amber-50 p-8 text-center">
           <p className="text-ink/70">{error || '该岗位信息不存在'}</p>
-          <Link href="/info" className="mt-4 inline-block rounded-full bg-accent px-5 py-2 text-sm text-paper">
+          <Link
+            href="/info"
+            className="mt-4 inline-block rounded-full bg-accent px-5 py-2 text-sm text-paper"
+          >
             查看其他机会
           </Link>
         </div>
       </main>
-    )
+    );
   }
 
   return (
     <main className="mx-auto max-w-3xl px-6 py-12">
-      <Link href="/info" className="mb-4 inline-flex items-center gap-1 text-sm text-accent hover:underline">
+      <Link
+        href="/info"
+        className="mb-4 inline-flex items-center gap-1 text-sm text-accent hover:underline"
+      >
         <ArrowLeft className="h-4 w-4" /> 返回信息差
       </Link>
 
       {/* 岗位头部 */}
       <div className="rounded-3xl border border-ink/10 bg-white/70 p-6">
-        <h1 className="font-serif text-2xl font-bold text-ink">
-          {job.role}
-        </h1>
+        <h1 className="font-serif text-2xl font-bold text-ink">{job.role}</h1>
         <p className="mt-1 text-lg text-ink/70">{job.company}</p>
         <div className="mt-3 flex flex-wrap items-center gap-3 text-sm text-ink/60">
           <span className="rounded-full bg-forest/10 px-3 py-1 text-forest">{job.salary}</span>
@@ -128,5 +135,5 @@ export default function CompanyPage() {
         </a>
       </div>
     </main>
-  )
+  );
 }

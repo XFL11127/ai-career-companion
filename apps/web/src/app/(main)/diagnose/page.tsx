@@ -1,46 +1,63 @@
-'use client'
-import { useEffect, useState } from 'react'
-import Link from 'next/link'
-import { useSkill } from '@/lib/useSkill'
-import { ArrowRight, PartyPopper } from 'lucide-react'
-import { saveUserProfile } from '@/lib/memory'
-import { RadarChart, Card, Pill, LoadingState, ErrorState, EmptyState } from '@/components/skill-ui'
-import { MemoryPanel } from '@/components/MemoryPanel'
+'use client';
+import { useEffect, useState } from 'react';
+import Link from 'next/link';
+import { useSkill } from '@/lib/useSkill';
+import { ArrowRight, PartyPopper } from 'lucide-react';
+import { saveUserProfile } from '@/lib/memory';
+import {
+  RadarChart,
+  Card,
+  Pill,
+  LoadingState,
+  ErrorState,
+  EmptyState,
+} from '@/components/skill-ui';
+import { MemoryPanel } from '@/components/MemoryPanel';
 
 export default function DiagnosePage() {
-  const { data, loading, error, run } = useSkill('diagnose')
-  const [text, setText] = useState('')
-  const [showBadge, setShowBadge] = useState(false)
+  const { data, loading, error, run } = useSkill('diagnose');
+  const [text, setText] = useState('');
+  const [showBadge, setShowBadge] = useState(false);
 
   useEffect(() => {
     if (data) {
-      if (!localStorage.getItem('hasAchievement') || localStorage.getItem('hasAchievement') !== 'diagnose') {
-        setShowBadge(true)
-        localStorage.setItem('hasAchievement', 'diagnose')
+      if (
+        !localStorage.getItem('hasAchievement') ||
+        localStorage.getItem('hasAchievement') !== 'diagnose'
+      ) {
+        setShowBadge(true);
+        localStorage.setItem('hasAchievement', 'diagnose');
       }
       if (!localStorage.getItem('hasDiagnosed')) {
-        localStorage.setItem('hasDiagnosed', 'true')
+        localStorage.setItem('hasDiagnosed', 'true');
       }
-      const content = text || '双非大三学生，计算机专业，想做前端开发，暂时没有实习'
-      const gradeMatch = content.match(/(大一|大二|大三|大四|研一|研二|研三)/)
-      const majorMatch = content.match(/(计算机|软件|电子|通信|自动化|大数据|人工智能|数据科学|软件工程)/)
-      const targetMatch = content.match(/(前端|后端|算法|测试|产品|运营|开发|工程师)/)
-      const gapMatch = content.match(/(缺乏|没有|不足|不够|需要)/)
-      const summary = [
-        majorMatch?.[0] ? `${majorMatch[0]}专业` : '',
-        gradeMatch?.[0] || '',
-        targetMatch?.[0] ? `目标${targetMatch[0]}` : '',
-        gapMatch ? '有明显差距' : '',
-      ].filter(Boolean).join('，') || content.slice(0, 20)
-      saveUserProfile(summary)
+      const content = text || '双非大三学生，计算机专业，想做前端开发，暂时没有实习';
+      const gradeMatch = content.match(/(大一|大二|大三|大四|研一|研二|研三)/);
+      const majorMatch = content.match(
+        /(计算机|软件|电子|通信|自动化|大数据|人工智能|数据科学|软件工程)/
+      );
+      const targetMatch = content.match(/(前端|后端|算法|测试|产品|运营|开发|工程师)/);
+      const gapMatch = content.match(/(缺乏|没有|不足|不够|需要)/);
+      const summary =
+        [
+          majorMatch?.[0] ? `${majorMatch[0]}专业` : '',
+          gradeMatch?.[0] || '',
+          targetMatch?.[0] ? `目标${targetMatch[0]}` : '',
+          gapMatch ? '有明显差距' : '',
+        ]
+          .filter(Boolean)
+          .join('，') || content.slice(0, 20);
+      saveUserProfile(summary);
     }
-  }, [data])
+  }, [data]);
 
   const start = () =>
     run({
       userId: 'local',
-      messages: [{ role: 'user', content: text || '双非大三学生，计算机专业，想做前端开发，暂时没有实习' }],
-    })
+      messages: [
+        { role: 'user', content: text || '双非大三学生，计算机专业，想做前端开发，暂时没有实习' },
+      ],
+    });
 
   return (
     <main className="mx-auto max-w-5xl px-6 py-12">
@@ -77,9 +94,7 @@ export default function DiagnosePage() {
 
       {data && (
         <div className="mt-6 grid gap-6 lg:grid-cols-2">
-          <Card>
-            {data.radar && <RadarChart radar={data.radar} />}
-          </Card>
+          <Card>{data.radar && <RadarChart radar={data.radar} />}</Card>
           <Card>
             <h3 className="font-serif text-lg font-bold text-ink">推荐岗位</h3>
             <div className="mt-3 space-y-3">
@@ -99,11 +114,14 @@ export default function DiagnosePage() {
 
       {data && !loading && (
         <div className="mt-6 text-center">
-          <Link href="/plan" className="inline-flex items-center gap-2 rounded-full bg-amber-500 px-5 py-2.5 text-sm font-medium text-white transition hover:bg-amber-600">
+          <Link
+            href="/plan"
+            className="inline-flex items-center gap-2 rounded-full bg-amber-500 px-5 py-2.5 text-sm font-medium text-white transition hover:bg-amber-600"
+          >
             规划你的成长路径 <ArrowRight className="h-4 w-4" />
           </Link>
         </div>
       )}
     </main>
-  )
+  );
 }

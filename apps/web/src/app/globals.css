@@ -28,20 +28,22 @@ body {
     radial-gradient(1100px 560px at 88% -8%, rgba(224, 168, 62, 0.12), transparent 60%),
     radial-gradient(900px 480px at -8% 108%, rgba(46, 94, 71, 0.1), transparent 55%);
   background-attachment: fixed;
-  font-family: "Noto Sans SC", system-ui, sans-serif;
+  font-family: 'Noto Sans SC', system-ui, sans-serif;
 }
 
 h1,
 h2,
 h3,
 .font-serif {
-  font-family: "Noto Serif SC", Georgia, serif;
+  font-family: 'Noto Serif SC', Georgia, serif;
 }
 
 /* 卡片悬停微交互：上浮 + 暖色描边 */
 .card-lift {
-  transition: transform 0.35s cubic-bezier(0.22, 1, 0.36, 1),
-    box-shadow 0.35s ease, border-color 0.35s ease;
+  transition:
+    transform 0.35s cubic-bezier(0.22, 1, 0.36, 1),
+    box-shadow 0.35s ease,
+    border-color 0.35s ease;
 }
 .card-lift:hover {
   transform: translateY(-6px);

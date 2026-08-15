@@ -1,12 +1,29 @@
-'use client'
-import { useEffect, useRef, useState } from 'react'
-import type { ComponentType } from 'react'
-import Link from 'next/link'
-import { useRouter } from 'next/navigation'
-import { type SkillName } from '@ai-career-companion/types'
-import { Radar, Route, Target, Newspaper, Briefcase, Send, Trash2, Menu, ClipboardList, CheckCircle2, Sparkles, Brain, Compass, Sword, Globe, Award } from 'lucide-react'
-import { useChat } from '@/lib/useChat'
-import { Sidebar } from '@/components/sidebar'
+'use client';
+import { useEffect, useRef, useState } from 'react';
+import type { ComponentType } from 'react';
+import Link from 'next/link';
+import { useRouter } from 'next/navigation';
+import { type SkillName } from '@ai-career-companion/types';
+import {
+  Radar,
+  Route,
+  Target,
+  Newspaper,
+  Briefcase,
+  Send,
+  Trash2,
+  Menu,
+  ClipboardList,
+  CheckCircle2,
+  Sparkles,
+  Brain,
+  Compass,
+  Sword,
+  Globe,
+  Award,
+} from 'lucide-react';
+import { useChat } from '@/lib/useChat';
+import { Sidebar } from '@/components/sidebar';
 import {
   loadConversations,
   deleteConversation,
@@ -16,76 +33,188 @@ import {
   migrateLegacyChats,
   type Conversation,
   type ChatMessage,
-} from '@/lib/memory'
-import { ProseBubble, SkillCardView, ErrorState, EmptyState } from '@/components/skill-ui'
+} from '@/lib/memory';
+import { ProseBubble, SkillCardView, ErrorState, EmptyState } from '@/components/skill-ui';
 
 const SKILLS: {
-  name: SkillName
-  label: string
-  icon: ComponentType<{ className?: string }>
-  placeholder: string
+  name: SkillName;
+  label: string;
+  icon: ComponentType<{ className?: string }>;
+  placeholder: string;
 }[] = [
-  { name: 'diagnose', label: '破局诊断', icon: Radar, placeholder: '介绍下你自己：专业 / 年级 / 目标岗位 / 现状…' },
-  { name: 'plan', label: '路径规划', icon: Route, placeholder: '你的目标是什么？比如“想做前端工程师”' },
-  { name: 'practice', label: '实战练兵', icon: Target, placeholder: '想练什么？面试 / 算法 / 项目（可留空直接回车）' },
-  { name: 'info', label: '信息差', icon: Newspaper, placeholder: '回车获取双非友好的校招 / 实习信息' },
-  { name: 'package', label: '成果包装', icon: Briefcase, placeholder: '粘贴你的简历原文，并说明目标岗位…' },
-]
+  {
+    name: 'diagnose',
+    label: '破局诊断',
+    icon: Radar,
+    placeholder: '介绍下你自己：专业 / 年级 / 目标岗位 / 现状…',
+  },
+  {
+    name: 'plan',
+    label: '路径规划',
+    icon: Route,
+    placeholder: '你的目标是什么？比如“想做前端工程师”',
+  },
+  {
+    name: 'practice',
+    label: '实战练兵',
+    icon: Target,
+    placeholder: '想练什么？面试 / 算法 / 项目（可留空直接回车）',
+  },
+  {
+    name: 'info',
+    label: '信息差',
+    icon: Newspaper,
+    placeholder: '回车获取双非友好的校招 / 实习信息',
+  },
+  {
+    name: 'package',
+    label: '成果包装',
+    icon: Briefcase,
+    placeholder: '粘贴你的简历原文，并说明目标岗位…',
+  },
+];
 
 // ---------- 每个 Skill 的差异化卡片配置 ----------
 // actionType: 'navigate' → 跳转详情页 | 'chat' → 在对话框内触发任务（自动填入 prompt）
 
 type SkillCardConfig = {
-  title: string
-  desc: string
-  action: string
-} & (
-  | { actionType: 'navigate'; href: string }
-  | { actionType: 'chat'; chatPrompt: string }
-)
+  title: string;
+  desc: string;
+  action: string;
+} & ({ actionType: 'navigate'; href: string } | { actionType: 'chat'; chatPrompt: string });
 
 const SKILL_CARDS: Record<SkillName, { sectionTitle: string; cards: SkillCardConfig[] }> = {
   diagnose: {
     sectionTitle: '破局诊断',
     cards: [
-      { title: '开始五维诊断', desc: 'AI 分析你的能力差距，生成雷达图与推荐岗位', action: '开始诊断 →', actionType: 'chat', chatPrompt: '帮我做一次五维差距诊断，我是双非大三计算机专业学生' },
-      { title: '查看诊断报告', desc: '回顾你的五维雷达图与岗位匹配分析', action: '查看详情 →', actionType: 'navigate', href: '/diagnose' },
-      { title: '诊断 FAQ', desc: '什么是五维诊断？需要准备什么？', action: '了解更多 →', actionType: 'navigate', href: '/help#diagnose' },
+      {
+        title: '开始五维诊断',
+        desc: 'AI 分析你的能力差距，生成雷达图与推荐岗位',
+        action: '开始诊断 →',
+        actionType: 'chat',
+        chatPrompt: '帮我做一次五维差距诊断，我是双非大三计算机专业学生',
+      },
+      {
+        title: '查看诊断报告',
+        desc: '回顾你的五维雷达图与岗位匹配分析',
+        action: '查看详情 →',
+        actionType: 'navigate',
+        href: '/diagnose',
+      },
+      {
+        title: '诊断 FAQ',
+        desc: '什么是五维诊断？需要准备什么？',
+        action: '了解更多 →',
+        actionType: 'navigate',
+        href: '/help#diagnose',
+      },
     ],
   },
   plan: {
     sectionTitle: '路径规划',
     cards: [
-      { title: '生成成长路径', desc: '基于诊断结果，生成 0-90 天可执行行动卡', action: '开始规划 →', actionType: 'chat', chatPrompt: '帮我制定一个 90 天的成长路径，目标是前端开发工程师' },
-      { title: '查看行动卡进度', desc: '追踪你的里程碑完成情况', action: '查看进度 →', actionType: 'navigate', href: '/plan' },
-      { title: '基于诊断结果规划', desc: '用已有的雷达数据做精准规划', action: '智能规划 →', actionType: 'chat', chatPrompt: '根据我之前的诊断结果，制定一个落地的提升计划' },
+      {
+        title: '生成成长路径',
+        desc: '基于诊断结果，生成 0-90 天可执行行动卡',
+        action: '开始规划 →',
+        actionType: 'chat',
+        chatPrompt: '帮我制定一个 90 天的成长路径，目标是前端开发工程师',
+      },
+      {
+        title: '查看行动卡进度',
+        desc: '追踪你的里程碑完成情况',
+        action: '查看进度 →',
+        actionType: 'navigate',
+        href: '/plan',
+      },
+      {
+        title: '基于诊断结果规划',
+        desc: '用已有的雷达数据做精准规划',
+        action: '智能规划 →',
+        actionType: 'chat',
+        chatPrompt: '根据我之前的诊断结果，制定一个落地的提升计划',
+      },
     ],
   },
   practice: {
     sectionTitle: '实战练兵',
     cards: [
-      { title: '模拟面试', desc: '技术 + 行为混合面试，贴近校招真实节奏', action: '开始面试 →', actionType: 'chat', chatPrompt: '来一场模拟面试，综合模式' },
-      { title: '算法刷题', desc: '出 1-2 道校招常见算法题，考思路与编码', action: '刷题 →', actionType: 'chat', chatPrompt: '出几道算法题练练，数组或字符串相关的' },
-      { title: '项目深挖', desc: '围绕你做过的项目问技术细节与量化结果', action: '项目复盘 →', actionType: 'chat', chatPrompt: '深挖一下我的项目经历，像面试官那样追问' },
+      {
+        title: '模拟面试',
+        desc: '技术 + 行为混合面试，贴近校招真实节奏',
+        action: '开始面试 →',
+        actionType: 'chat',
+        chatPrompt: '来一场模拟面试，综合模式',
+      },
+      {
+        title: '算法刷题',
+        desc: '出 1-2 道校招常见算法题，考思路与编码',
+        action: '刷题 →',
+        actionType: 'chat',
+        chatPrompt: '出几道算法题练练，数组或字符串相关的',
+      },
+      {
+        title: '项目深挖',
+        desc: '围绕你做过的项目问技术细节与量化结果',
+        action: '项目复盘 →',
+        actionType: 'chat',
+        chatPrompt: '深挖一下我的项目经历，像面试官那样追问',
+      },
     ],
   },
   info: {
     sectionTitle: '信息差填平',
     cards: [
-      { title: '最新校招资讯', desc: '获取双非友好的实习 / 校招 / 竞赛机会', action: '获取资讯 →', actionType: 'chat', chatPrompt: '' },
-      { title: '双非友好企业清单', desc: '不卡学历的公司和岗位汇总', action: '查看列表 →', actionType: 'navigate', href: '/info' },
-      { title: '秋招时间线', desc: '关键节点与投递策略指南', action: '了解时间线 →', actionType: 'navigate', href: '/help#recruitment' },
+      {
+        title: '最新校招资讯',
+        desc: '获取双非友好的实习 / 校招 / 竞赛机会',
+        action: '获取资讯 →',
+        actionType: 'chat',
+        chatPrompt: '',
+      },
+      {
+        title: '双非友好企业清单',
+        desc: '不卡学历的公司和岗位汇总',
+        action: '查看列表 →',
+        actionType: 'navigate',
+        href: '/info',
+      },
+      {
+        title: '秋招时间线',
+        desc: '关键节点与投递策略指南',
+        action: '了解时间线 →',
+        actionType: 'navigate',
+        href: '/help#recruitment',
+      },
     ],
   },
   package: {
     sectionTitle: '成果包装',
     cards: [
-      { title: '优化我的简历', desc: '粘贴简历原文，AI 帮你改写成 ATS 友好版', action: '开始优化 →', actionType: 'chat', chatPrompt: '帮我把简历优化一下，目标岗位是前端开发' },
-      { title: '项目亮点提炼', desc: '把经历讲成 STAR 结构的量化成果', action: '提炼亮点 →', actionType: 'chat', chatPrompt: '帮我把项目经历包装成面试能用的亮点' },
-      { title: '面试复盘模板', desc: '被问到学校时怎么接？表达模板在这里', action: '查看模板 →', actionType: 'navigate', href: '/package' },
+      {
+        title: '优化我的简历',
+        desc: '粘贴简历原文，AI 帮你改写成 ATS 友好版',
+        action: '开始优化 →',
+        actionType: 'chat',
+        chatPrompt: '帮我把简历优化一下，目标岗位是前端开发',
+      },
+      {
+        title: '项目亮点提炼',
+        desc: '把经历讲成 STAR 结构的量化成果',
+        action: '提炼亮点 →',
+        actionType: 'chat',
+        chatPrompt: '帮我把项目经历包装成面试能用的亮点',
+      },
+      {
+        title: '面试复盘模板',
+        desc: '被问到学校时怎么接？表达模板在这里',
+        action: '查看模板 →',
+        actionType: 'navigate',
+        href: '/package',
+      },
     ],
   },
-}
+};
 
 /** 获取当前 Skill 的图标（用于卡片区域标题装饰） */
 function SkillIcon({ name, className }: { name: SkillName; className?: string }) {
@@ -95,122 +224,122 @@ function SkillIcon({ name, className }: { name: SkillName; className?: string })
     practice: Sword,
     info: Globe,
     package: Award,
-  }
-  const Icon = iconMap[name] ?? Radar
-  return <Icon className={className} />
+  };
+  const Icon = iconMap[name] ?? Radar;
+  return <Icon className={className} />;
 }
 
 export function ChatShell() {
-  const router = useRouter()
-  const [skill, setSkill] = useState<SkillName>('diagnose')
-  const [open, setOpen] = useState(false)
-  const [conversations, setConversations] = useState<Conversation[]>([])
-  const [convKey, setConvKey] = useState(0)
-  const [activeConvId, setActiveConvId] = useState<string | null>(null)
-  const [progress, setProgress] = useState({ diagnosed: false, planned: false })
-  const [pendingPrompt, setPendingPrompt] = useState<string | null>(null)
-  const msgsRef = useRef<ChatMessage[]>([])
-  const current = SKILLS.find((s) => s.name === skill)!
+  const router = useRouter();
+  const [skill, setSkill] = useState<SkillName>('diagnose');
+  const [open, setOpen] = useState(false);
+  const [conversations, setConversations] = useState<Conversation[]>([]);
+  const [convKey, setConvKey] = useState(0);
+  const [activeConvId, setActiveConvId] = useState<string | null>(null);
+  const [progress, setProgress] = useState({ diagnosed: false, planned: false });
+  const [pendingPrompt, setPendingPrompt] = useState<string | null>(null);
+  const msgsRef = useRef<ChatMessage[]>([]);
+  const current = SKILLS.find((s) => s.name === skill)!;
 
   // 初始化：迁移旧版数据 + 载入会话历史（免登即用）
   useEffect(() => {
-    let alive = true
-    ;(async () => {
-      await migrateLegacyChats(SKILLS.map((s) => s.name)).catch(() => {})
-      const list = await loadConversations().catch(() => [])
-      if (alive) setConversations(list)
-    })()
+    let alive = true;
+    (async () => {
+      await migrateLegacyChats(SKILLS.map((s) => s.name)).catch(() => {});
+      const list = await loadConversations().catch(() => []);
+      if (alive) setConversations(list);
+    })();
     return () => {
-      alive = false
-    }
-  }, [])
+      alive = false;
+    };
+  }, []);
 
   // 读取进度标志，驱动「今日行动」卡与轻提醒（数据驱动，不再写死）
   useEffect(() => {
     setProgress({
       diagnosed: localStorage.getItem('hasDiagnosed') === 'true',
       planned: localStorage.getItem('hasPlanned') === 'true',
-    })
-  }, [])
+    });
+  }, []);
 
   const refreshConversations = async () => {
-    const list = await loadConversations().catch(() => [])
-    setConversations(list)
-  }
+    const list = await loadConversations().catch(() => []);
+    setConversations(list);
+  };
 
   // 切换上下文前，把当前「工作会话」归档进历史（正在查看历史会话时不重复归档）
   const commitCurrent = async () => {
-    if (activeConvId) return
-    const msgs = msgsRef.current
+    if (activeConvId) return;
+    const msgs = msgsRef.current;
     if (msgs.length > 0) {
-      await archiveCurrentConversation(skill, msgs).catch(() => {})
-      await clearMessages(skill).catch(() => {})
-      await refreshConversations()
-      msgsRef.current = []
+      await archiveCurrentConversation(skill, msgs).catch(() => {});
+      await clearMessages(skill).catch(() => {});
+      await refreshConversations();
+      msgsRef.current = [];
     }
-  }
+  };
 
   const handleNew = async () => {
-    await commitCurrent()
-    await clearMessages(skill).catch(() => {})
-    setActiveConvId(null)
-    msgsRef.current = []
-    setConvKey((k) => k + 1)
-    setOpen(false)
-  }
+    await commitCurrent();
+    await clearMessages(skill).catch(() => {});
+    setActiveConvId(null);
+    msgsRef.current = [];
+    setConvKey((k) => k + 1);
+    setOpen(false);
+  };
 
   const handleSkillChange = async (name: SkillName) => {
-    await commitCurrent()
-    setActiveConvId(null)
-    setSkill(name)
-    setConvKey((k) => k + 1)
-    setOpen(false)
-  }
+    await commitCurrent();
+    setActiveConvId(null);
+    setSkill(name);
+    setConvKey((k) => k + 1);
+    setOpen(false);
+  };
 
   const handleSelect = async (conv: Conversation) => {
-    await commitCurrent()
-    await saveMessages(conv.skill, conv.messages).catch(() => {})
-    setActiveConvId(conv.id)
-    setSkill(conv.skill as SkillName)
-    setConvKey((k) => k + 1)
-    setOpen(false)
-  }
+    await commitCurrent();
+    await saveMessages(conv.skill, conv.messages).catch(() => {});
+    setActiveConvId(conv.id);
+    setSkill(conv.skill as SkillName);
+    setConvKey((k) => k + 1);
+    setOpen(false);
+  };
 
   const handleDelete = async (id: string) => {
-    await deleteConversation(id).catch(() => {})
-    await refreshConversations()
+    await deleteConversation(id).catch(() => {});
+    await refreshConversations();
     if (activeConvId === id) {
-      setActiveConvId(null)
-      await clearMessages(skill).catch(() => {})
-      msgsRef.current = []
-      setConvKey((k) => k + 1)
+      setActiveConvId(null);
+      await clearMessages(skill).catch(() => {});
+      msgsRef.current = [];
+      setConvKey((k) => k + 1);
     }
-  }
+  };
 
   const handleClear = async () => {
     if (activeConvId) {
       // 正在查看某条历史会话：垃圾桶 = 删除该会话
-      await deleteConversation(activeConvId).catch(() => {})
-      await refreshConversations()
-      setActiveConvId(null)
-      await clearMessages(skill).catch(() => {})
-      msgsRef.current = []
-      setConvKey((k) => k + 1)
-      return
+      await deleteConversation(activeConvId).catch(() => {});
+      await refreshConversations();
+      setActiveConvId(null);
+      await clearMessages(skill).catch(() => {});
+      msgsRef.current = [];
+      setConvKey((k) => k + 1);
+      return;
     }
-    await clearMessages(skill).catch(() => {})
-    msgsRef.current = []
-    setConvKey((k) => k + 1)
-  }
+    await clearMessages(skill).catch(() => {});
+    msgsRef.current = [];
+    setConvKey((k) => k + 1);
+  };
 
   /** 处理 Skill 卡片点击：跳转页面对话框内触发 */
   const handleCardClick = (card: SkillCardConfig) => {
     if (card.actionType === 'navigate') {
-      router.push(card.href)
+      router.push(card.href);
     } else {
-      setPendingPrompt(card.chatPrompt)
+      setPendingPrompt(card.chatPrompt);
     }
-  }
+  };
 
   return (
     <div className="flex h-[100dvh]">
@@ -276,13 +405,13 @@ export function ChatShell() {
           pendingPrompt={pendingPrompt}
           onPendingPromptConsumed={() => setPendingPrompt(null)}
           onMessagesChange={(m) => {
-            msgsRef.current = m
+            msgsRef.current = m;
           }}
           onClear={handleClear}
         />
       </main>
     </div>
-  )
+  );
 }
 
 function ChatRoom({
@@ -294,48 +423,48 @@ function ChatRoom({
   onMessagesChange,
   onClear,
 }: {
-  skill: SkillName
-  placeholder: string
-  activeConversationId: string | null
-  pendingPrompt: string | null
-  onPendingPromptConsumed: () => void
-  onMessagesChange: (m: ChatMessage[]) => void
-  onClear: () => void
+  skill: SkillName;
+  placeholder: string;
+  activeConversationId: string | null;
+  pendingPrompt: string | null;
+  onPendingPromptConsumed: () => void;
+  onMessagesChange: (m: ChatMessage[]) => void;
+  onClear: () => void;
 }) {
-  const { messages, streaming, error, send } = useChat(skill)
-  const [text, setText] = useState('')
-  const [hasDiagnosed, setHasDiagnosed] = useState(false)
-  const [hasPlanned, setHasPlanned] = useState(false)
-  const endRef = useRef<HTMLDivElement>(null)
+  const { messages, streaming, error, send } = useChat(skill);
+  const [text, setText] = useState('');
+  const [hasDiagnosed, setHasDiagnosed] = useState(false);
+  const [hasPlanned, setHasPlanned] = useState(false);
+  const endRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
-    setHasDiagnosed(localStorage.getItem('hasDiagnosed') === 'true')
-    setHasPlanned(localStorage.getItem('hasPlanned') === 'true')
-  }, [])
+    setHasDiagnosed(localStorage.getItem('hasDiagnosed') === 'true');
+    setHasPlanned(localStorage.getItem('hasPlanned') === 'true');
+  }, []);
 
   useEffect(() => {
-    onMessagesChange(messages)
-  }, [messages, onMessagesChange])
+    onMessagesChange(messages);
+  }, [messages, onMessagesChange]);
 
   useEffect(() => {
-    endRef.current?.scrollIntoView({ behavior: 'smooth' })
-  }, [messages, streaming])
+    endRef.current?.scrollIntoView({ behavior: 'smooth' });
+  }, [messages, streaming]);
 
   // 处理从 Skill 卡片触发的对话（pendingPrompt 由父组件传入）
   useEffect(() => {
     if (pendingPrompt && pendingPrompt.trim() && !streaming) {
-      onPendingPromptConsumed()
-      send(pendingPrompt)
+      onPendingPromptConsumed();
+      send(pendingPrompt);
     }
-  }, [pendingPrompt]) // eslint-disable-line react-hooks/exhaustive-deps
+  }, [pendingPrompt]); // eslint-disable-line react-hooks/exhaustive-deps
 
   const submit = () => {
-    if (!text.trim() || streaming) return
-    send(text)
-    setText('')
-  }
+    if (!text.trim() || streaming) return;
+    send(text);
+    setText('');
+  };
 
-  const clearLabel = activeConversationId ? '删除此会话' : '清空对话'
+  const clearLabel = activeConversationId ? '删除此会话' : '清空对话';
 
   return (
     <>
@@ -349,7 +478,9 @@ function ChatRoom({
             <ProseBubble tone={m.role}>
               {m.content || (m.role === 'assistant' && !m.done ? '正在思考…' : '')}
             </ProseBubble>
-            {m.role === 'assistant' && m.card != null && <SkillCardView name={skill} data={m.card} />}
+            {m.role === 'assistant' && m.card != null && (
+              <SkillCardView name={skill} data={m.card} />
+            )}
           </div>
         ))}
         <div ref={endRef} />
@@ -391,8 +522,8 @@ function ChatRoom({
             onChange={(e) => setText(e.target.value)}
             onKeyDown={(e) => {
               if (e.key === 'Enter' && !e.shiftKey) {
-                e.preventDefault()
-                submit()
+                e.preventDefault();
+                submit();
               }
             }}
             placeholder={placeholder}
@@ -408,5 +539,5 @@ function ChatRoom({
         </div>
       </footer>
     </>
-  )
+  );
 }

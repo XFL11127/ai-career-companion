@@ -1,35 +1,35 @@
-'use client'
-import { useEffect, useState } from 'react'
-import Link from 'next/link'
-import { useSkill } from '@/lib/useSkill'
-import { ArrowRight, PartyPopper } from 'lucide-react'
-import { saveUserProfile } from '@/lib/memory'
-import { Card, LoadingState, ErrorState, EmptyState } from '@/components/skill-ui'
-import { MemoryPanel } from '@/components/MemoryPanel'
+'use client';
+import { useEffect, useState } from 'react';
+import Link from 'next/link';
+import { useSkill } from '@/lib/useSkill';
+import { ArrowRight, PartyPopper } from 'lucide-react';
+import { saveUserProfile } from '@/lib/memory';
+import { Card, LoadingState, ErrorState, EmptyState } from '@/components/skill-ui';
+import { MemoryPanel } from '@/components/MemoryPanel';
 
 export default function PackagePage() {
-  const { data, loading, error, run } = useSkill('package')
-  const [resumeText, setResumeText] = useState('')
-  const [targetRole, setTargetRole] = useState('')
-  const [showBadge, setShowBadge] = useState(false)
+  const { data, loading, error, run } = useSkill('package');
+  const [resumeText, setResumeText] = useState('');
+  const [targetRole, setTargetRole] = useState('');
+  const [showBadge, setShowBadge] = useState(false);
 
   useEffect(() => {
     if (data) {
       if (!localStorage.getItem('badge-package-shown')) {
-        setShowBadge(true)
-        localStorage.setItem('badge-package-shown', 'true')
+        setShowBadge(true);
+        localStorage.setItem('badge-package-shown', 'true');
       }
-      const target = targetRole || '前端开发工程师'
-      const summary = `目标岗位：${target}，已优化简历`
-      saveUserProfile(summary)
+      const target = targetRole || '前端开发工程师';
+      const summary = `目标岗位：${target}，已优化简历`;
+      saveUserProfile(summary);
     }
-  }, [data])
+  }, [data]);
 
   const start = () =>
     run({
       resumeText: resumeText || '（示例）双非大三，做过课程项目，无实习经历，熟悉 HTML/CSS/JS',
       targetRole: targetRole || '前端开发工程师',
-    })
+    });
 
   return (
     <main className="mx-auto max-w-3xl px-6 py-12">
@@ -39,7 +39,8 @@ export default function PackagePage() {
 
       {showBadge && data && (
         <div className="mt-4 rounded-lg bg-amber-50 border border-amber-200 px-4 py-3 text-sm text-amber-800">
-          <PartyPopper className="mr-1.5 inline h-5 w-5 align-[-2px]" />成果包装达成！你的经历已焕然一新
+          <PartyPopper className="mr-1.5 inline h-5 w-5 align-[-2px]" />
+          成果包装达成！你的经历已焕然一新
         </div>
       )}
 
@@ -96,11 +97,14 @@ export default function PackagePage() {
 
       {data && !loading && (
         <div className="mt-6 text-center">
-          <Link href="/" className="inline-flex items-center gap-2 rounded-full bg-amber-500 px-5 py-2.5 text-sm font-medium text-white transition hover:bg-amber-600">
+          <Link
+            href="/"
+            className="inline-flex items-center gap-2 rounded-full bg-amber-500 px-5 py-2.5 text-sm font-medium text-white transition hover:bg-amber-600"
+          >
             回到首页 <ArrowRight className="h-4 w-4" />
           </Link>
         </div>
       )}
     </main>
-  )
+  );
 }
