@@ -1,29 +1,28 @@
-'use client'
-import { useEffect, useState } from 'react'
-import Link from 'next/link'
-import { useSkill } from '@/lib/useSkill'
-import { ArrowRight, PartyPopper } from 'lucide-react'
-import { saveUserProfile } from '@/lib/memory'
-import { Card, Pill, LoadingState, ErrorState, EmptyState } from '@/components/skill-ui'
-import { MemoryPanel } from '@/components/MemoryPanel'
+'use client';
+import { useEffect, useState } from 'react';
+import Link from 'next/link';
+import { useSkill } from '@/lib/useSkill';
+import { ArrowRight, PartyPopper } from 'lucide-react';
+import { saveUserProfile } from '@/lib/memory';
+import { Card, Pill, LoadingState, ErrorState, EmptyState } from '@/components/skill-ui';
+import { MemoryPanel } from '@/components/MemoryPanel';
 
 export default function InfoPage() {
-  const { data, loading, error, run } = useSkill('info')
-  const [showBadge, setShowBadge] = useState(false)
+  const { data, loading, error, run } = useSkill('info');
+  const [showBadge, setShowBadge] = useState(false);
 
   useEffect(() => {
     if (data) {
       if (!localStorage.getItem('badge-info-shown')) {
-        setShowBadge(true)
-        localStorage.setItem('badge-info-shown', 'true')
+        setShowBadge(true);
+        localStorage.setItem('badge-info-shown', 'true');
       }
-      const roles = data.jobs?.map(j => j.role) || []
-      const summary = roles.length > 0
-        ? `关注岗位：${roles.slice(0, 2).join('、')}`
-        : '正在搜索双非友好机会'
-      saveUserProfile(summary)
+      const roles = data.jobs?.map((j) => j.role) || [];
+      const summary =
+        roles.length > 0 ? `关注岗位：${roles.slice(0, 2).join('、')}` : '正在搜索双非友好机会';
+      saveUserProfile(summary);
     }
-  }, [data])
+  }, [data]);
 
   return (
     <main className="mx-auto max-w-3xl px-6 py-12">
@@ -33,7 +32,8 @@ export default function InfoPage() {
 
       {showBadge && data && (
         <div className="mt-4 rounded-lg bg-amber-50 border border-amber-200 px-4 py-3 text-sm text-amber-800">
-          <PartyPopper className="mr-1.5 inline h-5 w-5 align-[-2px]" />信息聚合达成！双非友好机会已为你准备
+          <PartyPopper className="mr-1.5 inline h-5 w-5 align-[-2px]" />
+          信息聚合达成！双非友好机会已为你准备
         </div>
       )}
 
@@ -80,11 +80,14 @@ export default function InfoPage() {
 
       {data && !loading && (
         <div className="mt-6 text-center">
-          <Link href="/package" className="inline-flex items-center gap-2 rounded-full bg-amber-500 px-5 py-2.5 text-sm font-medium text-white transition hover:bg-amber-600">
+          <Link
+            href="/package"
+            className="inline-flex items-center gap-2 rounded-full bg-amber-500 px-5 py-2.5 text-sm font-medium text-white transition hover:bg-amber-600"
+          >
             包装你的成果 <ArrowRight className="h-4 w-4" />
           </Link>
         </div>
       )}
     </main>
-  )
+  );
 }

@@ -1,36 +1,42 @@
-'use client'
-import { useEffect, useState } from 'react'
-import Link from 'next/link'
-import { useSkill } from '@/lib/useSkill'
-import { ArrowRight, PartyPopper } from 'lucide-react'
-import { saveUserProfile } from '@/lib/memory'
-import { Card, LoadingState, ErrorState, EmptyState } from '@/components/skill-ui'
-import { MemoryPanel } from '@/components/MemoryPanel'
+'use client';
+import { useEffect, useState } from 'react';
+import Link from 'next/link';
+import { useSkill } from '@/lib/useSkill';
+import { ArrowRight, PartyPopper } from 'lucide-react';
+import { saveUserProfile } from '@/lib/memory';
+import { Card, LoadingState, ErrorState, EmptyState } from '@/components/skill-ui';
+import { MemoryPanel } from '@/components/MemoryPanel';
 
-type Mode = 'interview' | 'algorithm' | 'project'
+type Mode = 'interview' | 'algorithm' | 'project';
 
 export default function PracticePage() {
-  const { data, loading, error, run } = useSkill('practice')
-  const [mode, setMode] = useState<Mode>('interview')
-  const [topic, setTopic] = useState('')
-  const [showBadge, setShowBadge] = useState(false)
+  const { data, loading, error, run } = useSkill('practice');
+  const [mode, setMode] = useState<Mode>('interview');
+  const [topic, setTopic] = useState('');
+  const [showBadge, setShowBadge] = useState(false);
 
   useEffect(() => {
     if (data) {
       if (!localStorage.getItem('badge-practice-shown')) {
-        setShowBadge(true)
-        localStorage.setItem('badge-practice-shown', 'true')
+        setShowBadge(true);
+        localStorage.setItem('badge-practice-shown', 'true');
       }
-      const modeLabel: Record<Mode, string> = { interview: '模拟面试', algorithm: '算法刷题', project: '项目实战' }
-      const summary = topic
-        ? `${modeLabel[mode]}练习：${topic}`
-        : `${modeLabel[mode]}练习`
-      saveUserProfile(summary)
+      const modeLabel: Record<Mode, string> = {
+        interview: '模拟面试',
+        algorithm: '算法刷题',
+        project: '项目实战',
+      };
+      const summary = topic ? `${modeLabel[mode]}练习：${topic}` : `${modeLabel[mode]}练习`;
+      saveUserProfile(summary);
     }
-  }, [data])
+  }, [data]);
 
-  const start = () => run({ mode, topic: topic || undefined })
-  const modeLabel: Record<Mode, string> = { interview: '模拟面试', algorithm: '算法刷题', project: '项目实战' }
+  const start = () => run({ mode, topic: topic || undefined });
+  const modeLabel: Record<Mode, string> = {
+    interview: '模拟面试',
+    algorithm: '算法刷题',
+    project: '项目实战',
+  };
 
   return (
     <main className="mx-auto max-w-3xl px-6 py-12">
@@ -40,7 +46,8 @@ export default function PracticePage() {
 
       {showBadge && data && (
         <div className="mt-4 rounded-lg bg-amber-50 border border-amber-200 px-4 py-3 text-sm text-amber-800">
-          <PartyPopper className="mr-1.5 inline h-5 w-5 align-[-2px]" />实战练兵达成！每次练习都是进步
+          <PartyPopper className="mr-1.5 inline h-5 w-5 align-[-2px]" />
+          实战练兵达成！每次练习都是进步
         </div>
       )}
 
@@ -51,7 +58,9 @@ export default function PracticePage() {
               key={m}
               onClick={() => setMode(m)}
               className={`rounded-full px-4 py-1.5 text-sm transition ${
-                mode === m ? 'bg-accent text-paper' : 'border border-ink/15 text-ink/60 hover:border-ink/40'
+                mode === m
+                  ? 'bg-accent text-paper'
+                  : 'border border-ink/15 text-ink/60 hover:border-ink/40'
               }`}
             >
               {modeLabel[m]}
@@ -98,11 +107,14 @@ export default function PracticePage() {
 
       {data && !loading && (
         <div className="mt-6 text-center">
-          <Link href="/info" className="inline-flex items-center gap-2 rounded-full bg-amber-500 px-5 py-2.5 text-sm font-medium text-white transition hover:bg-amber-600">
+          <Link
+            href="/info"
+            className="inline-flex items-center gap-2 rounded-full bg-amber-500 px-5 py-2.5 text-sm font-medium text-white transition hover:bg-amber-600"
+          >
             填补信息差 <ArrowRight className="h-4 w-4" />
           </Link>
         </div>
       )}
     </main>
-  )
+  );
 }

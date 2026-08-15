@@ -1,14 +1,14 @@
-'use client'
+'use client';
 
-import Link from 'next/link'
-import { useSession, signOut } from 'next-auth/react'
-import { LogIn, LogOut, UserCircle2 } from 'lucide-react'
+import Link from 'next/link';
+import { useSession, signOut } from 'next-auth/react';
+import { LogIn, LogOut, UserCircle2 } from 'lucide-react';
 
 export function NavAccount() {
-  const { data: session, status } = useSession()
+  const { data: session, status } = useSession();
 
   if (status === 'loading') {
-    return <span className="h-4 w-4 rounded-full bg-ink/10" />
+    return <span className="h-4 w-4 rounded-full bg-ink/10" />;
   }
 
   if (session?.user) {
@@ -24,7 +24,7 @@ export function NavAccount() {
         </span>
         <LogOut className="h-4 w-4" />
       </button>
-    )
+    );
   }
 
   return (
@@ -36,5 +36,5 @@ export function NavAccount() {
       <LogIn className="h-4 w-4" />
       <span className="hidden md:inline">登录</span>
     </Link>
-  )
+  );
 }

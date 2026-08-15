@@ -7,29 +7,29 @@
  */
 
 interface Entry {
-  value: unknown
-  expireAt: number
+  value: unknown;
+  expireAt: number;
 }
 
-const store = new Map<string, Entry>()
-const MAX_KEYS = 2000
+const store = new Map<string, Entry>();
+const MAX_KEYS = 2000;
 
 export function cacheGet<T = unknown>(key: string): T | undefined {
-  const e = store.get(key)
-  if (!e) return undefined
+  const e = store.get(key);
+  if (!e) return undefined;
   if (Date.now() > e.expireAt) {
-    store.delete(key)
-    return undefined
+    store.delete(key);
+    return undefined;
   }
-  return e.value as T
+  return e.value as T;
 }
 
 export function cacheSet(key: string, value: unknown, ttlMs = 5 * 60_000): void {
-  store.set(key, { value, expireAt: Date.now() + ttlMs })
+  store.set(key, { value, expireAt: Date.now() + ttlMs });
 
   // 防止 Map 无限增长：超阈值时清理最久未用的一条
   if (store.size > MAX_KEYS) {
-    const oldest = store.keys().next().value
-    if (oldest !== undefined) store.delete(oldest)
+    const oldest = store.keys().next().value;
+    if (oldest !== undefined) store.delete(oldest);
   }
 }

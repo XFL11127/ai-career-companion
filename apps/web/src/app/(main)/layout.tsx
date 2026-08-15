@@ -1,5 +1,5 @@
-import type { ReactNode } from 'react'
-import Link from 'next/link'
+import type { ReactNode } from 'react';
+import Link from 'next/link';
 import {
   Radar,
   Route,
@@ -11,8 +11,8 @@ import {
   HelpCircle,
   Settings,
   type LucideIcon,
-} from 'lucide-react'
-import { NavAccount } from '@/components/NavAccount'
+} from 'lucide-react';
+import { NavAccount } from '@/components/NavAccount';
 
 const SKILL_NAV = [
   { href: '/diagnose', label: '诊断', icon: Radar },
@@ -20,16 +20,16 @@ const SKILL_NAV = [
   { href: '/practice', label: '练兵', icon: Target },
   { href: '/info', label: '信息差', icon: Newspaper },
   { href: '/package', label: '包装', icon: Briefcase },
-]
+];
 
-type NavItem = { href: string; label: string; icon: LucideIcon; button?: boolean }
+type NavItem = { href: string; label: string; icon: LucideIcon; button?: boolean };
 
 const UTIL_NAV: NavItem[] = [
   { href: '/', label: '首页', icon: Home, button: true },
   { href: '/analytics', label: '数据看板', icon: BarChart3 },
   { href: '/help', label: '帮助', icon: HelpCircle },
   { href: '/settings', label: '设置', icon: Settings },
-]
+];
 
 export default function MainLayout({ children }: { children: ReactNode }) {
   return (
@@ -45,7 +45,7 @@ export default function MainLayout({ children }: { children: ReactNode }) {
           </Link>
           <nav className="flex flex-1 flex-wrap items-center gap-1">
             {SKILL_NAV.map((n) => {
-              const Icon = n.icon
+              const Icon = n.icon;
               return (
                 <Link
                   key={n.href}
@@ -54,12 +54,12 @@ export default function MainLayout({ children }: { children: ReactNode }) {
                 >
                   <Icon className="h-4 w-4" /> <span className="hidden sm:inline">{n.label}</span>
                 </Link>
-              )
+              );
             })}
           </nav>
           <nav className="flex shrink-0 items-center gap-0.5">
             {UTIL_NAV.map((n) => {
-              const Icon = n.icon
+              const Icon = n.icon;
               return (
                 <Link
                   key={n.href}
@@ -77,7 +77,7 @@ export default function MainLayout({ children }: { children: ReactNode }) {
                     {n.label}
                   </span>
                 </Link>
-              )
+              );
             })}
             <NavAccount />
           </nav>
@@ -85,5 +85,5 @@ export default function MainLayout({ children }: { children: ReactNode }) {
       </header>
       {children}
     </div>
-  )
+  );
 }
