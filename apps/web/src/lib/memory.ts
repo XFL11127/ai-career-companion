@@ -266,6 +266,29 @@ export async function deleteConversation(id: string): Promise<void> {
   }
 }
 
+/** 云端拉取的历史会话合并到本地：按 id 去重，云端 updatedAt 优先，上限 MAX_CONVERSATIONS。 */
+export async function importConversations(incoming: Conversation[]): Promise<void> {
+  if (!incoming.length) return;
+  const db = await openDB();
+  try {
+    const list = (await getChat<Conversation[]>(db, CONVERSATIONS_KEY)) ?? [];
+    const map = new Map<string, Conversation>();
+    for (const c of list) map.set(c.id, c);
+    for (const c of incoming) {
+      const existing = map.get(c.id);
+      if (!existing || (c.updatedAt || 0) >= (existing.updatedAt || 0)) {
+        map.set(c.id, c);
+      }
+    }
+    const next = Array.from(map.values())
+      .sort((a, b) => b.updatedAt - a.updatedAt)
+      .slice(0, MAX_CONVERSATIONS);
+    await putChat(db, CONVERSATIONS_KEY, next);
+  } finally {
+    db.close();
+  }
+}
+
 /** 把旧版“每 Skill 一份当前聊天”数据迁移成会话列表（一次性）。 */
 export async function migrateLegacyChats(skills: string[]): Promise<void> {
   const db = await openDB();
