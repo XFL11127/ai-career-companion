@@ -266,6 +266,29 @@ export async function deleteConversation(id: string): Promise<void> {
   }
 }
 
+/**
+ * 登录后从云端拉取的会话列表批量写入本地（供 sync.ts 调用）。
+ * 语义：云端优先——同 id 以云端为准，本地缺失的会话保留；
+ * 合并后按 updatedAt 倒序、上限 MAX_CONVERSATIONS。
+ */
+export async function importConversations(convs: Conversation[]): Promise<void> {
+  if (!convs.length) return;
+  const db = await openDB();
+  try {
+    const existing = (await getChat<Conversation[]>(db, CONVERSATIONS_KEY)) ?? [];
+    const byId = new Map<string, Conversation>();
+    for (const c of existing) byId.set(c.id, c);
+    // 云端优先：同 id 覆盖本地
+    for (const c of convs) byId.set(c.id, c);
+    const next = Array.from(byId.values())
+      .sort((a, b) => b.updatedAt - a.updatedAt)
+      .slice(0, MAX_CONVERSATIONS);
+    await putChat(db, CONVERSATIONS_KEY, next);
+  } finally {
+    db.close();
+  }
+}
+
 /** 把旧版“每 Skill 一份当前聊天”数据迁移成会话列表（一次性）。 */
 export async function migrateLegacyChats(skills: string[]): Promise<void> {
   const db = await openDB();

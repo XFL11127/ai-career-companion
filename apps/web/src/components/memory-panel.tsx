@@ -43,10 +43,10 @@ export function MemoryPanel({ open, onClose }: { open: boolean; onClose: () => v
 
   const doSearch = async () => {
     const q = query.trim();
-    if (!q) return;
+    if (!q || !user) return;
     setSearching(true);
     setSearched(true);
-    const r = await searchMemory(q, 5).catch(() => ({ results: [] }));
+    const r = await searchMemory(user.id, q, 5).catch(() => ({ results: [] }));
     setResults(r.results ?? []);
     setSearching(false);
   };
