@@ -1,9 +1,14 @@
 node_modules
 dist
-.next
-turbo-cache
+.next*
+.turbo*
 .env
 .env.local
 *.log
 pnpm-debug.log
+*.ndjson
 coverage
+.idea
+.trae
+.trae/
+.vercel

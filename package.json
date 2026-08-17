@@ -1,14 +1,20 @@
 {
-  "name": "AI Career Companion",
+  "name": "ai-career-companion",
   "version": "1.0.0",
-  "description": "",
-  "main": "index.js",
+  "description": "AI学职同伴 - 面向双非学生的AI Copilot式学职陪伴产品",
   "private": true,
+  "packageManager": "npm@11.16.0",
+  "engines": {
+    "node": ">=18.17.0"
+  },
   "scripts": {
     "test": "echo \"Error: no test specified\" && exit 1",
     "dev": "turbo dev",
+    "web": "npm --workspace @ai-career-companion/web run dev",
+    "start": "npm run web",
     "build": "turbo build",
     "type-check": "turbo run type-check",
+    "check": "npm run type-check",
     "lint": "eslint .",
     "lint:fix": "eslint . --fix",
     "format": "prettier --write \"**/*.{ts,js,json}\"",
@@ -17,13 +23,12 @@
   "keywords": [],
   "author": "",
   "license": "ISC",
-  "devEngines": {
-    "packageManager": {
-      "name": "pnpm",
-      "version": "^11.14.0",
-      "onFail": "download"
-    }
-  },
+  "workspaces": [
+    "apps/*",
+    "packages/types",
+    "packages/utils",
+    "packages/llm"
+  ],
   "type": "module",
   "devDependencies": {
     "@babel/parser": "^8.0.4",
@@ -37,6 +42,6 @@
     "globals": "^17.7.0",
     "prettier": "^3.9.5",
     "turbo": "^2.10.5",
-    "typescript": "^7.0.2"
+    "typescript": "^5.9.3"
   }
 }

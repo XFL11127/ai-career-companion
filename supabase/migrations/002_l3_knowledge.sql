@@ -1,0 +1,58 @@
+-- L3 知识记忆层迁移（对齐参赛方案 v3.6）
+-- 1. 补充 Worker 调用的 match_memories RPC 函数
+-- 2. 预置 L3 静态知识种子数据（MVP 阶段降级方案，未来升级为 pgvector 动态向量检索）
+
+-- =================================================================
+-- 1. match_memories：向量余弦相似度检索（Worker POST /api/memory/search 调用）
+-- =================================================================
+create or replace function match_memories(
+  query_embedding vector(1536),
+  user_id_param uuid,
+  match_count int default 5
+) returns table (
+  id uuid,
+  content text,
+  layer text,
+  similarity float
+) language plpgsql as $$
+begin
+  return query
+  select
+    m.id,
+    m.content,
+    m.layer,
+    1 - (m.embedding <=> query_embedding) as similarity
+  from memories m
+  where (m.user_id = user_id_param or m.user_id is null)
+    and m.embedding is not null
+  order by m.embedding <=> query_embedding
+  limit match_count;
+end;
+$$;
+
+-- =================================================================
+-- 2. L3 知识种子数据（双非学生专属职业知识图谱）
+-- =================================================================
+-- 使用 NULL user_id 存储跨用户共享知识（系统级，不属于任何单一用户）
+-- 这些种子数据在 MVP 阶段也通过前端 l3-knowledge.ts 提供，此处作为向量检索数据源（需 Worker 生成嵌入后生效）
+
+-- 注意：以下插入的 embedding 为 null，需要 Worker 后台任务或首次调用时生成向量。
+-- MVP 阶段前端优先使用 l3-knowledge.ts 静态匹配，Worker API 作为兼容预留。
+
+insert into memories (user_id, content, layer, embedding) values
+  (null, '前端开发是双非计算机专业学生最容易切入的岗位方向，核心技能包括HTML CSS JavaScript基础、React或Vue框架、TypeScript。建议在校期间完成2到3个完整项目并部署上线。', 'knowledge', null),
+  (null, '数据分析是双非学生高性价比选择，门槛相对低，核心技能包括SQL Excel Python pandas。行业需求广泛涵盖互联网金融零售咨询，不强制要求名校背景。', 'knowledge', null),
+  (null, '软件测试是双非学生高上岸率方向，入门门槛低，学习周期3到6个月。核心技能包括测试理论、用例设计、接口测试Postman、自动化测试Selenium。', 'knowledge', null),
+  (null, '算法能力是校招技术岗核心考核项，双非学生建议基础阶段刷完剑指Offer加LeetCode热题100，进阶阶段按标签分类刷题，冲刺阶段做企业真题。', 'knowledge', null),
+  (null, '实习是双非学生最好的学历平权工具，策略是尽早投递优先选有转正机会岗位。先从中小公司做起积累经验，实习期间最重要是用STAR法则将经历包装成故事。', 'knowledge', null),
+  (null, '校招时间线：秋招7到11月是最大规模招聘，金九银十，提前批7月开始。春招2到5月是补录岗位数量少但竞争相对小。双非学生策略是秋招主攻春招保底。', 'knowledge', null),
+  (null, '双非学生简历黄金法则：用技术栈加量化成果加业务价值三段式写项目经历，所有描述用STAR法则，控制在一页A4内PDF格式投递。', 'knowledge', null),
+  (null, '双非学生面试策略：自我介绍用我是谁加我能做什么加我为什么适合的三段式，遇到学历提问承认后转化强调自学能力，反问环节问技术栈和新人培养机制。', 'knowledge', null),
+  (null, '新一线或二线城市就业优势：成都游戏互联网生活成本低，武汉光谷科技企业密集，西安军工IT外包稳定，南京软件外包，杭州电商互联网，苏州制造业数字化岗位多。', 'knowledge', null),
+  (null, '考研考公考编是双非学生常见选择，如果目标岗位要求硕士则考研，期望稳定工作则考公，有清晰职业方向则优先就业。三者可并行准备但时间规划需慎重。', 'knowledge', null),
+  (null, 'AI大模型方向对双非学生的新机会：Prompt工程师、AI应用开发、AI产品经理等新岗位更看重工程落地能力而非论文。建议掌握LangChain等框架并动手搭建RAG应用。', 'knowledge', null),
+  (null, '产品经理岗位对专业背景包容度高，双非文理科学生都可以尝试。核心能力包括需求分析、原型设计Figma、数据分析、沟通协作。建议参加iCAN等产品类比赛积累作品集。', 'knowledge', null),
+  (null, '运营岗位是双非文科学生最友好选择，不限专业门槛适中。细分方向包括内容运营、用户运营、社群运营、新媒体运营。建议在校运营个人自媒体账号用真实数据证明能力。', 'knowledge', null),
+  (null, '双非友好企业类型包括快速增长的独角兽、传统行业数字化转型企业、外包驻场公司、二线城市本地企业、外企在华研发中心。建议关注牛客网双非上岸板块获取真实信息。', 'knowledge', null),
+  (null, '学科竞赛是双非学生重要简历加分项，推荐蓝桥杯门槛适中双非友好，ACM含金量高但门槛也高。至少拿一个省级以上奖项作为简历亮点，但不能替代项目和实习。', 'knowledge', null)
+on conflict do nothing;
