@@ -44,5 +44,8 @@
     "prettier": "^3.9.5",
     "turbo": "^2.10.5",
     "typescript": "^5.9.3"
+  },
+  "dependencies": {
+    "next": "^15.5.7"
   }
 }
