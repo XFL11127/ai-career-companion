@@ -91,7 +91,12 @@ export function loadPosts(): Post[] {
 }
 
 export function savePost(post: Omit<Post, 'id' | 'createdAt'>): Post {
-  const item: Post = { ...post, status: post.status ?? 'pending', id: uid(), createdAt: Date.now() };
+  const item: Post = {
+    ...post,
+    status: post.status ?? 'pending',
+    id: uid(),
+    createdAt: Date.now(),
+  };
   const list = loadPosts();
   list.unshift(item);
   writeList(POSTS_KEY, list);
@@ -119,7 +124,10 @@ export function addComment(postId: string, body: string, author: string): Commen
   const item: Comment = { id: uid(), postId, body, author, createdAt: Date.now() };
   const list = loadComments(postId);
   list.push(item);
-  writeList(COMMENTS_KEY, [...readList<Comment>(COMMENTS_KEY).filter((c) => c.postId !== postId), ...list]);
+  writeList(COMMENTS_KEY, [
+    ...readList<Comment>(COMMENTS_KEY).filter((c) => c.postId !== postId),
+    ...list,
+  ]);
   return item;
 }
 
@@ -147,9 +155,7 @@ export function replyFeedback(id: string, reply: string): void {
 
 /** 审核社区帖子：通过 / 驳回（管理员/老师在后台操作） */
 export function reviewPost(id: string, decision: 'approved' | 'rejected'): void {
-  const list = readList<Post>(POSTS_KEY).map((p) =>
-    p.id === id ? { ...p, status: decision } : p
-  );
+  const list = readList<Post>(POSTS_KEY).map((p) => (p.id === id ? { ...p, status: decision } : p));
   writeList(POSTS_KEY, list);
 }
 

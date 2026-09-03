@@ -76,7 +76,13 @@ function ensureSeed(): void {
   const libs = readList<KBLib>(LIBS_KEY);
   if (libs.length === 0) {
     writeList(LIBS_KEY, [
-      { id: DEFAULT_LIB_ID, name: '资源库（默认）', isDefault: true, protected: true, ownerRole: 'teacher' },
+      {
+        id: DEFAULT_LIB_ID,
+        name: '资源库（默认）',
+        isDefault: true,
+        protected: true,
+        ownerRole: 'teacher',
+      },
     ]);
   }
 }

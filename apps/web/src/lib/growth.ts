@@ -266,7 +266,9 @@ export function loadAbilitySnapshots(): AbilitySnapshot[] {
     if (!Array.isArray(parsed)) return [];
     return parsed.filter(
       (s): s is AbilitySnapshot =>
-        !!s && typeof (s as AbilitySnapshot).date === 'string' && Array.isArray((s as AbilitySnapshot).radar)
+        !!s &&
+        typeof (s as AbilitySnapshot).date === 'string' &&
+        Array.isArray((s as AbilitySnapshot).radar)
     );
   } catch {
     return [];

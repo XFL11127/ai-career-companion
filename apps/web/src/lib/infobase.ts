@@ -162,7 +162,10 @@ export function loadContributions(): InfoItem[] {
 }
 
 /** 审核（未来由高校老师/系统维护员在后台执行；此处仅为本地占位）。 */
-export function reviewContribution(id: string, decision: 'published' | 'rejected'): InfoItem | null {
+export function reviewContribution(
+  id: string,
+  decision: 'published' | 'rejected'
+): InfoItem | null {
   const list = loadContributions();
   const idx = list.findIndex((c) => c.id === id);
   if (idx < 0) return null;
@@ -197,7 +200,9 @@ export function saveNote(input: NoteInput, ownerId?: string, existingId?: string
     url: '',
     tags: [],
     ownerId,
-    createdAt: existingId ? (list.find((n) => n.id === existingId)?.createdAt ?? Date.now()) : Date.now(),
+    createdAt: existingId
+      ? (list.find((n) => n.id === existingId)?.createdAt ?? Date.now())
+      : Date.now(),
     updatedAt: Date.now(),
   };
   const next = list.filter((n) => n.id !== item.id);

@@ -141,8 +141,8 @@ export function KnowledgeBase() {
       >
         <Upload className="mx-auto h-6 w-6 text-ink/30" />
         <p className="mt-2 text-sm text-ink/50">
-          拖入或点击上传文件（doc / ppt / pdf / 图片）。图片与 PDF 支持浏览器内预览；
-          docx/ppt 文本解析待接入后端。
+          拖入或点击上传文件（doc / ppt / pdf / 图片）。图片与 PDF 支持浏览器内预览； docx/ppt
+          文本解析待接入后端。
         </p>
         <label className="mt-3 inline-block cursor-pointer rounded-full bg-accent px-4 py-1.5 text-xs font-medium text-paper">
           选择文件
@@ -190,7 +190,8 @@ export function KnowledgeBase() {
                     onClick={() => setEditing(it)}
                     className="rounded-full bg-ink/5 px-2.5 py-1 text-xs text-ink/60 hover:text-ink"
                   >
-                    <Pencil className="mr-1 inline h-3 w-3" />编辑
+                    <Pencil className="mr-1 inline h-3 w-3" />
+                    编辑
                   </button>
                   <button
                     onClick={() => {
@@ -201,7 +202,8 @@ export function KnowledgeBase() {
                     }}
                     className="rounded-full bg-ink/5 px-2.5 py-1 text-xs text-ink/60 hover:text-red-500"
                   >
-                    <Trash2 className="mr-1 inline h-3 w-3" />删除
+                    <Trash2 className="mr-1 inline h-3 w-3" />
+                    删除
                   </button>
                 </>
               )}
@@ -266,7 +268,10 @@ export function KnowledgeBase() {
           className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 p-4"
           onClick={() => setPreview(null)}
         >
-          <div className="max-h-[80vh] w-full max-w-2xl overflow-auto rounded-2xl bg-paper p-4" onClick={(e) => e.stopPropagation()}>
+          <div
+            className="max-h-[80vh] w-full max-w-2xl overflow-auto rounded-2xl bg-paper p-4"
+            onClick={(e) => e.stopPropagation()}
+          >
             <div className="mb-2 flex items-center justify-between">
               <p className="text-sm font-medium text-ink">{preview.title}</p>
               <button onClick={() => setPreview(null)} className="text-ink/40 hover:text-ink">
@@ -295,7 +300,10 @@ export function KnowledgeBase() {
           className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 p-4"
           onClick={() => setEditing(null)}
         >
-          <div className="w-full max-w-md rounded-2xl bg-paper p-5" onClick={(e) => e.stopPropagation()}>
+          <div
+            className="w-full max-w-md rounded-2xl bg-paper p-5"
+            onClick={(e) => e.stopPropagation()}
+          >
             <p className="mb-3 text-sm font-semibold text-ink">
               {editing.id ? '编辑条目' : '新增条目'}
             </p>
@@ -312,13 +320,17 @@ export function KnowledgeBase() {
               className="mb-3 w-full rounded-xl border border-ink/15 px-3 py-2 text-sm outline-none focus:border-accent"
             />
             <div className="flex justify-end gap-2">
-              <button onClick={() => setEditing(null)} className="rounded-full px-3 py-1.5 text-sm text-ink/50">
+              <button
+                onClick={() => setEditing(null)}
+                className="rounded-full px-3 py-1.5 text-sm text-ink/50"
+              >
                 取消
               </button>
               <button
                 onClick={() => {
                   const title = (document.getElementById('kb-title') as HTMLInputElement).value;
-                  const summary = (document.getElementById('kb-summary') as HTMLTextAreaElement).value;
+                  const summary = (document.getElementById('kb-summary') as HTMLTextAreaElement)
+                    .value;
                   const next: KBItem = {
                     ...editing,
                     title: title || '未命名',

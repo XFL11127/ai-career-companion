@@ -38,13 +38,23 @@ type Tab = 'feed' | 'post' | 'mine' | 'feedback' | 'channels';
 function StatusBadge({ status }: { status: Post['status'] }) {
   const map = {
     pending: { cls: 'bg-amber-100 text-amber-700', icon: Clock, label: POST_STATUS_LABEL.pending },
-    approved: { cls: 'bg-forest/10 text-forest', icon: CheckCircle2, label: POST_STATUS_LABEL.approved },
-    rejected: { cls: 'bg-red-50 text-red-600', icon: ShieldCheck, label: POST_STATUS_LABEL.rejected },
+    approved: {
+      cls: 'bg-forest/10 text-forest',
+      icon: CheckCircle2,
+      label: POST_STATUS_LABEL.approved,
+    },
+    rejected: {
+      cls: 'bg-red-50 text-red-600',
+      icon: ShieldCheck,
+      label: POST_STATUS_LABEL.rejected,
+    },
   } as const;
   const m = map[status];
   const Icon = m.icon;
   return (
-    <span className={`inline-flex items-center gap-1 rounded-full px-2 py-0.5 text-[11px] ${m.cls}`}>
+    <span
+      className={`inline-flex items-center gap-1 rounded-full px-2 py-0.5 text-[11px] ${m.cls}`}
+    >
       <Icon className="h-3 w-3" />
       {m.label}
     </span>
@@ -94,7 +104,9 @@ export function CommunityModule() {
             onClick={() => setTab(key)}
             className={
               'inline-flex items-center gap-1.5 rounded-full px-3 py-1.5 text-sm transition ' +
-              (tab === key ? 'bg-accent text-paper' : 'border border-ink/15 bg-paper text-ink/60 hover:text-ink')
+              (tab === key
+                ? 'bg-accent text-paper'
+                : 'border border-ink/15 bg-paper text-ink/60 hover:text-ink')
             }
           >
             <Icon className="h-3.5 w-3.5" />
@@ -111,7 +123,9 @@ export function CommunityModule() {
                 key={c}
                 onClick={() => setCatFilter(c)}
                 className={`rounded-full px-2.5 py-1 text-xs transition ${
-                  catFilter === c ? 'bg-ink/10 text-ink' : 'border border-ink/10 text-ink/50 hover:text-ink'
+                  catFilter === c
+                    ? 'bg-ink/10 text-ink'
+                    : 'border border-ink/10 text-ink/50 hover:text-ink'
                 }`}
               >
                 {c}
@@ -125,10 +139,15 @@ export function CommunityModule() {
               </div>
             )}
             {filtered.map((p) => (
-              <button key={p.id} onClick={() => setOpenPost(p)} className={`${panelCls} p-4 text-left transition hover:border-accent/40`}>
-
+              <button
+                key={p.id}
+                onClick={() => setOpenPost(p)}
+                className={`${panelCls} p-4 text-left transition hover:border-accent/40`}
+              >
                 <div className="flex flex-wrap items-center gap-1.5">
-                  <span className="rounded-full bg-ink/5 px-2 py-0.5 text-[11px] text-ink/50">{p.category}</span>
+                  <span className="rounded-full bg-ink/5 px-2 py-0.5 text-[11px] text-ink/50">
+                    {p.category}
+                  </span>
                   {p.isHelp && (
                     <span className="inline-flex items-center gap-1 rounded-full bg-amber-100 px-2 py-0.5 text-[11px] text-amber-700">
                       <HelpCircle className="h-3 w-3" /> 求助
@@ -139,7 +158,9 @@ export function CommunityModule() {
                 <p className="mt-1.5 truncate text-sm font-medium text-ink">{p.title}</p>
                 <p className="mt-1 line-clamp-2 text-xs text-ink/50">{p.body}</p>
                 <div className="mt-2 flex flex-wrap items-center gap-2 text-[11px] text-ink/30">
-                  <span>{p.author} · {new Date(p.createdAt).toLocaleDateString()}</span>
+                  <span>
+                    {p.author} · {new Date(p.createdAt).toLocaleDateString()}
+                  </span>
                   <AttachmentChip name={p.attachmentName} kind={p.attachmentKind} />
                 </div>
               </button>
@@ -169,7 +190,9 @@ export function CommunityModule() {
           {myPosts.map((p) => (
             <div key={p.id} className={`${panelCls} p-4`}>
               <div className="flex flex-wrap items-center gap-1.5">
-                <span className="rounded-full bg-ink/5 px-2 py-0.5 text-[11px] text-ink/50">{p.category}</span>
+                <span className="rounded-full bg-ink/5 px-2 py-0.5 text-[11px] text-ink/50">
+                  {p.category}
+                </span>
                 <StatusBadge status={p.status} />
                 <button
                   onClick={() => {
@@ -210,7 +233,8 @@ export function CommunityModule() {
             </div>
           ))}
           <p className="col-span-full text-[11px] text-ink/30">
-            原生渠道（微信/QQ/学校 APP）由对应平台承载，Web 仅做引导与同步状态占位；真实多端发布与每日同步需后端。
+            原生渠道（微信/QQ/学校 APP）由对应平台承载，Web
+            仅做引导与同步状态占位；真实多端发布与每日同步需后端。
           </p>
         </div>
       )}
@@ -303,7 +327,13 @@ function PostEditor({
           <Paperclip className="h-3.5 w-3.5" />
           附件
         </button>
-        <input ref={fileRef} type="file" accept="image/*,video/*,.pdf,.doc,.docx,.ppt,.pptx" className="hidden" onChange={onFile} />
+        <input
+          ref={fileRef}
+          type="file"
+          accept="image/*,video/*,.pdf,.doc,.docx,.ppt,.pptx"
+          className="hidden"
+          onChange={onFile}
+        />
         {attachmentName && <AttachmentChip name={attachmentName} kind={attachmentKind} />}
         <button
           onClick={() => {
@@ -347,12 +377,20 @@ function PostDetail({
   const [text, setText] = useState('');
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 p-4" onClick={onClose}>
-      <div className="max-h-[80vh] w-full max-w-lg overflow-auto rounded-2xl bg-paper p-5" onClick={(e) => e.stopPropagation()}>
+    <div
+      className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 p-4"
+      onClick={onClose}
+    >
+      <div
+        className="max-h-[80vh] w-full max-w-lg overflow-auto rounded-2xl bg-paper p-5"
+        onClick={(e) => e.stopPropagation()}
+      >
         <div className="flex items-start justify-between">
           <div>
             <div className="flex flex-wrap items-center gap-1.5">
-              <span className="rounded-full bg-ink/5 px-2 py-0.5 text-[11px] text-ink/50">{post.category}</span>
+              <span className="rounded-full bg-ink/5 px-2 py-0.5 text-[11px] text-ink/50">
+                {post.category}
+              </span>
               <StatusBadge status={post.status} />
             </div>
             <p className="mt-1.5 text-base font-semibold text-ink">{post.title}</p>
@@ -382,7 +420,9 @@ function PostDetail({
         <AttachmentChip name={post.attachmentName} kind={post.attachmentKind} />
 
         <div className="mt-5 border-t border-ink/10 pt-3">
-          <p className="mb-2 text-xs font-medium text-ink/50">评论 / 求助回复（{comments.length}）</p>
+          <p className="mb-2 text-xs font-medium text-ink/50">
+            评论 / 求助回复（{comments.length}）
+          </p>
           {comments.map((c) => (
             <div key={c.id} className="mb-2 rounded-xl bg-ink/5 p-2 text-sm text-ink/70">
               <span className="text-[11px] text-ink/30">{c.author}：</span>
@@ -448,7 +488,9 @@ function FeedbackForm({ onSubmitted }: { onSubmitted?: () => void }) {
       >
         <Megaphone className="h-4 w-4" /> 提交反馈
       </button>
-      {done && <span className="ml-3 text-xs text-green-600">已收到，感谢反馈（演示，未接入后端）</span>}
+      {done && (
+        <span className="ml-3 text-xs text-green-600">已收到，感谢反馈（演示，未接入后端）</span>
+      )}
     </div>
   );
 }
@@ -481,7 +523,9 @@ function FeedbackArea() {
                   <p className="text-[11px] font-medium text-accent">官方回复</p>
                   <p className="mt-0.5 whitespace-pre-wrap text-sm text-ink/80">{f.reply}</p>
                   {f.replyAt && (
-                    <p className="mt-1 text-[11px] text-ink/30">{new Date(f.replyAt).toLocaleString()}</p>
+                    <p className="mt-1 text-[11px] text-ink/30">
+                      {new Date(f.replyAt).toLocaleString()}
+                    </p>
                   )}
                 </div>
               )}

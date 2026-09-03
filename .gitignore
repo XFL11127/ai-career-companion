@@ -13,3 +13,9 @@ coverage
 .trae
 .trae/
 .vercel
+.learnings/
+
+# Cloudflare/Turbo/Next build output must never be committed.
+.wrangler/
+apps/worker/.wrangler/
+.turbo/

@@ -20,11 +20,14 @@ jobs:
       - name: Setup Node.js
         uses: actions/setup-node@v4
         with:
-          node-version: 22
+          node-version: 22.22.2
           cache: 'npm'
 
+      - name: Pin npm
+        run: npm install --global npm@10.9.7
+
       - name: Install dependencies
-        run: npm install
+        run: npm ci
 
       - name: Run lint
         run: npm run lint
@@ -39,11 +42,14 @@ jobs:
       - name: Setup Node.js
         uses: actions/setup-node@v4
         with:
-          node-version: 22
+          node-version: 22.22.2
           cache: 'npm'
 
+      - name: Pin npm
+        run: npm install --global npm@10.9.7
+
       - name: Install dependencies
-        run: npm install
+        run: npm ci
 
       - name: Run type check
         run: npm run type-check
@@ -58,11 +64,14 @@ jobs:
       - name: Setup Node.js
         uses: actions/setup-node@v4
         with:
-          node-version: 22
+          node-version: 22.22.2
           cache: 'npm'
 
+      - name: Pin npm
+        run: npm install --global npm@10.9.7
+
       - name: Install dependencies
-        run: npm install
+        run: npm ci
 
       - name: Run build
         run: npm run build

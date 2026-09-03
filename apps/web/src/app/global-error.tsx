@@ -7,7 +7,13 @@ import { AlertTriangle, RotateCcw, Home } from 'lucide-react';
  * Next.js 全局错误边界（根 Error Boundary）。
  * 当渲染过程中出现未捕获错误时兜底，避免白屏。
  */
-export default function GlobalError({ error, reset }: { error: Error & { digest?: string }; reset: () => void }) {
+export default function GlobalError({
+  error,
+  reset,
+}: {
+  error: Error & { digest?: string };
+  reset: () => void;
+}) {
   useEffect(() => {
     // 生产环境可替换为 Sentry / 日志服务
     // eslint-disable-next-line no-console
@@ -21,8 +27,12 @@ export default function GlobalError({ error, reset }: { error: Error & { digest?
           <div className="rounded-2xl border border-red-200 bg-red-50 p-8 shadow-xl">
             <AlertTriangle className="mx-auto mb-4 h-12 w-12 text-red-500" />
             <h1 className="font-serif text-2xl font-bold text-ink">页面出了点小问题</h1>
-            <p className="mt-2 text-sm text-ink/60">我们已收到错误反馈，你可以尝试刷新或返回首页。</p>
-            {error.digest && <p className="mt-2 text-xs text-ink/30 font-mono">Error ID: {error.digest}</p>}
+            <p className="mt-2 text-sm text-ink/60">
+              我们已收到错误反馈，你可以尝试刷新或返回首页。
+            </p>
+            {error.digest && (
+              <p className="mt-2 text-xs text-ink/30 font-mono">Error ID: {error.digest}</p>
+            )}
             <div className="mt-6 flex items-center justify-center gap-3">
               <button
                 onClick={reset}

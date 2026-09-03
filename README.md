@@ -10,7 +10,7 @@
 
 | 层 | 技术 |
 |---|---|
-| 前端 | Next.js 14 (App Router) · React 18 · TypeScript 5.9 · Tailwind CSS 3.4 · lucide-react |
+| 前端 | Next.js 16 (App Router) · React 19 · TypeScript 5.9 · Tailwind CSS 3.4 · lucide-react |
 | 后端 | Cloudflare Workers · Hono 4 · zod 3 |
 | AI | Vercel AI SDK 7 · @ai-sdk/deepseek（DeepSeek-V3 主力，Moonshot 备用）· 无 Key 时走 stub |
 | 记忆/数据 | Supabase (PostgreSQL) · pgvector（1536 维向量）· 本地 IndexedDB/状态缓存 |
@@ -26,7 +26,7 @@
 ```
 ai-career-companion/
 ├── apps/
-│   ├── web/                      # 前端（Next.js 14，学生端产品界面）
+│   ├── web/                      # 前端（Next.js 16，学生端产品界面）
 │   │   └── src/app/
 │   │       ├── page.tsx          # 首页：Kimi 式对话式入口（ChatShell + 左侧栏 + 历史 + 登录占位）
 │   │       ├── login/page.tsx    # 登录占位页（功能开发中，免登录本地保存）
@@ -68,7 +68,7 @@ ai-career-companion/
 ## 三、环境准备
 
 ### 1. Node.js（关键，版本已锁定）
-Node 版本由仓库根目录的 **`.nvmrc`**（当前 `22.22.2`）和 `package.json` 的 **`engines.node`（>=18.17.0）** 共同约定，`npm install` 时若版本不符会直接报错（由 `.npmrc` 的 `engine-strict=true` 强制）。队友克隆后**版本自动对齐**，无需口头约定。
+Node 版本由仓库根目录的 **`.nvmrc`**（当前 `22.22.2`）和 `package.json` 的 **`engines.node`（>=22.18.0 <23）** 共同约定，`npm ci` / `npm install` 时若版本不符会直接报错（由 `.npmrc` 的 `engine-strict=true` 强制）。队友克隆后**版本自动对齐**，无需口头约定。
 
 **队友按自己的环境任选一种方式拿到 Node 22：**
 
@@ -87,7 +87,8 @@ Node 版本由仓库根目录的 **`.nvmrc`**（当前 `22.22.2`）和 `package.
 
 ### 2. 安装依赖
 ```bash
-npm install        # 已装过可跳过；依赖变更后再跑
+npm ci              # 按锁文件做可复现的 clean install
+# npm install      # 仅在依赖清单变更后用于更新 package-lock.json
 ```
 
 ### 3. 环境变量（可选，接真实 AI 才需要）

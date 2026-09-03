@@ -18,7 +18,12 @@
       "tags": ["双非友好", "实习", "有转正"],
       "url": "https://www.shixiseng.com/interns?keyword=前端开发实习",
       "description": "参与电商商家后台的前端开发，使用 React + TypeScript 构建数据密集型界面，配合设计稿还原交互。",
-      "requirements": ["熟悉 HTML/CSS/JavaScript", "了解 React 或 Vue", "有个人项目并部署上线", "每周到岗 4 天以上"],
+      "requirements": [
+        "熟悉 HTML/CSS/JavaScript",
+        "了解 React 或 Vue",
+        "有个人项目并部署上线",
+        "每周到岗 4 天以上"
+      ],
       "deadline": "2026-10-31"
     },
     {
@@ -33,7 +38,12 @@
       "tags": ["外企", "双非友好", "校招", "不卡第一学历"],
       "url": "https://www.zhipin.com/web/geek/job?query=后端开发&city=101280600",
       "description": "参与通信设备网管系统的后端服务开发，使用 Java/Go 编写微服务，负责接口设计与性能优化。",
-      "requirements": ["计算机相关专业本科", "熟悉 Java 或 Go", "了解 MySQL / Redis", "英语可阅读技术文档"],
+      "requirements": [
+        "计算机相关专业本科",
+        "熟悉 Java 或 Go",
+        "了解 MySQL / Redis",
+        "英语可阅读技术文档"
+      ],
       "deadline": "2026-11-30"
     },
     {
@@ -78,7 +88,12 @@
       "tags": ["双非友好", "实习", "项目驱动"],
       "url": "https://www.shixiseng.com/interns?keyword=游戏客户端开发",
       "description": "参与手游客户端功能开发，使用 Unity/Cocos 实现玩法逻辑，配合策划与美术完成版本迭代。",
-      "requirements": ["熟悉 C# 或 TypeScript", "了解 Unity 或 Cocos", "有独立 Demo 优先", "热爱游戏"],
+      "requirements": [
+        "熟悉 C# 或 TypeScript",
+        "了解 Unity 或 Cocos",
+        "有独立 Demo 优先",
+        "热爱游戏"
+      ],
       "deadline": "2026-10-20"
     },
     {
@@ -93,7 +108,12 @@
       "tags": ["双非友好", "不限专业", "校招"],
       "url": "https://www.zhipin.com/web/geek/job?query=产品助理&city=101010100",
       "description": "协助产品经理完成需求调研、原型设计与数据分析，跟进开发排期，参与用户反馈整理。",
-      "requirements": ["本科及以上，专业不限", "会用 Figma 或 Axure", "有良好文字表达", "有产品类竞赛经历优先"],
+      "requirements": [
+        "本科及以上，专业不限",
+        "会用 Figma 或 Axure",
+        "有良好文字表达",
+        "有产品类竞赛经历优先"
+      ],
       "deadline": "2026-11-30"
     },
     {
@@ -123,7 +143,12 @@
       "tags": ["薪资高", "校招", "学历竞争激烈"],
       "url": "https://www.zhipin.com/web/geek/job?query=Java开发&city=101020100",
       "description": "参与支付清结算系统的开发，负责交易链路的接口实现与幂等设计，保障资金安全。",
-      "requirements": ["扎实 Java 基础", "熟悉 Spring Boot", "了解分布式与事务", "有金融系统实习优先"],
+      "requirements": [
+        "扎实 Java 基础",
+        "熟悉 Spring Boot",
+        "了解分布式与事务",
+        "有金融系统实习优先"
+      ],
       "deadline": "2026-11-20"
     },
     {
@@ -138,7 +163,12 @@
       "tags": ["双非友好", "门槛低", "项目多"],
       "url": "https://www.zhipin.com/web/geek/job?query=前端开发&city=101110100",
       "description": "承接政企数字化项目的前端开发，使用 Vue/React 完成页面与表单逻辑，接触多行业业务。",
-      "requirements": ["熟悉 Vue 或 React", "了解 Element/Ant Design", "能接受项目制工作", "沟通能力强"],
+      "requirements": [
+        "熟悉 Vue 或 React",
+        "了解 Element/Ant Design",
+        "能接受项目制工作",
+        "沟通能力强"
+      ],
       "deadline": "2026-12-31"
     },
     {
@@ -153,7 +183,12 @@
       "tags": ["双非友好", "新方向", "看重工程能力"],
       "url": "https://www.shixiseng.com/interns?keyword=AI应用开发",
       "description": "参与 RAG 应用的工程落地，使用 LangChain 类框架搭建检索与生成链路，优化召回效果与响应耗时。",
-      "requirements": ["熟悉 Python", "了解大模型 API 调用", "动手搭过 RAG/ Agent Demo", "工程能力优先于论文"],
+      "requirements": [
+        "熟悉 Python",
+        "了解大模型 API 调用",
+        "动手搭过 RAG/ Agent Demo",
+        "工程能力优先于论文"
+      ],
       "deadline": "2026-10-31"
     },
     {
@@ -168,7 +203,12 @@
       "tags": ["双非友好", "实习", "上手快"],
       "url": "https://www.shixiseng.com/interns?keyword=自动化测试",
       "description": "参与 Web 自动化测试脚本编写，使用 Selenium/Playwright 覆盖核心流程，输出测试报告。",
-      "requirements": ["了解 Python 或 Java", "接触过 Selenium 优先", "细心、有耐心", "每周到岗 3 天以上"],
+      "requirements": [
+        "了解 Python 或 Java",
+        "接触过 Selenium 优先",
+        "细心、有耐心",
+        "每周到岗 3 天以上"
+      ],
       "deadline": "2026-11-10"
     },
     {
@@ -183,7 +223,12 @@
       "tags": ["双非友好", "稳定", "新一线"],
       "url": "https://www.zhipin.com/web/geek/job?query=后端开发&city=101270100",
       "description": "参与政务系统后端模块开发，使用 Java/Spring 完成业务逻辑与数据接口，配合完成等保合规改造。",
-      "requirements": ["熟悉 Java 基础", "了解 Spring Boot", "了解关系型数据库", "可接受规范化流程"],
+      "requirements": [
+        "熟悉 Java 基础",
+        "了解 Spring Boot",
+        "了解关系型数据库",
+        "可接受规范化流程"
+      ],
       "deadline": "2026-12-20"
     },
     {
@@ -198,7 +243,12 @@
       "tags": ["双非友好", "B端", "技术成长快"],
       "url": "https://www.zhipin.com/web/geek/job?query=前端开发&city=101280600",
       "description": "负责企业协作产品的前端开发，处理复杂表格与表单场景，关注性能与可访问性。",
-      "requirements": ["熟练 JavaScript/TypeScript", "熟悉 React", "了解性能优化", "有复杂交互项目经验"],
+      "requirements": [
+        "熟练 JavaScript/TypeScript",
+        "熟悉 React",
+        "了解性能优化",
+        "有复杂交互项目经验"
+      ],
       "deadline": "2026-11-25"
     },
     {
@@ -258,7 +308,12 @@
       "tags": ["双非友好", "实习", "内容型产品"],
       "url": "https://www.shixiseng.com/interns?keyword=前端开发",
       "description": "参与内容平台的前端开发，负责活动页与组件库维护，关注首屏性能与埋点准确性。",
-      "requirements": ["熟悉 HTML/CSS/JS", "了解 React 或 Vue", "有响应式开发经验", "每周到岗 4 天"],
+      "requirements": [
+        "熟悉 HTML/CSS/JS",
+        "了解 React 或 Vue",
+        "有响应式开发经验",
+        "每周到岗 4 天"
+      ],
       "deadline": "2026-11-15"
     },
     {
@@ -303,7 +358,12 @@
       "tags": ["双非友好", "实习", "新一线"],
       "url": "https://www.shixiseng.com/interns?keyword=数据开发",
       "description": "参与离线数仓的 ETL 开发，使用 SQL/Hive 完成数据清洗与分层，协助排查数据质量问题。",
-      "requirements": ["熟练 SQL", "了解 Hive/Spark 优先", "了解 Linux 基本命令", "每周到岗 3 天以上"],
+      "requirements": [
+        "熟练 SQL",
+        "了解 Hive/Spark 优先",
+        "了解 Linux 基本命令",
+        "每周到岗 3 天以上"
+      ],
       "deadline": "2026-11-20"
     },
     {

@@ -35,9 +35,7 @@ export default function KnowledgeBasePage() {
               onClick={() => setTab(t.key)}
               aria-pressed={active}
               className={`inline-flex items-center gap-1.5 rounded-full px-3.5 py-1.5 text-sm transition ${
-                active
-                  ? 'bg-accent text-paper'
-                  : 'text-ink/60 hover:bg-ink/[0.04] hover:text-ink'
+                active ? 'bg-accent text-paper' : 'text-ink/60 hover:bg-ink/[0.04] hover:text-ink'
               }`}
             >
               <Icon className="h-4 w-4" />

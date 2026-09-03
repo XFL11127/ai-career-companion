@@ -40,7 +40,8 @@ export function RoleSwitcher() {
         身份 / 角色（测试账号）
       </h2>
       <p className="mb-3 text-xs text-ink/45">
-        当前为 MVP：用测试账号模拟不同身份，验证系统资源库受保护与审核门禁。正式账号体系待 Supabase Auth 接入。
+        当前为 MVP：用测试账号模拟不同身份，验证系统资源库受保护与审核门禁。正式账号体系待 Supabase
+        Auth 接入。
       </p>
 
       <div className="grid gap-2 sm:grid-cols-3">

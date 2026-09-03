@@ -31,13 +31,15 @@ export function SourceCard({
   onContribute,
   demo,
 }: SourceCardProps) {
-  const site = sourceSite ?? (() => {
-    try {
-      return new URL(url).hostname.replace(/^www\./, '');
-    } catch {
-      return '';
-    }
-  })();
+  const site =
+    sourceSite ??
+    (() => {
+      try {
+        return new URL(url).hostname.replace(/^www\./, '');
+      } catch {
+        return '';
+      }
+    })();
 
   return (
     <article className={`${panelCls} p-4 shadow-[0_14px_34px_-26px_rgba(31,27,22,0.4)]`}>

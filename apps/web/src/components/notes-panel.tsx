@@ -50,7 +50,8 @@ export function NotesPanel() {
   function saveViewing() {
     if (!viewing) return;
     const t = (document.getElementById('note-title') as HTMLInputElement)?.value ?? viewing.title;
-    const b = (document.getElementById('note-body') as HTMLTextAreaElement)?.value ?? viewing.summary;
+    const b =
+      (document.getElementById('note-body') as HTMLTextAreaElement)?.value ?? viewing.summary;
     saveNote({ title: t, summary: b }, user.id, viewing.id);
     setViewing(null);
     refresh();
@@ -68,7 +69,12 @@ export function NotesPanel() {
       </header>
 
       <form onSubmit={add} className="mb-4 space-y-2">
-        <input className={inputCls} placeholder="笔记标题" value={title} onChange={(e) => setTitle(e.target.value)} />
+        <input
+          className={inputCls}
+          placeholder="笔记标题"
+          value={title}
+          onChange={(e) => setTitle(e.target.value)}
+        />
         <textarea
           className={inputCls}
           placeholder="笔记内容（私有，不外泄）"
@@ -124,7 +130,9 @@ export function NotesPanel() {
                 <FileText className="mt-0.5 h-4 w-4 shrink-0 text-accent/70" />
                 <div className="min-w-0 flex-1">
                   <div className="text-sm font-medium text-ink">{n.title}</div>
-                  <p className="mt-0.5 line-clamp-2 text-xs leading-relaxed text-ink/60">{n.summary}</p>
+                  <p className="mt-0.5 line-clamp-2 text-xs leading-relaxed text-ink/60">
+                    {n.summary}
+                  </p>
                 </div>
               </button>
               <button

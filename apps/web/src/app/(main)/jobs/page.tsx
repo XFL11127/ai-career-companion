@@ -263,9 +263,13 @@ function JobBrowser({ onGoContribute }: { onGoContribute: () => void }) {
       </aside>
 
       <section className={panelCls}>
-        <div className="border-b border-ink/10 px-4 py-2.5 text-xs text-ink/40">共 {filtered.length} 个岗位</div>
+        <div className="border-b border-ink/10 px-4 py-2.5 text-xs text-ink/40">
+          共 {filtered.length} 个岗位
+        </div>
         {filtered.length === 0 ? (
-          <div className="p-10 text-center text-sm text-ink/40">没有符合条件的岗位，试试放宽筛选条件。</div>
+          <div className="p-10 text-center text-sm text-ink/40">
+            没有符合条件的岗位，试试放宽筛选条件。
+          </div>
         ) : (
           <ul className="divide-y divide-ink/5">
             {filtered.map((j) => {
@@ -299,7 +303,9 @@ function JobBrowser({ onGoContribute }: { onGoContribute: () => void }) {
                           双非友好
                         </span>
                       )}
-                      <span className="rounded bg-ink/5 px-1.5 py-0.5 text-[11px] text-ink/50">{j.degree}</span>
+                      <span className="rounded bg-ink/5 px-1.5 py-0.5 text-[11px] text-ink/50">
+                        {j.degree}
+                      </span>
                     </div>
                   </button>
                 </li>
@@ -346,7 +352,10 @@ function JobBrowser({ onGoContribute }: { onGoContribute: () => void }) {
                 <div className="mb-1.5 text-xs font-medium text-ink/40">岗位要求</div>
                 <ul className="space-y-1">
                   {selected.requirements.map((r, i) => (
-                    <li key={i} className="flex gap-2 rounded-lg bg-ink/[0.02] px-2.5 py-1.5 text-xs leading-relaxed text-ink/70">
+                    <li
+                      key={i}
+                      className="flex gap-2 rounded-lg bg-ink/[0.02] px-2.5 py-1.5 text-xs leading-relaxed text-ink/70"
+                    >
                       <span className="text-accent">·</span>
                       {r}
                     </li>
@@ -355,7 +364,10 @@ function JobBrowser({ onGoContribute }: { onGoContribute: () => void }) {
               </div>
               <div className="mt-4 flex flex-wrap gap-1.5">
                 {selected.tags.map((t) => (
-                  <span key={t} className="rounded-full border border-ink/10 px-2 py-0.5 text-[11px] text-ink/50">
+                  <span
+                    key={t}
+                    className="rounded-full border border-ink/10 px-2 py-0.5 text-[11px] text-ink/50"
+                  >
                     {t}
                   </span>
                 ))}
@@ -400,9 +412,7 @@ export default function InfoHubPage() {
     <main className="mx-auto max-w-6xl px-4 py-10">
       <header className="mb-5">
         <h1 className="font-serif text-2xl font-bold tracking-tight text-ink">信息中枢</h1>
-        <p className="mt-1 text-sm text-ink/60">
-          岗位浏览 · 资源库 · 用户贡献（双非垂直信息底座）
-        </p>
+        <p className="mt-1 text-sm text-ink/60">岗位浏览 · 资源库 · 用户贡献（双非垂直信息底座）</p>
         <p className="mt-1.5 text-xs text-ink/45">
           这里是你自己检索、浏览的信息底座；需要 AI 帮你筛选匹配机会，去{' '}
           <Link href="/assistant?tab=info" className="font-medium text-accent hover:underline">

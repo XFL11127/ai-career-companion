@@ -60,9 +60,13 @@ export function ContributionPanel({ onChanged }: { onChanged?: () => void }) {
                   <div className="flex-1">
                     <div className="flex items-center gap-2">
                       <span className="text-sm font-medium text-ink">{c.title}</span>
-                      <span className={`rounded-full px-2 py-0.5 text-[11px] ${st.cls}`}>{st.text}</span>
+                      <span className={`rounded-full px-2 py-0.5 text-[11px] ${st.cls}`}>
+                        {st.text}
+                      </span>
                     </div>
-                    <p className="mt-0.5 text-xs text-ink/50">{c.category} · {c.url}</p>
+                    <p className="mt-0.5 text-xs text-ink/50">
+                      {c.category} · {c.url}
+                    </p>
                   </div>
                   {reviewer && c.status === 'pending' && (
                     <div className="flex shrink-0 gap-1">

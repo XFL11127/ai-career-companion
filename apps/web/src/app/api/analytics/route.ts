@@ -46,7 +46,7 @@ function sampleTrend(days: number): { date: string; active: number }[] {
   });
 }
 
-function sampleAnalytic(days:number): Analytic {
+function sampleAnalytic(days: number): Analytic {
   return {
     demo: true,
     days,

@@ -17,9 +17,24 @@ export interface TestAccount {
 
 /** 演示用测试账号（切换即模拟不同身份）。 */
 export const TEST_ACCOUNTS: TestAccount[] = [
-  { id: 'u_student', name: '陈同学（学生）', role: 'student', desc: '双非在校生 · 可浏览/自建/提交贡献' },
-  { id: 'u_teacher', name: '李老师（高校老师）', role: 'teacher', desc: '可编辑受保护系统库、审核贡献' },
-  { id: 'u_admin', name: '维护员（系统维护员）', role: 'admin', desc: '平台运维、Key 配置、审核队列' },
+  {
+    id: 'u_student',
+    name: '陈同学（学生）',
+    role: 'student',
+    desc: '双非在校生 · 可浏览/自建/提交贡献',
+  },
+  {
+    id: 'u_teacher',
+    name: '李老师（高校老师）',
+    role: 'teacher',
+    desc: '可编辑受保护系统库、审核贡献',
+  },
+  {
+    id: 'u_admin',
+    name: '维护员（系统维护员）',
+    role: 'admin',
+    desc: '平台运维、Key 配置、审核队列',
+  },
 ];
 
 const ROLE_KEY = 'app_role';

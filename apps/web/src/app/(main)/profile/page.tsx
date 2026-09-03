@@ -88,10 +88,7 @@ export default function ProfilePage() {
   }, []);
 
   const streak = useMemo(() => getStreak(growth?.checkins ?? []), [growth]);
-  const monthSet = useMemo(
-    () => getMonthCheckins(cursor.year, cursor.month),
-    [cursor, growth]
-  );
+  const monthSet = useMemo(() => getMonthCheckins(cursor.year, cursor.month), [cursor, growth]);
 
   // 月历格子：前置空白 + 当月天数
   const daysGrid = useMemo(() => {
@@ -336,30 +333,22 @@ export default function ProfilePage() {
             <Field
               label="姓名"
               value={resume.basics.name}
-              onChange={(v) =>
-                setResume({ ...resume, basics: { ...resume.basics, name: v } })
-              }
+              onChange={(v) => setResume({ ...resume, basics: { ...resume.basics, name: v } })}
             />
             <Field
               label="学校"
               value={resume.basics.school}
-              onChange={(v) =>
-                setResume({ ...resume, basics: { ...resume.basics, school: v } })
-              }
+              onChange={(v) => setResume({ ...resume, basics: { ...resume.basics, school: v } })}
             />
             <Field
               label="年级"
               value={resume.basics.grade}
-              onChange={(v) =>
-                setResume({ ...resume, basics: { ...resume.basics, grade: v } })
-              }
+              onChange={(v) => setResume({ ...resume, basics: { ...resume.basics, grade: v } })}
             />
             <Field
               label="专业"
               value={resume.basics.major}
-              onChange={(v) =>
-                setResume({ ...resume, basics: { ...resume.basics, major: v } })
-              }
+              onChange={(v) => setResume({ ...resume, basics: { ...resume.basics, major: v } })}
             />
             <div className="sm:col-span-2">
               <Field
@@ -495,7 +484,10 @@ export default function ProfilePage() {
             <div className="min-w-0 flex-1">
               <p className="text-sm font-medium text-ink">双非破局者 · 第 {level} 级</p>
               <div className="mt-2 h-2 w-full overflow-hidden rounded-full bg-ink/10">
-                <div className="h-full rounded-full bg-accent" style={{ width: `${levelProgress}%` }} />
+                <div
+                  className="h-full rounded-full bg-accent"
+                  style={{ width: `${levelProgress}%` }}
+                />
               </div>
               <p className="mt-1 text-xs text-ink/40">
                 距下一级还需 {100 - levelProgress} 积分（当前 {growth.points}）

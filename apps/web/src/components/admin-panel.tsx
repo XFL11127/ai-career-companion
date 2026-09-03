@@ -101,19 +101,23 @@ export function AdminPanel() {
   return (
     <div className="space-y-5">
       <div className="flex flex-wrap gap-2">
-        {([
-          ['review', '审核队列', ShieldCheck],
-          ['progress', '进度协调', Kanban],
-          ['users', '用户管理', Users],
-          ['config', '后台配置', KeyRound],
-          ['feedback', '官方反馈', Megaphone],
-        ] as const).map(([key, label, Icon]) => (
+        {(
+          [
+            ['review', '审核队列', ShieldCheck],
+            ['progress', '进度协调', Kanban],
+            ['users', '用户管理', Users],
+            ['config', '后台配置', KeyRound],
+            ['feedback', '官方反馈', Megaphone],
+          ] as const
+        ).map(([key, label, Icon]) => (
           <button
             key={key}
             onClick={() => setTab(key)}
             className={
               'inline-flex items-center gap-1.5 rounded-full px-3 py-1.5 text-sm transition ' +
-              (tab === key ? 'bg-accent text-paper' : 'border border-ink/15 bg-paper text-ink/60 hover:text-ink')
+              (tab === key
+                ? 'bg-accent text-paper'
+                : 'border border-ink/15 bg-paper text-ink/60 hover:text-ink')
             }
           >
             <Icon className="h-3.5 w-3.5" />
@@ -125,121 +129,130 @@ export function AdminPanel() {
       {tab === 'review' && (
         <>
           <div className="space-y-3">
-          {contribs.length === 0 && (
-            <div className="rounded-xl border border-dashed border-ink/15 p-8 text-center text-sm text-ink/40">
-              暂无贡献待处理。
-            </div>
-          )}
-          {contribs.map((c) => (
-            <div key={c.id} className={`${panelCls} p-4`}>
-              <div className="flex items-start justify-between gap-2">
-                <div className="min-w-0">
-                  <p className="truncate text-sm font-medium text-ink">{c.title}</p>
-                  <p className="mt-0.5 line-clamp-2 text-xs text-ink/50">{c.summary}</p>
-                  <p className="mt-1 text-[11px] text-ink/30">
-                    {c.url} · 状态：
-                    <span
-                      className={
-                        c.status === 'pending'
-                          ? 'text-amber-600'
-                          : c.status === 'published'
-                            ? 'text-green-600'
-                            : 'text-red-500'
-                      }
-                    >
-                      {c.status === 'pending' ? '待审核' : c.status === 'published' ? '已发布' : '已驳回'}
-                    </span>
-                  </p>
-                </div>
-                {c.status === 'pending' && (
-                  <div className="flex shrink-0 gap-2">
-                    <button
-                      onClick={() => {
-                        reviewContribution(c.id, 'published');
-                        refreshContribs();
-                      }}
-                      className="inline-flex items-center gap-1 rounded-full bg-green-600 px-2.5 py-1 text-xs text-white"
-                    >
-                      <Check className="h-3 w-3" /> 通过
-                    </button>
-                    <button
-                      onClick={() => {
-                        reviewContribution(c.id, 'rejected');
-                        refreshContribs();
-                      }}
-                      className="inline-flex items-center gap-1 rounded-full bg-red-500 px-2.5 py-1 text-xs text-white"
-                    >
-                      <X className="h-3 w-3" /> 驳回
-                    </button>
-                  </div>
-                )}
+            {contribs.length === 0 && (
+              <div className="rounded-xl border border-dashed border-ink/15 p-8 text-center text-sm text-ink/40">
+                暂无贡献待处理。
               </div>
-            </div>
-          ))}
-        </div>
-
-        <div className="mt-6 border-t border-dashed border-ink/15 pt-4">
-          <p className="mb-3 text-xs font-medium text-ink/50">帖子审核（学职频道用户发帖）</p>
-          {posts.filter((p) => p.status === 'pending').length === 0 && (
-            <div className="rounded-xl border border-dashed border-ink/15 p-6 text-center text-sm text-ink/40">
-              暂无待审核帖子。
-            </div>
-          )}
-          {posts
-            .filter((p) => p.status === 'pending')
-            .map((p) => (
-              <div key={p.id} className={`${panelCls} p-4`}>
+            )}
+            {contribs.map((c) => (
+              <div key={c.id} className={`${panelCls} p-4`}>
                 <div className="flex items-start justify-between gap-2">
                   <div className="min-w-0">
-                    <p className="truncate text-sm font-medium text-ink">{p.title}</p>
-                    <p className="mt-0.5 line-clamp-2 text-xs text-ink/50">{p.body}</p>
+                    <p className="truncate text-sm font-medium text-ink">{c.title}</p>
+                    <p className="mt-0.5 line-clamp-2 text-xs text-ink/50">{c.summary}</p>
                     <p className="mt-1 text-[11px] text-ink/30">
-                      {p.author} · {p.category} · {new Date(p.createdAt).toLocaleString()}
+                      {c.url} · 状态：
+                      <span
+                        className={
+                          c.status === 'pending'
+                            ? 'text-amber-600'
+                            : c.status === 'published'
+                              ? 'text-green-600'
+                              : 'text-red-500'
+                        }
+                      >
+                        {c.status === 'pending'
+                          ? '待审核'
+                          : c.status === 'published'
+                            ? '已发布'
+                            : '已驳回'}
+                      </span>
                     </p>
                   </div>
-                  <div className="flex shrink-0 gap-2">
-                    <button
-                      onClick={() => {
-                        reviewPost(p.id, 'approved');
-                        refreshPosts();
-                      }}
-                      className="inline-flex items-center gap-1 rounded-full bg-green-600 px-2.5 py-1 text-xs text-white"
-                    >
-                      <Check className="h-3 w-3" /> 通过
-                    </button>
-                    <button
-                      onClick={() => {
-                        reviewPost(p.id, 'rejected');
-                        refreshPosts();
-                      }}
-                      className="inline-flex items-center gap-1 rounded-full bg-red-500 px-2.5 py-1 text-xs text-white"
-                    >
-                      <X className="h-3 w-3" /> 驳回
-                    </button>
-                  </div>
+                  {c.status === 'pending' && (
+                    <div className="flex shrink-0 gap-2">
+                      <button
+                        onClick={() => {
+                          reviewContribution(c.id, 'published');
+                          refreshContribs();
+                        }}
+                        className="inline-flex items-center gap-1 rounded-full bg-green-600 px-2.5 py-1 text-xs text-white"
+                      >
+                        <Check className="h-3 w-3" /> 通过
+                      </button>
+                      <button
+                        onClick={() => {
+                          reviewContribution(c.id, 'rejected');
+                          refreshContribs();
+                        }}
+                        className="inline-flex items-center gap-1 rounded-full bg-red-500 px-2.5 py-1 text-xs text-white"
+                      >
+                        <X className="h-3 w-3" /> 驳回
+                      </button>
+                    </div>
+                  )}
                 </div>
               </div>
             ))}
-          {posts.some((p) => p.status !== 'pending') && (
-            <details className="mt-2">
-              <summary className="cursor-pointer text-[11px] text-ink/40">
-                查看已处理帖子（{posts.filter((p) => p.status !== 'pending').length}）
-              </summary>
-              <div className="mt-2 space-y-2">
-                {posts
-                  .filter((p) => p.status !== 'pending')
-                  .map((p) => (
-                    <div key={p.id} className="flex items-center justify-between rounded-xl border border-ink/10 p-2 text-xs text-ink/60">
-                      <span className="truncate">{p.title}</span>
-                      <span className={p.status === 'approved' ? 'text-green-600' : 'text-red-500'}>
-                        {POST_STATUS_LABEL[p.status]}
-                      </span>
-                    </div>
-                  ))}
+          </div>
+
+          <div className="mt-6 border-t border-dashed border-ink/15 pt-4">
+            <p className="mb-3 text-xs font-medium text-ink/50">帖子审核（学职频道用户发帖）</p>
+            {posts.filter((p) => p.status === 'pending').length === 0 && (
+              <div className="rounded-xl border border-dashed border-ink/15 p-6 text-center text-sm text-ink/40">
+                暂无待审核帖子。
               </div>
-            </details>
-          )}
-        </div>
+            )}
+            {posts
+              .filter((p) => p.status === 'pending')
+              .map((p) => (
+                <div key={p.id} className={`${panelCls} p-4`}>
+                  <div className="flex items-start justify-between gap-2">
+                    <div className="min-w-0">
+                      <p className="truncate text-sm font-medium text-ink">{p.title}</p>
+                      <p className="mt-0.5 line-clamp-2 text-xs text-ink/50">{p.body}</p>
+                      <p className="mt-1 text-[11px] text-ink/30">
+                        {p.author} · {p.category} · {new Date(p.createdAt).toLocaleString()}
+                      </p>
+                    </div>
+                    <div className="flex shrink-0 gap-2">
+                      <button
+                        onClick={() => {
+                          reviewPost(p.id, 'approved');
+                          refreshPosts();
+                        }}
+                        className="inline-flex items-center gap-1 rounded-full bg-green-600 px-2.5 py-1 text-xs text-white"
+                      >
+                        <Check className="h-3 w-3" /> 通过
+                      </button>
+                      <button
+                        onClick={() => {
+                          reviewPost(p.id, 'rejected');
+                          refreshPosts();
+                        }}
+                        className="inline-flex items-center gap-1 rounded-full bg-red-500 px-2.5 py-1 text-xs text-white"
+                      >
+                        <X className="h-3 w-3" /> 驳回
+                      </button>
+                    </div>
+                  </div>
+                </div>
+              ))}
+            {posts.some((p) => p.status !== 'pending') && (
+              <details className="mt-2">
+                <summary className="cursor-pointer text-[11px] text-ink/40">
+                  查看已处理帖子（{posts.filter((p) => p.status !== 'pending').length}）
+                </summary>
+                <div className="mt-2 space-y-2">
+                  {posts
+                    .filter((p) => p.status !== 'pending')
+                    .map((p) => (
+                      <div
+                        key={p.id}
+                        className="flex items-center justify-between rounded-xl border border-ink/10 p-2 text-xs text-ink/60"
+                      >
+                        <span className="truncate">{p.title}</span>
+                        <span
+                          className={p.status === 'approved' ? 'text-green-600' : 'text-red-500'}
+                        >
+                          {POST_STATUS_LABEL[p.status]}
+                        </span>
+                      </div>
+                    ))}
+                </div>
+              </details>
+            )}
+          </div>
         </>
       )}
 
@@ -254,7 +267,10 @@ export function AdminPanel() {
                 {tasks
                   .filter((t) => t.col === col)
                   .map((t) => (
-                    <div key={t.id} className="rounded-xl border border-ink/10 p-2 text-sm text-ink/70">
+                    <div
+                      key={t.id}
+                      className="rounded-xl border border-ink/10 p-2 text-sm text-ink/70"
+                    >
                       {t.title}
                       <div className="mt-1 flex gap-1">
                         {(['todo', 'doing', 'done'] as const)
@@ -263,7 +279,9 @@ export function AdminPanel() {
                             <button
                               key={c}
                               onClick={() =>
-                                persistTasks(tasks.map((x) => (x.id === t.id ? { ...x, col: c } : x)))
+                                persistTasks(
+                                  tasks.map((x) => (x.id === t.id ? { ...x, col: c } : x))
+                                )
                               }
                               className="rounded bg-ink/5 px-1.5 py-0.5 text-[11px] text-ink/50 hover:text-ink"
                             >
@@ -277,7 +295,8 @@ export function AdminPanel() {
             </div>
           ))}
           <p className="col-span-full text-[11px] text-ink/30">
-            进度数据为本前端演示（localStorage）；真实项目管理与跨端同步需后端。可对接 docs/TASKBOARD.md 视图。
+            进度数据为本前端演示（localStorage）；真实项目管理与跨端同步需后端。可对接
+            docs/TASKBOARD.md 视图。
           </p>
         </div>
       )}
@@ -288,7 +307,9 @@ export function AdminPanel() {
             <div key={a.id} className={`${panelCls} flex items-center justify-between p-3`}>
               <div>
                 <p className="text-sm font-medium text-ink">{a.name}</p>
-                <p className="text-xs text-ink/50">{ROLE_LABEL[a.role]} · {a.desc}</p>
+                <p className="text-xs text-ink/50">
+                  {ROLE_LABEL[a.role]} · {a.desc}
+                </p>
               </div>
               <button
                 onClick={() => {

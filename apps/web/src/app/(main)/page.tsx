@@ -53,9 +53,7 @@ export default function HomePage() {
   return (
     <main className="mx-auto max-w-5xl">
       <header className="mb-8 text-center">
-        <h1 className="font-serif text-3xl font-bold tracking-tight text-ink">
-          你的双非破局同伴
-        </h1>
+        <h1 className="font-serif text-3xl font-bold tracking-tight text-ink">你的双非破局同伴</h1>
         <p className="mx-auto mt-2 max-w-md text-sm text-ink/60">
           3 分钟看清能力差距，拿到一条能执行的成长路径
         </p>

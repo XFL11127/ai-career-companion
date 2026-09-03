@@ -4,10 +4,10 @@
   "description": "AI学职同伴 - 面向双非学生的AI Copilot式学职陪伴产品",
   "private": true,
   "engines": {
-    "node": ">=18.17.0"
+    "node": ">=22.18.0 <23"
   },
   "scripts": {
-    "test": "echo \"Error: no test specified\" && exit 1",
+    "test": "node --test",
     "dev": "turbo dev",
     "web": "npm --workspace @ai-career-companion/web run dev",
     "worker": "npm --workspace @ai-career-companion/worker run dev",
@@ -32,7 +32,6 @@
   "type": "module",
   "packageManager": "npm@10.9.7",
   "devDependencies": {
-    "@babel/parser": "^8.0.4",
     "@eslint/js": "^9.0.0",
     "@types/node": "^26.1.1",
     "@typescript-eslint/eslint-plugin": "^8.64.0",

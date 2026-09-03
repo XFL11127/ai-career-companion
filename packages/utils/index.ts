@@ -14,7 +14,9 @@ export const formatDate = (date: Date | string): string => {
   });
 };
 
-export const debounce = <T extends (...args: any[]) => any>(
+type AnyFunction = (...args: never[]) => unknown;
+
+export const debounce = <T extends AnyFunction>(
   fn: T,
   delay: number
 ): ((...args: Parameters<T>) => void) => {
@@ -25,7 +27,7 @@ export const debounce = <T extends (...args: any[]) => any>(
   };
 };
 
-export const throttle = <T extends (...args: any[]) => any>(
+export const throttle = <T extends AnyFunction>(
   fn: T,
   delay: number
 ): ((...args: Parameters<T>) => void) => {
@@ -39,7 +41,7 @@ export const throttle = <T extends (...args: any[]) => any>(
   };
 };
 
-export const isEmpty = (value: any): boolean => {
+export const isEmpty = (value: unknown): boolean => {
   if (value === null || value === undefined) return true;
   if (typeof value === 'string') return value.trim() === '';
   if (Array.isArray(value)) return value.length === 0;

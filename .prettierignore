@@ -1,5 +1,10 @@
 node_modules
 dist
 .turbo
+.next
+.wrangler
+apps/worker/.wrangler
+**/next-env.d.ts
+.learnings
 pnpm-lock.yaml
 *.log
