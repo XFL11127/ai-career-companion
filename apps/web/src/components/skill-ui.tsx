@@ -1,23 +1,28 @@
-'use client'
-import type { ReactNode } from 'react'
-import type { GapDimension, SkillName } from '@ai-career-companion/types'
+'use client';
+import type { ReactNode } from 'react';
+import type { GapDimension, SkillName } from '@ai-career-companion/types';
 
 /** 轻量 SVG 五维雷达图（不依赖 recharts，符合依赖克制）。 */
 export function RadarChart({ radar, size = 300 }: { radar: GapDimension[]; size?: number }) {
-  const cx = size / 2
-  const cy = size / 2
-  const R = size / 2 - 42
-  const n = radar.length
-  const angle = (i: number) => -Math.PI / 2 + (i * 2 * Math.PI) / n
+  const cx = size / 2;
+  const cy = size / 2;
+  const R = size / 2 - 42;
+  const n = radar.length;
+  const angle = (i: number) => -Math.PI / 2 + (i * 2 * Math.PI) / n;
   const pt = (i: number, v: number): [number, number] => {
-    const r = (Math.max(0, Math.min(100, v)) / 100) * R
-    return [cx + r * Math.cos(angle(i)), cy + r * Math.sin(angle(i))]
-  }
+    const r = (Math.max(0, Math.min(100, v)) / 100) * R;
+    return [cx + r * Math.cos(angle(i)), cy + r * Math.sin(angle(i))];
+  };
   const poly = (key: 'current' | 'target') =>
-    radar.map((d, i) => pt(i, d[key]).join(',')).join(' ')
+    radar.map((d, i) => pt(i, d[key]).join(',')).join(' ');
 
   return (
-    <svg viewBox={`0 0 ${size} ${size}`} className="mx-auto h-auto w-full max-w-[320px]" role="img" aria-label="五维能力雷达图">
+    <svg
+      viewBox={`0 0 ${size} ${size}`}
+      className="mx-auto h-auto w-full max-w-[320px]"
+      role="img"
+      aria-label="五维能力雷达图"
+    >
       {[1, 0.66, 0.33].map((f, gi) => (
         <polygon
           key={gi}
@@ -28,40 +33,82 @@ export function RadarChart({ radar, size = 300 }: { radar: GapDimension[]; size?
         />
       ))}
       {radar.map((_, i) => {
-        const [x, y] = pt(i, 100)
-        return <line key={i} x1={cx} y1={cy} x2={x} y2={y} stroke="rgb(var(--ink) / 0.12)" strokeWidth={1} />
-      })}
-      <polygon points={poly('target')} fill="rgb(var(--forest) / 0.08)" stroke="rgb(var(--forest) / 0.6)" strokeWidth={1.5} strokeDasharray="4 3" />
-      <polygon points={poly('current')} fill="rgb(var(--accent) / 0.18)" stroke="rgb(var(--accent))" strokeWidth={2} />
-      {radar.map((d, i) => {
-        const [x, y] = pt(i, 118)
+        const [x, y] = pt(i, 100);
         return (
-          <text key={i} x={x} y={y} textAnchor="middle" dominantBaseline="middle" className="fill-ink text-[11px]">
+          <line
+            key={i}
+            x1={cx}
+            y1={cy}
+            x2={x}
+            y2={y}
+            stroke="rgb(var(--ink) / 0.12)"
+            strokeWidth={1}
+          />
+        );
+      })}
+      <polygon
+        points={poly('target')}
+        fill="rgb(var(--forest) / 0.08)"
+        stroke="rgb(var(--forest) / 0.6)"
+        strokeWidth={1.5}
+        strokeDasharray="4 3"
+      />
+      <polygon
+        points={poly('current')}
+        fill="rgb(var(--accent) / 0.18)"
+        stroke="rgb(var(--accent))"
+        strokeWidth={2}
+      />
+      {radar.map((d, i) => {
+        const [x, y] = pt(i, 118);
+        return (
+          <text
+            key={i}
+            x={x}
+            y={y}
+            textAnchor="middle"
+            dominantBaseline="middle"
+            className="fill-ink text-[11px]"
+          >
             {d.name}
             <tspan className="fill-accent"> {d.current}</tspan>
           </text>
-        )
+        );
       })}
     </svg>
-  )
+  );
 }
 
 export function Card({ className = '', children }: { className?: string; children: ReactNode }) {
   return (
-    <div className={`card-lift rounded-3xl border border-ink/10 bg-white/70 p-6 backdrop-blur ${className}`}>
+    <div
+      className={`card-lift rounded-3xl border border-ink/10 bg-white/70 p-6 backdrop-blur ${className}`}
+    >
       {children}
     </div>
-  )
+  );
 }
 
-export function Pill({ tone = 'accent', children }: { tone?: 'accent' | 'forest' | 'gold'; children: ReactNode }) {
+export function Pill({
+  tone = 'accent',
+  children,
+}: {
+  tone?: 'accent' | 'forest' | 'gold';
+  children: ReactNode;
+}) {
   const cls =
     tone === 'forest'
       ? 'bg-forest/10 text-forest'
       : tone === 'gold'
         ? 'bg-gold/10 text-forest'
-        : 'bg-accent/10 text-accent'
-  return <span className={`inline-flex items-center rounded-full px-2.5 py-0.5 text-xs font-medium ${cls}`}>{children}</span>
+        : 'bg-accent/10 text-accent';
+  return (
+    <span
+      className={`inline-flex items-center rounded-full px-2.5 py-0.5 text-xs font-medium ${cls}`}
+    >
+      {children}
+    </span>
+  );
 }
 
 export function LoadingState({ label }: { label: string }) {
@@ -69,7 +116,7 @@ export function LoadingState({ label }: { label: string }) {
     <div className="mt-6 animate-fade-in rounded-3xl border border-ink/10 bg-white/70 p-10 text-center text-ink/50">
       <span className="animate-pulse">{label}</span>
     </div>
-  )
+  );
 }
 
 export function ErrorState({ message, onRetry }: { message: string; onRetry?: () => void }) {
@@ -82,7 +129,7 @@ export function ErrorState({ message, onRetry }: { message: string; onRetry?: ()
         </button>
       )}
     </div>
-  )
+  );
 }
 
 export function EmptyState({ label }: { label: string }) {
@@ -90,8 +137,64 @@ export function EmptyState({ label }: { label: string }) {
     <div className="mt-6 rounded-3xl border border-dashed border-ink/15 bg-white/40 p-10 text-center text-ink/40">
       {label}
     </div>
-  )
+  );
 }
+
+/** 带标题栏的区块卡片：图标 + 标题 + 右侧 extra。全站统一的"面板"外观。 */
+export function SectionCard({
+  title,
+  icon,
+  extra,
+  children,
+  className = '',
+}: {
+  title: string;
+  icon?: ReactNode;
+  extra?: ReactNode;
+  children?: ReactNode;
+  className?: string;
+}) {
+  return (
+    <section
+      className={`rounded-2xl border border-accent/15 bg-paper p-5 shadow-[0_18px_40px_-28px_rgba(31,27,22,0.4)] ${className}`}
+    >
+      <header className="mb-4 flex items-center gap-2 text-ink">
+        {icon && <span className="text-accent">{icon}</span>}
+        <h2 className="text-base font-semibold tracking-tight">{title}</h2>
+        {extra && <div className="ml-auto text-xs text-ink/40">{extra}</div>}
+      </header>
+      {children}
+    </section>
+  );
+}
+
+/** 统一的受控文本输入（带标签）。用于画像 / 简历等表单。 */
+export function Field({
+  label,
+  value,
+  onChange,
+  placeholder,
+}: {
+  label: string;
+  value: string;
+  onChange: (v: string) => void;
+  placeholder?: string;
+}) {
+  return (
+    <label className="block">
+      <span className="mb-1 block text-xs text-ink/50">{label}</span>
+      <input
+        value={value}
+        onChange={(e) => onChange(e.target.value)}
+        placeholder={placeholder}
+        className="w-full rounded-xl border border-ink/15 bg-background px-3 py-2 text-sm text-ink outline-none transition focus:border-accent"
+      />
+    </label>
+  );
+}
+
+/** 面板基础样式（圆角卡片外观）。各组件直接拼接到自身 className，避免引入额外 DOM 层级与闭合标签错配。 */
+export const panelCls = 'rounded-2xl border border-accent/15 bg-paper';
 
 // ---------- Kimi 式对话组件 ----------
 
@@ -100,26 +203,28 @@ export function ProseBubble({
   children,
   tone = 'assistant',
 }: {
-  children: ReactNode
-  tone?: 'user' | 'assistant'
+  children: ReactNode;
+  tone?: 'user' | 'assistant';
 }) {
   const cls =
     tone === 'user'
       ? 'ml-auto bg-accent text-paper'
-      : 'mr-auto bg-white/80 border border-ink/10 text-ink'
+      : 'mr-auto bg-white/80 border border-ink/10 text-ink';
   return (
-    <div className={`max-w-[85%] whitespace-pre-wrap rounded-3xl px-4 py-3 text-sm leading-relaxed ${cls}`}>
+    <div
+      className={`max-w-[85%] whitespace-pre-wrap rounded-3xl px-4 py-3 text-sm leading-relaxed ${cls}`}
+    >
       {children}
     </div>
-  )
+  );
 }
 
-type AnyObj = Record<string, any>
+type AnyObj = Record<string, any>;
 
 /** 把某个 Skill 的结构化卡片（流式 partial 也安全）渲染成富卡片。 */
 export function SkillCardView({ name, data }: { name: SkillName; data: unknown }) {
-  const d = data as AnyObj | null
-  if (!d) return null
+  const d = data as AnyObj | null;
+  if (!d) return null;
 
   switch (name) {
     case 'diagnose':
@@ -145,7 +250,7 @@ export function SkillCardView({ name, data }: { name: SkillName; data: unknown }
             </div>
           </Card>
         </div>
-      )
+      );
 
     case 'plan':
       return (
@@ -160,14 +265,16 @@ export function SkillCardView({ name, data }: { name: SkillName; data: unknown }
                 {(m?.actions ?? []).map((a: AnyObj, ai: number) => (
                   <li key={ai} className="rounded-2xl border border-ink/10 bg-paper p-3">
                     <div className="font-medium text-ink">{a?.title}</div>
-                    {a?.description && <div className="mt-1 text-sm text-ink/60">{a.description}</div>}
+                    {a?.description && (
+                      <div className="mt-1 text-sm text-ink/60">{a.description}</div>
+                    )}
                   </li>
                 ))}
               </ul>
             </Card>
           ))}
         </div>
-      )
+      );
 
     case 'practice':
       return (
@@ -187,7 +294,7 @@ export function SkillCardView({ name, data }: { name: SkillName; data: unknown }
             </Card>
           )}
         </div>
-      )
+      );
 
     case 'info':
       return (
@@ -212,7 +319,7 @@ export function SkillCardView({ name, data }: { name: SkillName; data: unknown }
             </a>
           ))}
         </div>
-      )
+      );
 
     case 'package':
       return (
@@ -240,7 +347,7 @@ export function SkillCardView({ name, data }: { name: SkillName; data: unknown }
             </Card>
           )}
         </div>
-      )
+      );
   }
-  return null
+  return null;
 }

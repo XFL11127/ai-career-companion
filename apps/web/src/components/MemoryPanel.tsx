@@ -1,10 +1,11 @@
-'use client'
+'use client';
 
-import { useCallback, useEffect, useState } from 'react'
-import type { SkillName } from '@ai-career-companion/types'
-import { loadProfile } from '@/lib/profile'
-import { recallTurns, getStreak, type MemoryTurn } from '@/lib/memory'
-import { Brain, RefreshCw, Flame, UserCircle2, MessageSquareText, ChevronDown } from 'lucide-react'
+import { useCallback, useEffect, useState } from 'react';
+import { panelCls } from '@/components/skill-ui';
+import type { SkillName } from '@ai-career-companion/types';
+import { loadProfile } from '@/lib/profile';
+import { recallTurns, getStreak, type MemoryTurn } from '@/lib/memory';
+import { Brain, RefreshCw, Flame, UserCircle2, MessageSquareText, ChevronDown } from 'lucide-react';
 
 /**
  * Q3 记忆回顾面板（游客本地优先）。
@@ -17,39 +18,53 @@ import { Brain, RefreshCw, Flame, UserCircle2, MessageSquareText, ChevronDown } 
  * 登录后（后续阶段）可在 loadLocal 之后追加从 Worker /memory 按 user_id 拉取云端记忆并合并。
  */
 export function MemoryPanel({ skill }: { skill: SkillName }) {
-  const [open, setOpen] = useState(true)
-  const [loading, setLoading] = useState(true)
-  const [profile, setProfile] = useState<ReturnType<typeof loadProfile> | null>(null)
-  const [turns, setTurns] = useState<MemoryTurn[]>([])
-  const [streak, setStreak] = useState(0)
+  const [open, setOpen] = useState(true);
+  const [loading, setLoading] = useState(true);
+  const [profile, setProfile] = useState<ReturnType<typeof loadProfile> | null>(null);
+  const [turns, setTurns] = useState<MemoryTurn[]>([]);
+  const [streak, setStreak] = useState(0);
 
   const loadLocal = useCallback(async () => {
-    setLoading(true)
+    setLoading(true);
     const [p, t, s] = await Promise.all([
       Promise.resolve(loadProfile()),
       recallTurns(skill, 3).catch(() => [] as MemoryTurn[]),
       Promise.resolve(getStreak()),
-    ])
-    setProfile(p)
-    setTurns(t)
-    setStreak(s)
-    setLoading(false)
-  }, [skill])
+    ]);
+    setProfile(p);
+    setTurns(t);
+    setStreak(s);
+    setLoading(false);
+  }, [skill]);
 
   useEffect(() => {
-    loadLocal()
-  }, [loadLocal])
+    loadLocal();
+  }, [loadLocal]);
 
   const identity = profile
-    ? [profile.school, profile.grade, profile.major, profile.targetRole && `目标${profile.targetRole}`]
+    ? [
+        profile.school,
+        profile.grade,
+        profile.major,
+        profile.targetRole && `目标${profile.targetRole}`,
+      ]
         .filter(Boolean)
         .join(' · ')
-    : ''
+    : '';
 
-  const hasData = !!identity || (profile && profile.totalDiagnoses + profile.totalPlans + profile.totalPractices + profile.totalInfo + profile.totalPackages > 0) || turns.length > 0
+  const hasData =
+    !!identity ||
+    (profile &&
+      profile.totalDiagnoses +
+        profile.totalPlans +
+        profile.totalPractices +
+        profile.totalInfo +
+        profile.totalPackages >
+        0) ||
+    turns.length > 0;
 
   return (
-    <section className="mt-4 rounded-2xl border border-accent/15 bg-paper">
+    <section className={`${panelCls} mt-4`}>
       <button
         onClick={() => setOpen((o) => !o)}
         className="flex w-full items-center gap-2 px-4 py-3 text-left"
@@ -58,21 +73,31 @@ export function MemoryPanel({ skill }: { skill: SkillName }) {
         <Brain className="h-4 w-4 text-accent" />
         <span className="font-medium text-ink">记忆回顾</span>
         {hasData ? (
-          <span className="rounded-full bg-forest/10 px-2 py-0.5 text-xs text-forest">已从本地读取</span>
+          <span className="rounded-full bg-forest/10 px-2 py-0.5 text-xs text-forest">
+            已从本地读取
+          </span>
         ) : (
           <span className="rounded-full bg-ink/5 px-2 py-0.5 text-xs text-ink/50">暂无记忆</span>
         )}
         <span className="ml-auto flex items-center gap-2 text-ink/40">
-          <button
+          <span
             onClick={(e) => {
-              e.stopPropagation()
-              loadLocal()
+              e.stopPropagation();
+              loadLocal();
+            }}
+            role="button"
+            tabIndex={0}
+            onKeyDown={(e) => {
+              if (e.key === 'Enter' || e.key === ' ') {
+                e.stopPropagation();
+                loadLocal();
+              }
             }}
             title="刷新记忆"
             className="rounded-md p-1 hover:bg-ink/5 hover:text-ink"
           >
             <RefreshCw className={`h-3.5 w-3.5 ${loading ? 'animate-spin' : ''}`} />
-          </button>
+          </span>
           <ChevronDown className={`h-4 w-4 transition-transform ${open ? 'rotate-180' : ''}`} />
         </span>
       </button>
@@ -116,13 +141,12 @@ export function MemoryPanel({ skill }: { skill: SkillName }) {
               {turns.length > 0 && (
                 <div>
                   <p className="mb-1.5 flex items-center gap-1.5 text-xs font-medium text-ink/60">
-                    <MessageSquareText className="h-3.5 w-3.5" />
-                    本 Skill 最近本地对话
+                    <MessageSquareText className="h-3.5 w-3.5" />本 Skill 最近本地对话
                   </p>
                   <ul className="space-y-1.5">
                     {turns.map((t, i) => {
-                      const input = typeof t.input === 'string' ? t.input : JSON.stringify(t.input)
-                      const summary = input.length > 80 ? input.slice(0, 80) + '…' : input
+                      const input = typeof t.input === 'string' ? t.input : JSON.stringify(t.input);
+                      const summary = input.length > 80 ? input.slice(0, 80) + '…' : input;
                       return (
                         <li
                           key={i}
@@ -130,7 +154,7 @@ export function MemoryPanel({ skill }: { skill: SkillName }) {
                         >
                           {summary || '(空输入)'}
                         </li>
-                      )
+                      );
                     })}
                   </ul>
                 </div>
@@ -146,9 +170,9 @@ export function MemoryPanel({ skill }: { skill: SkillName }) {
         </div>
       )}
     </section>
-  )
+  );
 }
 
 function Tag({ label }: { label: string }) {
-  return <span className="rounded-full bg-ink/5 px-2.5 py-1 text-ink/60">{label}</span>
+  return <span className="rounded-full bg-ink/5 px-2.5 py-1 text-ink/60">{label}</span>;
 }

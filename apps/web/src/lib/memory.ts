@@ -232,28 +232,6 @@ export async function loadConversations(): Promise<Conversation[]> {
   }
 }
 
-/** 把云端拉取的会话合并进本地会话列表（按 skill+title+createdAt 去重，避免重复）。 */
-export async function importConversations(incoming: Conversation[]): Promise<void> {
-  if (!incoming.length) return;
-  const db = await openDB();
-  try {
-    const existing = (await getChat<Conversation[]>(db, CONVERSATIONS_KEY)) ?? [];
-    const merged: Conversation[] = [...existing];
-    const seen = new Set(existing.map((c) => `${c.skill}:${c.title}:${c.createdAt}`));
-    for (const c of incoming) {
-      const key = `${c.skill}:${c.title}:${c.createdAt}`;
-      if (!seen.has(key)) {
-        seen.add(key);
-        merged.push(c);
-      }
-    }
-    merged.sort((a, b) => b.updatedAt - a.updatedAt);
-    await putChat(db, CONVERSATIONS_KEY, merged.slice(0, MAX_CONVERSATIONS));
-  } finally {
-    db.close();
-  }
-}
-
 export async function archiveCurrentConversation(
   skill: string,
   messages: ChatMessage[]
@@ -282,6 +260,29 @@ export async function deleteConversation(id: string): Promise<void> {
   try {
     const list = (await getChat<Conversation[]>(db, CONVERSATIONS_KEY)) ?? [];
     const next = list.filter((c) => c.id !== id);
+    await putChat(db, CONVERSATIONS_KEY, next);
+  } finally {
+    db.close();
+  }
+}
+
+/** 云端拉取的历史会话合并到本地：按 id 去重，云端 updatedAt 优先，上限 MAX_CONVERSATIONS。 */
+export async function importConversations(incoming: Conversation[]): Promise<void> {
+  if (!incoming.length) return;
+  const db = await openDB();
+  try {
+    const list = (await getChat<Conversation[]>(db, CONVERSATIONS_KEY)) ?? [];
+    const map = new Map<string, Conversation>();
+    for (const c of list) map.set(c.id, c);
+    for (const c of incoming) {
+      const existing = map.get(c.id);
+      if (!existing || (c.updatedAt || 0) >= (existing.updatedAt || 0)) {
+        map.set(c.id, c);
+      }
+    }
+    const next = Array.from(map.values())
+      .sort((a, b) => b.updatedAt - a.updatedAt)
+      .slice(0, MAX_CONVERSATIONS);
     await putChat(db, CONVERSATIONS_KEY, next);
   } finally {
     db.close();

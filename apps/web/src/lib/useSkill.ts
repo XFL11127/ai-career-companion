@@ -6,6 +6,10 @@ import { loadResult, saveResult } from './db';
 import { appendTurn, recallTurns, turnsToContext, getUserProfile } from './memory';
 import { updateFromSkillResult, loadProfile, type SkillNameInput } from './profile';
 import { searchL3Knowledge } from './l3-knowledge';
+import { searchMemory } from './memory-api';
+import { appendSkillEvent } from './analytics-events';
+import { saveAbilitySnapshot } from './growth';
+import type { DiagnoseOutput } from '@ai-career-companion/types';
 
 /** 从 input 中提取可搜索的文本片段（用于 L3 关键词匹配）。 */
 function inputTextFromUnknown(input: unknown): string {
@@ -44,9 +48,17 @@ export function useSkill<N extends SkillName>(name: N) {
       const profileData = loadProfile();
       const profile = profileData.summary || getUserProfile() || undefined;
 
-      // L3 知识记忆：关键词匹配静态知识库（MVP 降级方案，未来升级为 pgvector 语义搜索）
+      // L3 知识记忆：优先语义搜索（Worker → bge-m3 → pgvector），
+      // 失败或无结果时回退关键词静态库，任何情况下都不阻塞主流程。
       const inputText = inputTextFromUnknown(input);
-      const l3Items = searchL3Knowledge(inputText, name);
+      let l3Items: string[] = searchL3Knowledge(inputText, name);
+      try {
+        const res = await searchMemory('local', inputText, 5);
+        const semantic = (res.results ?? []).map((r) => r.content).filter(Boolean);
+        if (semantic.length > 0) l3Items = semantic;
+      } catch {
+        /* Worker 不可达 / Supabase 未配置 → 静默回退关键词匹配 */
+      }
       const context = [
         ...l1Context,
         ...(l3Items.length ? [`【L3知识检索】`, ...l3Items.slice(0, 2)] : []),
@@ -62,11 +74,21 @@ export function useSkill<N extends SkillName>(name: N) {
       if (!finalData) throw new Error('未获取到结果');
       setData(finalData);
       await saveResult(name, finalData).catch(() => {});
+      // W2 D13 能力成长轨迹：诊断结果含雷达五维 → 存为一条带日期的快照
+      if (name === 'diagnose') {
+        const out = finalData as unknown as DiagnoseOutput;
+        if (out?.radar?.length) saveAbilitySnapshot(out.radar, 'diagnose');
+      }
       await appendTurn(name, { input: enriched, output: finalData, ts: Date.now() }).catch(
         () => {}
       );
       // L2 交互记忆：Skill 成功后自动更新用户画像
       updateFromSkillResult(name as SkillNameInput, finalData, profileData);
+      // L1 埋点：记录本次 Skill 调用（结构对齐 Supabase skill_events 表）
+      appendSkillEvent(name, {
+        inputChars: inputText.length,
+        usedSemanticRecall: l3Items.length > 0,
+      });
     } catch (e) {
       setError(e instanceof Error ? e.message : '请求失败');
     } finally {

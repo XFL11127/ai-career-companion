@@ -1,55 +1,32 @@
 import { type NextRequest, NextResponse } from 'next/server';
+import jobsData from '@/lib/jobs-data.json';
 
-// 模拟岗位详情数据（按公司名匹配）
-const MOCK_JOBS: Record<
-  string,
-  {
-    company: string;
-    role: string;
-    salary: string;
-    location: string;
-    tags: string[];
-    url: string;
-    description: string;
-    requirements: string[];
-    deadline: string;
-  }
-> = {
-  某双非友好科技公司: {
-    company: '某双非友好科技公司',
-    role: '前端开发实习',
-    salary: '200/天',
-    location: '远程',
-    tags: ['双非友好', '远程', '实习'],
-    url: 'https://www.shixiseng.com',
-    description:
-      '负责公司前端产品的开发与维护，参与项目技术方案讨论，使用 React/Next.js 构建用户界面。',
-    requirements: [
-      '熟悉 HTML/CSS/JavaScript',
-      '了解 React 或 Vue 框架',
-      '有项目经验优先',
-      '每周可实习3天以上',
-    ],
-    deadline: '2026-09-30',
-  },
-  某地市国企信息岗: {
-    company: '某地市国企信息岗',
-    role: '软件开发',
-    salary: '8-12K',
-    location: '二线城市',
-    tags: ['稳定', '校招', '国企'],
-    url: 'https://www.zhaopin.com',
-    description:
-      '参与企业内部信息系统的开发与运维，使用 Java/Python 进行后端开发，配合前端完成功能交付。',
-    requirements: [
-      '计算机相关专业本科及以上',
-      '熟悉 Java 或 Python',
-      '了解数据库基本操作',
-      '良好的沟通能力',
-    ],
-    deadline: '2026-10-15',
-  },
+/**
+ * 岗位详情数据源：src/lib/jobs-data.json
+ *
+ * 说明：
+ * - 取代原先硬编码在路由里的 MOCK_JOBS（"某双非友好科技公司"等占位数据）。
+ * - 数据带 industry / city / firstDegreeFriendly 等筛选字段，供后续 /jobs 三栏页使用。
+ * - 投递链接指向招聘平台搜索页，非伪造的具体岗位链接；技能要求基于行业真实行情整理。
+ */
+
+type Job = {
+  id: string;
+  company: string;
+  role: string;
+  salary: string;
+  location: string;
+  industry: string;
+  degree: string;
+  firstDegreeFriendly: boolean;
+  tags: string[];
+  url: string;
+  description: string;
+  requirements: string[];
+  deadline: string;
 };
+
+const JOBS = jobsData.jobs as Job[];
 
 export async function GET(
   request: NextRequest,
@@ -58,32 +35,36 @@ export async function GET(
   // Next 15：params 为异步 Promise，需 await 后取出
   const { path } = await params;
 
-  // path[0] 是公司名（可能经过 URL 编码），使用安全解码避免畸形输入导致崩溃
-  const company = path?.[0] ? safeDecodeURIComponent(path[0]) : '';
+  // path[0] 是公司名或岗位 id（可能经过 URL 编码），安全解码避免畸形输入导致崩溃
+  const keyword = path?.[0] ? safeDecodeURIComponent(path[0]) : '';
 
-  if (!company) {
+  if (!keyword) {
     return NextResponse.json({ error: '公司名不能为空' }, { status: 400 });
   }
 
-  // 尝试精确匹配
-  let job = MOCK_JOBS[company];
-
-  // 精确匹配失败，尝试模糊匹配（包含关键词即可）
+  // 1) 按 id 精确匹配
+  let job = JOBS.find((j) => j.id === keyword);
+  // 2) 按公司名精确匹配
+  if (!job) job = JOBS.find((j) => j.company === keyword);
+  // 3) 模糊匹配（双向包含）
   if (!job) {
-    const key = Object.keys(MOCK_JOBS).find((k) => k.includes(company) || company.includes(k));
-    if (key) job = MOCK_JOBS[key];
+    job = JOBS.find((j) => j.company.includes(keyword) || keyword.includes(j.company));
   }
 
-  // 仍然没找到，返回通用模拟数据
+  // 4) 兜底：未收录时返回带搜索链接的通用卡片，而不是编造岗位信息
   if (!job) {
     return NextResponse.json({
-      company,
+      id: 'not-found',
+      company: keyword,
       role: '岗位详情',
       salary: '面议',
-      location: '详见招聘页面',
-      tags: ['双非友好'],
-      url: 'https://www.zhaopin.com',
-      description: `${company}的岗位详情暂未收录。你可以点击下方链接前往招聘平台搜索相关岗位信息。`,
+      location: '详见招聘平台',
+      industry: '未知',
+      degree: '未知',
+      firstDegreeFriendly: false,
+      tags: ['未收录'],
+      url: `https://www.zhipin.com/web/geek/job?query=${encodeURIComponent(keyword)}`,
+      description: `${keyword} 的岗位暂未收录进我们的岗位库。可以点击下方链接前往招聘平台搜索该企业的最新岗位。`,
       requirements: ['请前往招聘平台查看具体岗位要求'],
       deadline: '以招聘平台公布为准',
     });
