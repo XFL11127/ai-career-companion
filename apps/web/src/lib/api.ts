@@ -1,4 +1,4 @@
-import { type SkillName, type SkillOutput } from '@ai-career-companion/types';
+import { type SkillName, type SkillOutput, type SkillRunMeta } from '@ai-career-companion/types';
 
 /** 非流式封装（保留给 Worker 可达路径 / 简单调用）。 */
 export async function postSkill<N extends SkillName>(
@@ -19,6 +19,7 @@ export type StreamChunk<N extends SkillName> = {
   done: boolean;
   data: Partial<SkillOutput<N>> | null;
   error?: string;
+  meta?: SkillRunMeta;
 };
 
 /**
@@ -40,14 +41,19 @@ export async function* streamSkillCall<N extends SkillName>(
   const ct = res.headers.get('content-type') ?? '';
   if (!ct.includes('ndjson')) {
     const json = await res.json();
-    if (json.code !== 0) throw new Error(json.message ?? 'skill request failed');
-    yield { done: true, data: (json.data ?? null) as Partial<SkillOutput<N>> | null };
+    if (!res.ok || json.code !== 0) throw new Error(json.message ?? 'skill request failed');
+    yield {
+      done: true,
+      data: (json.data ?? null) as Partial<SkillOutput<N>> | null,
+      meta: json.meta as SkillRunMeta | undefined,
+    };
     return;
   }
   if (!res.body) throw new Error('no response body');
   const reader = res.body.getReader();
   const decoder = new TextDecoder();
   let buf = '';
+  let emittedFinalChunk = false;
   while (true) {
     const { done, value } = await reader.read();
     if (done) break;
@@ -58,14 +64,24 @@ export async function* streamSkillCall<N extends SkillName>(
       buf = buf.slice(nl + 1);
       if (!line.trim()) continue;
       try {
-        const chunk = JSON.parse(line) as { done: boolean; data: unknown; error?: string };
+        const chunk = JSON.parse(line) as {
+          done: boolean;
+          data: unknown;
+          error?: string;
+          meta?: SkillRunMeta;
+        };
         if (chunk.error) throw new Error(chunk.error);
-        yield { done: chunk.done, data: (chunk.data ?? null) as Partial<SkillOutput<N>> | null };
+        if (chunk.done) emittedFinalChunk = true;
+        yield {
+          done: chunk.done,
+          data: (chunk.data ?? null) as Partial<SkillOutput<N>> | null,
+          meta: chunk.meta,
+        };
       } catch (e) {
         if (e instanceof SyntaxError) continue;
         throw e;
       }
     }
   }
-  yield { done: true, data: null };
+  if (!emittedFinalChunk) yield { done: true, data: null };
 }

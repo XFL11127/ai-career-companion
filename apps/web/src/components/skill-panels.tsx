@@ -17,13 +17,27 @@ import {
 } from '@/components/skill-ui';
 import { MemoryPanel } from '@/components/MemoryPanel';
 import { ArrowRight, PartyPopper, Plus, Trash2 } from 'lucide-react';
-import type { SkillName, DiagnoseOutput } from '@ai-career-companion/types';
+import type { SkillName, DiagnoseOutput, SkillRunMeta } from '@ai-career-companion/types';
 
 type OnNext = (tab: SkillName) => void;
 
+function RunStatus({ meta }: { meta: SkillRunMeta | null }) {
+  if (!meta) return null;
+  return (
+    <p
+      className={`mt-4 text-xs ${meta.degraded ? 'text-amber-700' : 'text-forest'}`}
+      role="status"
+    >
+      {meta.degraded
+        ? `当前显示降级示例结果（${meta.reason === 'missing_api_key' ? '未配置模型密钥' : '模型服务暂不可用'}）。`
+        : '本次结果由 DeepSeek 实时生成。'}
+    </p>
+  );
+}
+
 // ==================== Diagnose ====================
 export function DiagnosePanel({ onNext }: { onNext?: OnNext }) {
-  const { data, loading, error, run } = useSkill('diagnose');
+  const { data, loading, error, run, runMeta } = useSkill('diagnose');
   const [text, setText] = useState('');
   const [showBadge, setShowBadge] = useState(false);
 
@@ -57,7 +71,6 @@ export function DiagnosePanel({ onNext }: { onNext?: OnNext }) {
 
   const start = () =>
     run({
-      userId: 'local',
       messages: [
         { role: 'user', content: text || '双非大三学生，计算机专业，想做前端开发，暂时没有实习' },
       ],
@@ -92,6 +105,7 @@ export function DiagnosePanel({ onNext }: { onNext?: OnNext }) {
       {!error && !data && !loading && <EmptyState label="填写上方信息，生成你的五维能力雷达图" />}
       {loading && !data && <LoadingState label="正在扫描五维差距…" />}
 
+      {data && <RunStatus meta={runMeta} />}
       {data && (
         <div className="mt-6 grid gap-6 lg:grid-cols-2">
           <Card>{data.radar && <RadarChart radar={data.radar} />}</Card>
@@ -139,7 +153,7 @@ const DEFAULT_DIAGNOSE: DiagnoseOutput = {
 };
 
 export function PlanPanel({ onNext }: { onNext?: OnNext }) {
-  const { data, loading, error, run } = useSkill('plan');
+  const { data, loading, error, run, runMeta } = useSkill('plan');
   const [diagnose, setDiagnose] = useState<DiagnoseOutput | null>(null);
   const [showBadge, setShowBadge] = useState(false);
 
@@ -194,6 +208,7 @@ export function PlanPanel({ onNext }: { onNext?: OnNext }) {
       {!error && !data && !loading && <EmptyState label="点击上方按钮，生成你的阶段化成长路径" />}
       {loading && !data && <LoadingState label="正在规划路径…" />}
 
+      {data && <RunStatus meta={runMeta} />}
       {data && (
         <div className="mt-6 space-y-4">
           {data.milestones?.map((m, i) => (
@@ -248,7 +263,7 @@ const PRACTICE_MODE_LABEL: Record<PracticeMode, string> = {
 };
 
 export function PracticePanel({ onNext }: { onNext?: OnNext }) {
-  const { data, loading, error, run } = useSkill('practice');
+  const { data, loading, error, run, runMeta } = useSkill('practice');
   const [mode, setMode] = useState<PracticeMode>('interview');
   const [topic, setTopic] = useState('');
   const [showBadge, setShowBadge] = useState(false);
@@ -313,6 +328,7 @@ export function PracticePanel({ onNext }: { onNext?: OnNext }) {
       {!error && !data && !loading && <EmptyState label="选择模式，生成针对性问题与纠偏反馈" />}
       {loading && !data && <LoadingState label="正在准备题目…" />}
 
+      {data && <RunStatus meta={runMeta} />}
       {data && (
         <div className="mt-6 space-y-4">
           <Card>
@@ -348,7 +364,7 @@ export function PracticePanel({ onNext }: { onNext?: OnNext }) {
 
 // ==================== Info ====================
 export function InfoPanel({ onNext }: { onNext?: OnNext }) {
-  const { data, loading, error, run } = useSkill('info');
+  const { data, loading, error, run, runMeta } = useSkill('info');
   const [showBadge, setShowBadge] = useState(false);
 
   useEffect(() => {
@@ -365,7 +381,7 @@ export function InfoPanel({ onNext }: { onNext?: OnNext }) {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [data]);
 
-  const start = () => run({ userId: 'local' });
+  const start = () => run({});
 
   return (
     <div>
@@ -390,6 +406,7 @@ export function InfoPanel({ onNext }: { onNext?: OnNext }) {
       {!error && !data && !loading && <EmptyState label="点击上方按钮，获取最新双非友好机会" />}
       {loading && !data && <LoadingState label="正在聚合信息…" />}
 
+      {data && <RunStatus meta={runMeta} />}
       {data && (
         <div className="mt-6 space-y-3">
           {data.jobs?.map((j, i) => (
@@ -443,7 +460,7 @@ function buildResumeText(r: ResumeData): string {
 }
 
 export function PackagePanel() {
-  const { data, loading, error, run } = useSkill('package');
+  const { data, loading, error, run, runMeta } = useSkill('package');
   const [resumeText, setResumeText] = useState('');
   const [targetRole, setTargetRole] = useState('');
   const [showBadge, setShowBadge] = useState(false);
@@ -654,6 +671,7 @@ export function PackagePanel() {
       {!error && !data && !loading && <EmptyState label="填入简历与目标岗位，生成优化版本" />}
       {loading && !data && <LoadingState label="正在包装成果…" />}
 
+      {data && <RunStatus meta={runMeta} />}
       {data && (
         <div className="mt-6 space-y-4">
           {data.optimizedResume && (

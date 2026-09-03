@@ -2,7 +2,7 @@
 
 > 面向**双非学生**的 AI Copilot 式学职陪伴产品 · iCAN 参赛项目
 
-一个帮助学生完成「破局诊断 → 路径规划 → 实战练兵 → 信息差 → 成果包装」五步闭环的 Web 应用。后端接 DeepSeek 大模型，记忆层：前端 IndexedDB（L1 会话）+ 服务端 Mem0 兼容 L1 存储（关键词+时间召回，无需 embedding API；pgvector/长期向量按规划推迟），全栈 Serverless 部署。
+一个帮助学生完成「破局诊断 → 路径规划 → 实战练兵 → 信息差 → 成果包装」五步闭环的 Web 应用。浏览器仅调用 Next.js BFF；BFF 调用 DeepSeek，并在认证与 RLS 就绪后负责 Supabase 数据访问。Cloudflare Worker 仅保留为带内部密钥的 BGE-M3 向量服务，不能直接暴露给浏览器。
 
 ---
 
@@ -11,9 +11,9 @@
 | 层 | 技术 |
 |---|---|
 | 前端 | Next.js 16 (App Router) · React 19 · TypeScript 5.9 · Tailwind CSS 3.4 · lucide-react |
-| 后端 | Cloudflare Workers · Hono 4 · zod 3 |
+| 后端 | Next.js Route Handlers（BFF）· Cloudflare Worker（内部 embedding）· zod 3 |
 | AI | Vercel AI SDK 7 · @ai-sdk/deepseek（DeepSeek-V3 主力，Moonshot 备用）· 无 Key 时走 stub |
-| 记忆/数据 | Supabase (PostgreSQL) · pgvector（1536 维向量）· 本地 IndexedDB/状态缓存 |
+| 记忆/数据 | Supabase (PostgreSQL) · pgvector（认证/RLS 就绪后接入）· 本地 IndexedDB/状态缓存 |
 | 工程 | npm workspaces · Turbo 2.10 · ESLint · Prettier |
 | 部署 | Vercel（前端）· Cloudflare Workers（后端）· Supabase（数据库） |
 
@@ -57,8 +57,8 @@ ai-career-companion/
 ```
 
 **模块职责**
-- `apps/web`：学生端全部界面，通过 `useSkill` hook → `/api/skill` → Worker 调大模型。
-- `apps/worker`：Hono 服务，路由转发到 `packages/llm` 的 `runSkill`，负责真实 AI 推理与（未来）持久化。
+- `apps/web`：学生端全部界面，通过 `useSkill` hook → `/api/skill` → DeepSeek；BFF 是浏览器唯一的业务后端入口。
+- `apps/worker`：仅提供 `POST /internal/embed` 的 BGE-M3 embedding 服务，要求 `INTERNAL_WORKER_SECRET`，不访问 Supabase、不处理用户业务请求。
 - `packages/llm`：封装 Vercel AI SDK + DeepSeek，统一 5 个 Skill 的 prompt 与 zod 输出校验；无 `DEEPSEEK_API_KEY` 时返回 stub 演示数据，保证链路可演示。
 - `packages/types`：前后端共享的 zod 契约，避免类型漂移。
 - `supabase`：学生画像、Skill 会话、三层记忆（含向量）的持久化。

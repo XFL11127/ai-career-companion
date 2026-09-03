@@ -1,51 +1,41 @@
-/**
- * Worker 记忆 API 客户端
- *
- * 封装对 Cloudflare Worker 的 /api/memory 和 /api/memory/search 接口调用。
- * 当前 MVP 阶段前端调用此 API 进行 L3 知识记忆的存储与检索（通过 pgvector 语义搜索）。
- * Worker URL 通过环境变量或默认值配置。
- */
-
-const WORKER_BASE = process.env.NEXT_PUBLIC_WORKER_URL ?? '';
+import type { MemoryLayer, MemorySearchResponse } from '@ai-career-companion/types';
 
 /**
- * 存储一条记忆到 Supabase（Worker 生成 BGE-M3 向量 → 写入 pgvector）。
- * 当前 MVP 阶段用于将 Skill 交互中生成的结构化知识存入 L3。
+ * Browser memory client. It only reaches the same-origin Next BFF; user identity is never accepted
+ * here and is derived by the BFF after Supabase Auth has been introduced.
  */
+
+/** Store a memory through the BFF once authenticated persistence is enabled. */
 export async function storeMemory(
-  userId: string,
-  content: string
-): Promise<{ ok: boolean; id?: string }> {
-  try {
-    const res = await fetch(`${WORKER_BASE}/api/memory`, {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ user_id: userId, content }),
-    });
-    return await res.json();
-  } catch {
-    // Worker 不可达时静默降级（不阻塞主流程）
-    return { ok: false };
-  }
+  content: string,
+  layer: MemoryLayer = 'interaction'
+): Promise<{ ok: boolean; id?: string; degraded?: boolean; reason?: string }> {
+  const res = await fetch('/api/memory', {
+    method: 'POST',
+    headers: { 'content-type': 'application/json' },
+    body: JSON.stringify({ content, layer }),
+  });
+  const payload = (await res.json()) as {
+    ok?: boolean;
+    id?: string;
+    degraded?: boolean;
+    reason?: string;
+    message?: string;
+  };
+  if (!res.ok) throw new Error(payload.message ?? payload.reason ?? 'memory write failed');
+  return {
+    ok: payload.ok === true,
+    id: payload.id,
+    degraded: payload.degraded,
+    reason: payload.reason,
+  };
 }
 
-/**
- * 语义搜索记忆（Worker 生成查询向量 → Supabase pgvector 余弦相似度检索 Top K）。
- * 当前 MVP 阶段用于在 Skill 调用前检索相关历史知识。
- */
-export async function searchMemory(
-  userId: string,
-  query: string,
-  limit = 5
-): Promise<{ results?: Array<{ id: string; content: string; similarity: number }> }> {
-  try {
-    const res = await fetch(`${WORKER_BASE}/api/memory/search`, {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ user_id: userId, query, match_count: limit }),
-    });
-    return await res.json();
-  } catch {
-    return { results: [] };
-  }
+/** Search memory through the BFF; it reports an explicit keyword fallback until persistence is ready. */
+export async function searchMemory(query: string, limit = 5): Promise<MemorySearchResponse> {
+  const params = new URLSearchParams({ query, limit: String(limit) });
+  const res = await fetch(`/api/memory?${params.toString()}`);
+  const payload = (await res.json()) as MemorySearchResponse & { message?: string };
+  if (!res.ok) throw new Error(payload.message ?? 'memory search failed');
+  return payload;
 }

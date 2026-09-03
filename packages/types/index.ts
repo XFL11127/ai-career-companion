@@ -49,7 +49,7 @@ export const profileSchema = z.object({
 });
 export type Profile = z.infer<typeof profileSchema>;
 
-// ---------- 记忆层（Mem0 + pgvector，三层）----------
+// ---------- 记忆层（Supabase + pgvector，三层）----------
 
 // L1 感知 / L2 交互 / L3 知识 → 对应短期会话/中期本地/长期向量
 export const memoryLayerSchema = z.enum(['perception', 'interaction', 'knowledge']);
@@ -64,6 +64,56 @@ export const memoryItemSchema = z.object({
   createdAt: z.string(),
 });
 export type MemoryItem = z.infer<typeof memoryItemSchema>;
+
+/**
+ * 浏览器可见的记忆条目。身份归属只在服务端处理，因此 DTO 中绝不能出现 userId 或 embedding。
+ */
+export const memoryViewSchema = z.object({
+  id: z.string(),
+  content: z.string(),
+  layer: memoryLayerSchema,
+  createdAt: z.string(),
+  score: z.number().min(0).max(1).optional(),
+});
+export type MemoryView = z.infer<typeof memoryViewSchema>;
+
+const boundedMemoryText = z.string().trim().min(1).max(8_000);
+
+/** Browser → Next BFF. The authenticated user is derived by the BFF, never supplied by the client. */
+export const memoryWriteRequestSchema = z.object({
+  content: boundedMemoryText,
+  layer: memoryLayerSchema.optional().default('interaction'),
+  metadata: z.record(z.string(), z.unknown()).optional(),
+});
+export type MemoryWriteRequest = z.infer<typeof memoryWriteRequestSchema>;
+
+/** Browser → Next BFF semantic-memory query. */
+export const memorySearchRequestSchema = z.object({
+  query: boundedMemoryText,
+  limit: z.coerce.number().int().min(1).max(20).default(5),
+});
+export type MemorySearchRequest = z.infer<typeof memorySearchRequestSchema>;
+
+export const memorySearchResponseSchema = z.object({
+  items: z.array(memoryViewSchema),
+  mode: z.enum(['semantic', 'keyword']),
+  degraded: z.boolean(),
+  reason: z.string().optional(),
+});
+export type MemorySearchResponse = z.infer<typeof memorySearchResponseSchema>;
+
+/** Next BFF → internal Worker only. Do not expose this request shape to the browser. */
+export const embeddingRequestSchema = z.object({
+  texts: z.array(boundedMemoryText).min(1).max(32),
+});
+export type EmbeddingRequest = z.infer<typeof embeddingRequestSchema>;
+
+export const embeddingResponseSchema = z.object({
+  embeddings: z.array(z.array(z.number())).min(1),
+  model: z.literal('@cf/baai/bge-m3'),
+  degraded: z.literal(false),
+});
+export type EmbeddingResponse = z.infer<typeof embeddingResponseSchema>;
 
 // ---------- Skill 0：破局诊断（五维差距扫描）----------
 
@@ -83,14 +133,19 @@ export const roleMatchSchema = z.object({
 export type RoleMatch = z.infer<typeof roleMatchSchema>;
 
 export const diagnoseInputSchema = z.object({
-  userId: z.string(),
   messages: z
-    .array(z.object({ role: z.enum(['user', 'assistant']), content: z.string() }))
+    .array(
+      z.object({
+        role: z.enum(['user', 'assistant']),
+        content: z.string().trim().min(1).max(4_000),
+      })
+    )
+    .max(20)
     .optional(),
   // L1 会话记忆：召回的近期轮次摘要，注入 prompt 保持连贯
-  context: z.array(z.string()).optional(),
+  context: z.array(z.string().trim().min(1).max(2_000)).max(10).optional(),
   // L2 交互记忆：用户画像摘要，跨会话持久化
-  profile: z.string().optional(),
+  profile: z.string().trim().max(4_000).optional(),
 });
 export const diagnoseOutputSchema = z.object({
   reply: z.string().optional(), // 散文式解读（Kimi 式对话感）
@@ -126,9 +181,9 @@ export type PlanOutput = z.infer<typeof planOutputSchema>;
 
 // 路径规划输入：既接受「诊断输出」（卡片页链路），也接受「自由文本目标」（聊天链路）
 export const planInputSchema = diagnoseOutputSchema.partial().extend({
-  goal: z.string().optional(),
-  context: z.array(z.string()).optional(),
-  profile: z.string().optional(),
+  goal: z.string().trim().min(1).max(2_000).optional(),
+  context: z.array(z.string().trim().min(1).max(2_000)).max(10).optional(),
+  profile: z.string().trim().max(4_000).optional(),
 });
 export type PlanInput = z.infer<typeof planInputSchema>;
 
@@ -136,11 +191,11 @@ export type PlanInput = z.infer<typeof planInputSchema>;
 
 export const practiceInputSchema = z.object({
   mode: z.enum(['interview', 'algorithm', 'project']).optional().default('interview'),
-  topic: z.string().optional(),
+  topic: z.string().trim().min(1).max(2_000).optional(),
   // L1 会话记忆
-  context: z.array(z.string()).optional(),
+  context: z.array(z.string().trim().min(1).max(2_000)).max(10).optional(),
   // L2 交互记忆：用户画像摘要
-  profile: z.string().optional(),
+  profile: z.string().trim().max(4_000).optional(),
 });
 export const practiceOutputSchema = z.object({
   reply: z.string().optional(),
@@ -172,12 +227,12 @@ export type InfoOutput = z.infer<typeof infoOutputSchema>;
 // ---------- Skill 4：成果包装（简历/面试材料转化）----------
 
 export const packageInputSchema = z.object({
-  resumeText: z.string().optional(),
-  targetRole: z.string().optional(),
+  resumeText: z.string().trim().min(1).max(12_000).optional(),
+  targetRole: z.string().trim().min(1).max(2_000).optional(),
   // L1 会话记忆
-  context: z.array(z.string()).optional(),
+  context: z.array(z.string().trim().min(1).max(2_000)).max(10).optional(),
   // L2 交互记忆：用户画像摘要
-  profile: z.string().optional(),
+  profile: z.string().trim().max(4_000).optional(),
 });
 export const packageOutputSchema = z.object({
   reply: z.string().optional(),
@@ -195,9 +250,8 @@ export const skillInputMap = {
   plan: planInputSchema,
   practice: practiceInputSchema,
   info: z.object({
-    userId: z.string(),
-    context: z.array(z.string()).optional(),
-    profile: z.string().optional(),
+    context: z.array(z.string().trim().min(1).max(2_000)).max(10).optional(),
+    profile: z.string().trim().max(4_000).optional(),
   }),
   package: packageInputSchema,
 } as const;
@@ -213,6 +267,18 @@ export const skillOutputMap = {
 export type SkillInput<N extends SkillName> = z.infer<(typeof skillInputMap)[N]>;
 export type SkillOutput<N extends SkillName> = z.infer<(typeof skillOutputMap)[N]>;
 
+/** Every Skill response declares whether it is a real provider result or an explicit fallback. */
+export const skillRunMetaSchema = z.object({
+  provider: z.enum(['deepseek', 'stub']),
+  degraded: z.boolean(),
+  reason: z.enum(['missing_api_key', 'provider_error']).optional(),
+});
+export type SkillRunMeta = z.infer<typeof skillRunMetaSchema>;
+
 // Worker 健康检查
-export const healthSchema = z.object({ status: z.literal('ok'), time: z.string() });
+export const healthSchema = z.object({
+  status: z.literal('ok'),
+  time: z.string(),
+  components: z.object({ embedding: z.enum(['ready', 'unavailable']) }),
+});
 export type Health = z.infer<typeof healthSchema>;

@@ -1,47 +1,42 @@
 import type { NextRequest } from 'next/server';
 import { NextResponse } from 'next/server';
+import { memorySearchRequestSchema, memoryWriteRequestSchema } from '@ai-career-companion/types';
 
-// 记忆读写透传层。当前服务端持久化（Cloudflare Worker）已弃用，未配置 NEXT_PUBLIC_WORKER_URL 时
-// 优雅降级：GET 返回空、POST/DELETE 返回 ok:false，不阻断主链路；前端 L1 记忆走 localStorage。
-const WORKER_URL = process.env.NEXT_PUBLIC_WORKER_URL ?? '';
+// Memory persistence starts only after Supabase Auth + RLS are available. Do not proxy a browser
+// request to the Worker: this route is the permanent security boundary that derives identity server-side.
+const MEMORY_NOT_READY = 'memory_persistence_not_ready';
 
 export async function GET(req: NextRequest) {
   const { searchParams } = new URL(req.url);
-  if (!WORKER_URL) return NextResponse.json({ items: [], count: 0, degraded: true });
-  try {
-    const res = await fetch(`${WORKER_URL}/memory?${searchParams.toString()}`, {
-      headers: { 'content-type': 'application/json' },
-    });
-    return NextResponse.json(await res.json());
-  } catch {
-    return NextResponse.json({ items: [], count: 0, degraded: true });
+  const input = memorySearchRequestSchema.safeParse({
+    query: searchParams.get('query') ?? searchParams.get('q'),
+    limit: searchParams.get('limit') ?? searchParams.get('topK') ?? undefined,
+  });
+  if (!input.success) {
+    return NextResponse.json({ code: 400, message: 'invalid memory query' }, { status: 400 });
   }
+  return NextResponse.json({
+    items: [],
+    mode: 'keyword',
+    degraded: true,
+    reason: MEMORY_NOT_READY,
+  });
 }
 
 export async function POST(req: NextRequest) {
-  if (!WORKER_URL) return NextResponse.json({ ok: false, degraded: true });
-  try {
-    const body = await req.json();
-    const res = await fetch(`${WORKER_URL}/memory`, {
-      method: 'POST',
-      headers: { 'content-type': 'application/json' },
-      body: JSON.stringify(body),
-    });
-    return NextResponse.json(await res.json());
-  } catch {
-    return NextResponse.json({ ok: false, degraded: true });
+  const input = memoryWriteRequestSchema.safeParse(await req.json().catch(() => undefined));
+  if (!input.success) {
+    return NextResponse.json({ code: 400, message: 'invalid memory write' }, { status: 400 });
   }
+  return NextResponse.json(
+    { ok: false, degraded: true, reason: MEMORY_NOT_READY },
+    { status: 503 }
+  );
 }
 
-export async function DELETE(req: NextRequest) {
-  if (!WORKER_URL) return NextResponse.json({ ok: false, degraded: true });
-  try {
-    const { searchParams } = new URL(req.url);
-    const res = await fetch(`${WORKER_URL}/memory?${searchParams.toString()}`, {
-      method: 'DELETE',
-    });
-    return NextResponse.json(await res.json());
-  } catch {
-    return NextResponse.json({ ok: false, degraded: true });
-  }
+export async function DELETE() {
+  return NextResponse.json(
+    { ok: false, degraded: true, reason: MEMORY_NOT_READY },
+    { status: 503 }
+  );
 }

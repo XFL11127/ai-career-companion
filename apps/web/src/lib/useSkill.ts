@@ -1,6 +1,6 @@
 'use client';
 import { useEffect, useState } from 'react';
-import { type SkillName, type SkillOutput } from '@ai-career-companion/types';
+import { type SkillName, type SkillOutput, type SkillRunMeta } from '@ai-career-companion/types';
 import { streamSkillCall } from './api';
 import { loadResult, saveResult } from './db';
 import { appendTurn, recallTurns, turnsToContext, getUserProfile } from './memory';
@@ -26,6 +26,7 @@ export function useSkill<N extends SkillName>(name: N) {
   const [data, setData] = useState<SkillOutput<N> | null>(null);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [runMeta, setRunMeta] = useState<SkillRunMeta | null>(null);
 
   // 进入页面时先读本地缓存，命中则直接展示（免登即用）
   useEffect(() => {
@@ -39,6 +40,7 @@ export function useSkill<N extends SkillName>(name: N) {
   const run = async (input: unknown) => {
     setLoading(true);
     setError(null);
+    setRunMeta(null);
     try {
       // L1 会话记忆：召回近期轮次
       const history = await recallTurns(name, 5).catch(() => []);
@@ -48,13 +50,13 @@ export function useSkill<N extends SkillName>(name: N) {
       const profileData = loadProfile();
       const profile = profileData.summary || getUserProfile() || undefined;
 
-      // L3 知识记忆：优先语义搜索（Worker → bge-m3 → pgvector），
-      // 失败或无结果时回退关键词静态库，任何情况下都不阻塞主流程。
+      // L3 知识记忆：BFF 持久化就绪后优先语义搜索；在此之前或失败时使用关键词静态库。
+      // 无论哪种情况都不阻塞主流程。
       const inputText = inputTextFromUnknown(input);
       let l3Items: string[] = searchL3Knowledge(inputText, name);
       try {
-        const res = await searchMemory('local', inputText, 5);
-        const semantic = (res.results ?? []).map((r) => r.content).filter(Boolean);
+        const res = await searchMemory(inputText, 5);
+        const semantic = res.items.map((item) => item.content).filter(Boolean);
         if (semantic.length > 0) l3Items = semantic;
       } catch {
         /* Worker 不可达 / Supabase 未配置 → 静默回退关键词匹配 */
@@ -68,6 +70,7 @@ export function useSkill<N extends SkillName>(name: N) {
       let finalData: SkillOutput<N> | null = null;
       // 流式：每收到一个 partial 就更新 data，UI 边生成边渲染，首段几百毫秒即到
       for await (const chunk of streamSkillCall(name, enriched)) {
+        if (chunk.meta) setRunMeta(chunk.meta);
         if (chunk.data) setData(chunk.data as SkillOutput<N>);
         if (chunk.done && chunk.data) finalData = chunk.data as SkillOutput<N>;
       }
@@ -96,5 +99,5 @@ export function useSkill<N extends SkillName>(name: N) {
     }
   };
 
-  return { data, loading, error, run };
+  return { data, loading, error, run, runMeta };
 }

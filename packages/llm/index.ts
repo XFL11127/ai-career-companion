@@ -18,6 +18,7 @@ import {
   type PlanInput,
   type PracticeInput,
   type PackageInput,
+  type SkillRunMeta,
 } from '@ai-career-companion/types';
 
 // 抑制 @ai-sdk/deepseek 在结构化输出（generateObject/streamObject）时因
@@ -247,130 +248,118 @@ function buildPackagePrompt(input: PackageInput): string {
 只输出符合 schema 的 JSON，不要额外解释。${withMemory(input.context)}${withProfile(input.profile)}`;
 }
 
-// ---------- 主入口 ----------
+type PreparedSkill = { schema: z.ZodTypeAny; promptText: string };
+
+/**
+ * Validates and normalizes an incoming Skill request before any provider call. This is intentionally
+ * separate from fallback handling: malformed client input is a 400 at the BFF, never a fake success.
+ */
+function prepareSkill(name: SkillName, rawInput: unknown): PreparedSkill {
+  switch (name) {
+    case 'diagnose': {
+      const input = diagnoseInputSchema.parse(rawInput);
+      return { schema: diagnoseOutputSchema, promptText: buildDiagnosePrompt(input) };
+    }
+    case 'plan': {
+      const input = planInputSchema.parse(rawInput);
+      return { schema: planOutputSchema, promptText: buildPlanPrompt(input) };
+    }
+    case 'practice': {
+      const input = practiceInputSchema.parse(rawInput);
+      return { schema: practiceOutputSchema, promptText: buildPracticePrompt(input) };
+    }
+    case 'info': {
+      const input = skillInputMap.info.parse(rawInput);
+      return {
+        schema: infoOutputSchema,
+        promptText: buildInfoPrompt(input.context, input.profile),
+      };
+    }
+    case 'package': {
+      const input = packageInputSchema.parse(rawInput);
+      return { schema: packageOutputSchema, promptText: buildPackagePrompt(input) };
+    }
+  }
+}
+
+export type SkillRunResult = { data: unknown; meta: SkillRunMeta };
+export type SkillStreamChunk = { done: boolean; data: unknown; error?: string; meta: SkillRunMeta };
+
+const providerMeta: SkillRunMeta = { provider: 'deepseek', degraded: false };
+
+function fallbackResult(
+  name: SkillName,
+  reason: 'missing_api_key' | 'provider_error'
+): SkillRunResult {
+  return {
+    data: stubFor(name),
+    meta: { provider: 'stub', degraded: true, reason },
+  };
+}
+
+/** Non-streaming API with explicit provider/fallback state for callers that need it. */
+export async function runSkillWithMeta(
+  name: SkillName,
+  rawInput: unknown,
+  env?: Record<string, string | undefined>
+): Promise<SkillRunResult> {
+  const prepared = prepareSkill(name, rawInput);
+  const apiKey = getApiKey(env);
+  if (!apiKey) return fallbackResult(name, 'missing_api_key');
+
+  const deepseek = createDeepSeek({ apiKey });
+  try {
+    const { object } = await generateObject({
+      model: deepseek('deepseek-chat'),
+      schema: prepared.schema,
+      prompt: prepared.promptText,
+    });
+    return { data: prepared.schema.parse(object), meta: providerMeta };
+  } catch {
+    // Do not surface provider internals or request content; the client gets an explicit safe fallback.
+    return fallbackResult(name, 'provider_error');
+  }
+}
+
+/** Backwards-compatible non-streaming API. New code should prefer runSkillWithMeta. */
 export async function runSkill(
   name: SkillName,
   rawInput: unknown,
   env?: Record<string, string | undefined>
 ): Promise<unknown> {
-  const apiKey = getApiKey(env);
-  const deepseek = apiKey ? createDeepSeek({ apiKey }) : null;
-  if (!deepseek) return stubFor(name);
-  try {
-    switch (name) {
-      case 'diagnose': {
-        const input = diagnoseInputSchema.parse(rawInput);
-        const { object } = await generateObject({
-          model: deepseek('deepseek-chat'),
-          schema: diagnoseOutputSchema,
-          prompt: buildDiagnosePrompt(input),
-        });
-        return diagnoseOutputSchema.parse(object);
-      }
-      case 'plan': {
-        const input = planInputSchema.parse(rawInput);
-        const { object } = await generateObject({
-          model: deepseek('deepseek-chat'),
-          schema: planOutputSchema,
-          prompt: buildPlanPrompt(input),
-        });
-        return planOutputSchema.parse(object);
-      }
-      case 'practice': {
-        const input = practiceInputSchema.parse(rawInput);
-        const { object } = await generateObject({
-          model: deepseek('deepseek-chat'),
-          schema: practiceOutputSchema,
-          prompt: buildPracticePrompt(input),
-        });
-        return practiceOutputSchema.parse(object);
-      }
-      case 'info': {
-        const infoInput = skillInputMap.info.parse(rawInput); // 校验 userId
-        const { object } = await generateObject({
-          model: deepseek('deepseek-chat'),
-          schema: infoOutputSchema,
-          prompt: buildInfoPrompt(infoInput.context, infoInput.profile),
-        });
-        return infoOutputSchema.parse(object);
-      }
-      case 'package': {
-        const input = packageInputSchema.parse(rawInput);
-        const { object } = await generateObject({
-          model: deepseek('deepseek-chat'),
-          schema: packageOutputSchema,
-          prompt: buildPackagePrompt(input),
-        });
-        return packageOutputSchema.parse(object);
-      }
-    }
-  } catch {
-    // LLM 调用失败（限流 / 网络 / 输出不符契约）→ 回落 stub，保证链路不中断
-    return stubFor(name);
-  }
+  return (await runSkillWithMeta(name, rawInput, env)).data;
 }
 
 // ---------- 流式入口（Web BFF 用，边生成边返回 partial，消除等待感）----------
-export type SkillStreamChunk = { done: boolean; data: unknown; error?: string };
-
 export async function* streamSkill(
   name: SkillName,
   rawInput: unknown,
   env?: Record<string, string | undefined>
 ): AsyncGenerator<SkillStreamChunk> {
+  const prepared = prepareSkill(name, rawInput);
   const apiKey = getApiKey(env);
-  const deepseek = apiKey ? createDeepSeek({ apiKey }) : null;
-  if (!deepseek) {
-    yield { done: true, data: stubFor(name) };
+  if (!apiKey) {
+    const fallback = fallbackResult(name, 'missing_api_key');
+    yield { done: true, ...fallback };
     return;
   }
+
+  const deepseek = createDeepSeek({ apiKey });
   try {
-    let schema: z.ZodTypeAny;
-    let promptText: string;
-    switch (name) {
-      case 'diagnose': {
-        const input = diagnoseInputSchema.parse(rawInput);
-        schema = diagnoseOutputSchema;
-        promptText = buildDiagnosePrompt(input);
-        break;
-      }
-      case 'plan': {
-        const input = planInputSchema.parse(rawInput);
-        schema = planOutputSchema;
-        promptText = buildPlanPrompt(input);
-        break;
-      }
-      case 'practice': {
-        const input = practiceInputSchema.parse(rawInput);
-        schema = practiceOutputSchema;
-        promptText = buildPracticePrompt(input);
-        break;
-      }
-      case 'info': {
-        const infoInput = skillInputMap.info.parse(rawInput);
-        schema = infoOutputSchema;
-        promptText = buildInfoPrompt(infoInput.context, infoInput.profile);
-        break;
-      }
-      case 'package': {
-        const input = packageInputSchema.parse(rawInput);
-        schema = packageOutputSchema;
-        promptText = buildPackagePrompt(input);
-        break;
-      }
-      default:
-        yield { done: true, data: stubFor(name) };
-        return;
-    }
-    const result = streamObject({ model: deepseek('deepseek-chat'), schema, prompt: promptText });
+    const result = streamObject({
+      model: deepseek('deepseek-chat'),
+      schema: prepared.schema,
+      prompt: prepared.promptText,
+    });
     for await (const partial of result.partialObjectStream) {
-      yield { done: false, data: partial };
+      yield { done: false, data: partial, meta: providerMeta };
     }
     const final = await result.object;
-    yield { done: true, data: schema.parse(final) };
+    yield { done: true, data: prepared.schema.parse(final), meta: providerMeta };
   } catch {
-    // 流式失败（限流 / 网络 / 输出不符契约）→ 回落 stub，保证链路不中断
-    yield { done: true, data: stubFor(name) };
+    // Do not surface provider internals or request content; the client gets an explicit safe fallback.
+    const fallback = fallbackResult(name, 'provider_error');
+    yield { done: true, ...fallback };
   }
 }
 
