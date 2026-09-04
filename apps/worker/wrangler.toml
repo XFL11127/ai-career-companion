@@ -1,0 +1,11 @@
+name = "ai-career-companion-worker"
+main = "src/index.ts"
+compatibility_date = "2024-09-23"
+
+# This Worker exposes only the internal embedding adapter. It must not receive browser traffic,
+# Supabase credentials, or a DeepSeek key. Configure a long random shared secret outside Git:
+#   wrangler secret put INTERNAL_WORKER_SECRET
+# The Next.js server uses this secret when calling POST /internal/embed.
+
+[ai]
+binding = "AI"

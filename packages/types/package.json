@@ -1,14 +1,17 @@
 {
-  "name": "types",
+  "name": "@ai-career-companion/types",
   "version": "1.0.0",
-  "description": "",
-  "main": "index.js",
+  "description": "共享领域模型与 Skill 接口契约（zod）— Web 与 Worker 双端单一事实来源",
+  "type": "module",
+  "main": "index.ts",
+  "types": "index.ts",
+  "exports": {
+    ".": "./index.ts"
+  },
   "scripts": {
-    "test": "echo \"Error: no test specified\" && exit 1",
     "type-check": "tsc --noEmit"
   },
-  "keywords": [],
-  "author": "",
-  "license": "ISC",
-  "type": "module"
+  "dependencies": {
+    "zod": "^3"
+  }
 }

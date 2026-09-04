@@ -1,0 +1,37 @@
+name: 功能 / 任务
+description: 提出一个新功能、优化或任务
+title: "[Feature] "
+labels: ["enhancement"]
+body:
+  - type: dropdown
+    id: priority
+    attributes:
+      label: 优先级
+      options: ["🔴阻断", "🟡高", "🟢中", "⚪暂缓"]
+    validations:
+      required: true
+  - type: dropdown
+    id: effort
+    attributes:
+      label: 预估工作量
+      options: ["XS", "S", "M", "L"]
+  - type: textarea
+    id: desc
+    attributes:
+      label: 功能描述
+      description: 要做什么？解决什么问题？
+    validations:
+      required: true
+  - type: textarea
+    id: accept
+    attributes:
+      label: 验收标准
+      description: 做到什么程度算完成？（可勾选）
+    validations:
+      required: true
+  - type: input
+    id: source
+    attributes:
+      label: 需求来源
+      description: 谁、在哪次对话 / 哪个 Issue 提出的（溯源用）
+      placeholder: "例：计划书 v3.6 §X / 队长在群聊提出"

@@ -1,0 +1,42 @@
+name: Bug 报告
+description: 报告一个缺陷或异常
+title: "[Bug] "
+labels: ["bug"]
+body:
+  - type: dropdown
+    id: priority
+    attributes:
+      label: 优先级
+      options: ["🔴阻断", "🟡高", "🟢中", "⚪暂缓"]
+    validations:
+      required: true
+  - type: dropdown
+    id: effort
+    attributes:
+      label: 预估工作量
+      options: ["XS", "S", "M", "L"]
+  - type: textarea
+    id: desc
+    attributes:
+      label: 问题描述
+      description: 发生了什么？期望是什么？
+    validations:
+      required: true
+  - type: textarea
+    id: reproduce
+    attributes:
+      label: 复现步骤
+      placeholder: "1. 打开...\n2. 点击...\n3. 看到..."
+  - type: textarea
+    id: accept
+    attributes:
+      label: 验收标准
+      description: 修复到什么程度算完？
+    validations:
+      required: true
+  - type: input
+    id: source
+    attributes:
+      label: 需求来源
+      description: 谁、在哪次对话 / 哪个 Issue 提出的（溯源用）
+      placeholder: "例：凯文在 8-13 进度复盘对话中提出"

@@ -14,9 +14,9 @@
     "noUnusedParameters": true,
     "noFallthroughCasesInSwitch": true,
     "paths": {
-      "@shared/*": ["./packages/shared/*"],
       "@ai-career-companion/types": ["./packages/types/index.ts"],
-      "@ai-career-companion/utils": ["./packages/utils/index.ts"]
+      "@ai-career-companion/utils": ["./packages/utils/index.ts"],
+      "@ai-career-companion/llm": ["./packages/llm/index.ts"]
     }
   },
   "exclude": ["node_modules", "dist", ".turbo"]
