@@ -5,6 +5,7 @@ import { useRouter } from 'next/navigation';
 import Link from 'next/link';
 import { getProviders, signIn } from 'next-auth/react';
 import { Mail, ArrowLeft, Loader2, CheckCircle2 } from 'lucide-react';
+import { trackEvent } from '@/lib/track';
 
 function GitHubMark({ className }: { className?: string }) {
   return (
@@ -40,6 +41,7 @@ export default function LoginPage() {
 
   const handleGitHub = () => {
     setMsg(null);
+    void trackEvent('login', { metadata: { provider: 'github', status: 'redirect' } });
     signIn('github', { callbackUrl: '/' });
   };
 
@@ -71,6 +73,7 @@ export default function LoginPage() {
         setLoading(false);
         return;
       }
+      void trackEvent('login', { metadata: { provider: 'credentials', status: 'success' } });
       setMsg({ type: 'ok', text: '登录成功，正在跳转…' });
       router.push('/');
       router.refresh();
