@@ -348,6 +348,49 @@ export function SkillCardView({ name, data }: { name: SkillName; data: unknown }
           )}
         </div>
       );
+
+    case 'resume':
+      return (
+        <div className="mt-3 grid gap-3 sm:grid-cols-2">
+          <Card>
+            <div className="flex items-center justify-between"><span className="text-sm text-ink/60">综合评分</span><Pill tone="accent">{Math.round(d.overallScore ?? 0)}</Pill></div>
+            <div className="mt-3 flex items-center justify-between"><span className="text-sm text-ink/60">ATS 可解析度</span><Pill tone="forest">{Math.round(d.atsScore ?? 0)}</Pill></div>
+            <div className="mt-4 flex flex-wrap gap-1.5">{(d.missingKeywords ?? []).slice(0, 8).map((k: string, i: number) => <Pill key={`${k}-${i}`} tone="gold">{k}</Pill>)}</div>
+          </Card>
+          <Card><h3 className="font-serif text-lg font-bold text-ink">优化预览</h3><p className="mt-2 whitespace-pre-wrap text-sm leading-6 text-ink/70">{d.optimizedResume}</p></Card>
+        </div>
+      )
+
+    case 'interview':
+      return (
+        <div className="mt-3 space-y-3">
+          <Card><h3 className="font-serif text-lg font-bold text-ink">面试问题</h3><ol className="mt-3 list-decimal space-y-2 pl-5 text-sm leading-6 text-ink/75">{(d.questions ?? []).map((q: AnyObj, i: number) => <li key={q.id ?? i}>{q.question}</li>)}</ol></Card>
+          {d.scoreCard && <Card><div className="flex items-center justify-between"><span className="font-medium text-ink">本轮评分</span><Pill tone="forest">{Math.round(d.scoreCard.overall ?? 0)}</Pill></div><p className="mt-2 text-sm text-ink/65">{d.scoreCard.feedback}</p></Card>}
+        </div>
+      )
+
+    case 'match':
+      return (
+        <div className="mt-3 space-y-3">
+          <Card><div className="flex items-center justify-between"><h3 className="font-serif text-lg font-bold text-ink">五维匹配</h3><Pill tone={d.recommendation === 'recommend' ? 'forest' : d.recommendation === 'avoid' ? 'accent' : 'gold'}>{Math.round(d.overallScore ?? 0)}</Pill></div><div className="mt-3 space-y-2">{(d.dimensions ?? []).map((x: AnyObj) => <div key={x.key} className="flex items-center justify-between rounded-xl bg-ink/[0.025] px-3 py-2 text-sm"><span className="text-ink/70">{x.name}</span><span className="font-medium text-ink">{x.score}</span></div>)}</div></Card>
+        </div>
+      )
+
+    case 'course':
+      return (
+        <div className="mt-3 space-y-3">
+          <Card><h3 className="font-serif text-lg font-bold text-ink">知识总览</h3><p className="mt-2 text-sm leading-6 text-ink/70">{d.summary}</p></Card>
+          <Card><h3 className="font-serif text-lg font-bold text-ink">关键概念</h3><ul className="mt-3 list-disc space-y-2 pl-5 text-sm text-ink/75">{(d.concepts ?? []).slice(0, 6).map((c: AnyObj, i: number) => <li key={i}><strong>{c.term}</strong>：{c.explanation}</li>)}</ul></Card>
+        </div>
+      )
+
+    case 'assessment':
+      return (
+        <div className="mt-3 space-y-3">
+          <Card><h3 className="font-serif text-lg font-bold text-ink">{d.profileTitle} · {d.profileCode}</h3><p className="mt-2 text-sm leading-6 text-ink/70">{d.disclaimer}</p><div className="mt-3 flex flex-wrap gap-1.5">{(d.traits ?? []).map((x: string) => <Pill key={x} tone="forest">{x}</Pill>)}</div></Card>
+          <Card><h3 className="font-serif text-lg font-bold text-ink">推荐探索方向</h3><ul className="mt-3 space-y-2 text-sm text-ink/75">{(d.recommendedCareers ?? []).map((c: AnyObj, i: number) => <li key={i} className="flex items-center justify-between gap-3"><span>{c.role}</span><Pill tone="accent">{c.fitScore}</Pill></li>)}</ul></Card>
+        </div>
+      )
   }
   return null;
 }

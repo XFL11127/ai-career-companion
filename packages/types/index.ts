@@ -8,7 +8,18 @@ import { z } from 'zod';
 
 // ---------- 基础结构 ----------
 
-export const skillNameSchema = z.enum(['diagnose', 'plan', 'practice', 'info', 'package']);
+export const skillNameSchema = z.enum([
+  'diagnose',
+  'plan',
+  'practice',
+  'info',
+  'package',
+  'resume',
+  'interview',
+  'match',
+  'course',
+  'assessment',
+]);
 export type SkillName = z.infer<typeof skillNameSchema>;
 
 export const apiErrorSchema = z.object({
@@ -243,6 +254,194 @@ export const packageOutputSchema = z.object({
 export type PackageInput = z.infer<typeof packageInputSchema>;
 export type PackageOutput = z.infer<typeof packageOutputSchema>;
 
+// ---------- MVP M1：智能简历工坊 ----------
+
+export const resumeDimensionSchema = z.object({
+  name: z.string(),
+  score: z.number().min(0).max(100),
+  comment: z.string(),
+});
+export const resumeRewriteSchema = z.object({
+  section: z.string(),
+  before: z.string(),
+  after: z.string(),
+  reason: z.string(),
+});
+export const resumeInputSchema = z.object({
+  resumeText: z.string().min(1),
+  targetRole: z.string().min(1),
+  jobDescription: z.string().optional(),
+  context: z.array(z.string()).optional(),
+  profile: z.string().optional(),
+});
+export const resumeOutputSchema = z.object({
+  reply: z.string().optional(),
+  overallScore: z.number().min(0).max(100),
+  atsScore: z.number().min(0).max(100),
+  dimensions: z.array(resumeDimensionSchema),
+  missingKeywords: z.array(z.string()),
+  strengths: z.array(z.string()),
+  rewriteSuggestions: z.array(resumeRewriteSchema),
+  optimizedResume: z.string(),
+  projectBullets: z.array(z.string()),
+  nextActions: z.array(z.string()),
+});
+export type ResumeInput = z.infer<typeof resumeInputSchema>;
+export type ResumeOutput = z.infer<typeof resumeOutputSchema>;
+
+// ---------- MVP M2：模拟面试舱 ----------
+
+export const interviewQuestionSchema = z.object({
+  id: z.string(),
+  category: z.enum(['自我介绍', '技术', '项目', '行为', '反问']),
+  question: z.string(),
+  intention: z.string(),
+  starHint: z.string(),
+  sampleAnswer: z.string(),
+});
+export const interviewScoreSchema = z.object({
+  clarity: z.number().min(0).max(100),
+  structure: z.number().min(0).max(100),
+  relevance: z.number().min(0).max(100),
+  depth: z.number().min(0).max(100),
+  overall: z.number().min(0).max(100),
+  feedback: z.string(),
+});
+export const interviewInputSchema = z.object({
+  targetRole: z.string().min(1),
+  resumeText: z.string().optional(),
+  jobDescription: z.string().optional(),
+  mode: z.enum(['technical', 'behavioral', 'mixed']).optional().default('mixed'),
+  language: z.enum(['zh', 'en', 'bilingual']).optional().default('zh'),
+  priorAnswers: z.array(z.object({ question: z.string(), answer: z.string() })).optional(),
+  context: z.array(z.string()).optional(),
+  profile: z.string().optional(),
+});
+export const interviewOutputSchema = z.object({
+  reply: z.string().optional(),
+  questions: z.array(interviewQuestionSchema),
+  scoreCard: interviewScoreSchema.optional(),
+  followUps: z.array(z.string()),
+  improvementPlan: z.array(z.string()),
+});
+export type InterviewInput = z.infer<typeof interviewInputSchema>;
+export type InterviewOutput = z.infer<typeof interviewOutputSchema>;
+
+// ---------- MVP M3：岗位匹配雷达 ----------
+
+export const matchDimensionSchema = z.object({
+  key: z.enum(['skills', 'experience', 'location', 'industry', 'trajectory']),
+  name: z.string(),
+  score: z.number().min(0).max(100),
+  weight: z.number().min(0).max(100),
+  reason: z.string(),
+});
+export const matchOutputSchema = z.object({
+  reply: z.string().optional(),
+  overallScore: z.number().min(0).max(100),
+  recommendation: z.enum(['recommend', 'caution', 'avoid']),
+  summary: z.string(),
+  dimensions: z.array(matchDimensionSchema),
+  strengths: z.array(z.string()),
+  missingKeywords: z.array(z.string()),
+  risks: z.array(z.string()),
+  actions: z.array(z.string()),
+});
+export const matchInputSchema = z.object({
+  resumeText: z.string().min(1),
+  jobDescription: z.string().min(1),
+  targetLocation: z.string().optional(),
+  targetIndustry: z.string().optional(),
+  careerGoal: z.string().optional(),
+  context: z.array(z.string()).optional(),
+  profile: z.string().optional(),
+});
+export type MatchInput = z.infer<typeof matchInputSchema>;
+export type MatchOutput = z.infer<typeof matchOutputSchema>;
+
+// ---------- MVP M4：课程学习助手 ----------
+
+export const courseConceptSchema = z.object({
+  term: z.string(),
+  explanation: z.string(),
+  example: z.string(),
+  whyItMatters: z.string(),
+});
+export const flashcardSchema = z.object({
+  id: z.string(),
+  front: z.string(),
+  back: z.string(),
+  tags: z.array(z.string()),
+});
+export const quizQuestionSchema = z.object({
+  id: z.string(),
+  type: z.enum(['single', 'short-answer']),
+  question: z.string(),
+  options: z.array(z.string()),
+  answer: z.string(),
+  explanation: z.string(),
+});
+export const studyPlanSchema = z.object({
+  dayRange: z.string(),
+  goal: z.string(),
+  tasks: z.array(z.string()),
+});
+export const courseOutputSchema = z.object({
+  reply: z.string().optional(),
+  summary: z.string(),
+  concepts: z.array(courseConceptSchema),
+  flashcards: z.array(flashcardSchema),
+  quiz: z.array(quizQuestionSchema),
+  studyPlan: z.array(studyPlanSchema),
+  misconceptions: z.array(z.string()),
+});
+export const courseInputSchema = z.object({
+  materialText: z.string().min(1),
+  materialName: z.string().optional(),
+  goal: z.string().optional(),
+  level: z.enum(['beginner', 'intermediate', 'advanced']).optional().default('beginner'),
+  context: z.array(z.string()).optional(),
+  profile: z.string().optional(),
+});
+export type CourseInput = z.infer<typeof courseInputSchema>;
+export type CourseOutput = z.infer<typeof courseOutputSchema>;
+
+// ---------- MVP M5：自我认知测评 ----------
+
+export const assessmentDimensionSchema = z.object({
+  key: z.string(),
+  name: z.string(),
+  score: z.number().min(0).max(100),
+  level: z.enum(['低', '中', '高']),
+  description: z.string(),
+});
+export const careerDirectionSchema = z.object({
+  role: z.string(),
+  fitScore: z.number().min(0).max(100),
+  reason: z.string(),
+  nextStep: z.string(),
+});
+export const assessmentInputSchema = z.object({
+  answers: z.record(z.string(), z.number().min(1).max(5)),
+  targetRole: z.string().optional(),
+  context: z.array(z.string()).optional(),
+  profile: z.string().optional(),
+});
+export const assessmentOutputSchema = z.object({
+  reply: z.string().optional(),
+  profileTitle: z.string(),
+  profileCode: z.string(),
+  disclaimer: z.string(),
+  dimensions: z.array(assessmentDimensionSchema),
+  traits: z.array(z.string()),
+  strengths: z.array(z.string()),
+  growthAreas: z.array(z.string()),
+  recommendedCareers: z.array(careerDirectionSchema),
+  actionPlan: z.array(z.string()),
+});
+export type AssessmentInput = z.infer<typeof assessmentInputSchema>;
+export type AssessmentOutput = z.infer<typeof assessmentOutputSchema>;
+
 // ---------- 统一 Skill 输入/输出映射（Worker 路由与 Web 共用）----------
 
 export const skillInputMap = {
@@ -254,6 +453,11 @@ export const skillInputMap = {
     profile: z.string().trim().max(4_000).optional(),
   }),
   package: packageInputSchema,
+  resume: resumeInputSchema,
+  interview: interviewInputSchema,
+  match: matchInputSchema,
+  course: courseInputSchema,
+  assessment: assessmentInputSchema,
 } as const;
 
 export const skillOutputMap = {
@@ -262,6 +466,11 @@ export const skillOutputMap = {
   practice: practiceOutputSchema,
   info: infoOutputSchema,
   package: packageOutputSchema,
+  resume: resumeOutputSchema,
+  interview: interviewOutputSchema,
+  match: matchOutputSchema,
+  course: courseOutputSchema,
+  assessment: assessmentOutputSchema,
 } as const;
 
 export type SkillInput<N extends SkillName> = z.infer<(typeof skillInputMap)[N]>;
