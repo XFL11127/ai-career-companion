@@ -15,6 +15,12 @@ function GitHubMark({ className }: { className?: string }) {
   );
 }
 
+const DEMO_ACCOUNTS: { email: string; password: string; label: string; role: string }[] = [
+  { email: 'demo@aicc.com', password: 'demo1234', label: '学生', role: '浏览 / 提交贡献' },
+  { email: 'teacher@aicc.com', password: 'teacher1234', label: '高校老师', role: '可审核贡献' },
+  { email: 'admin@aicc.com', password: 'admin1234', label: '系统维护员', role: '可审核贡献' },
+];
+
 type Mode = 'login' | 'register';
 
 export default function LoginPage() {
@@ -169,6 +175,32 @@ export default function LoginPage() {
         >
           {mode === 'login' ? '还没有账号？去注册' : '已有账号？去登录'}
         </button>
+
+        <div className="mt-6 rounded-2xl border border-ink/10 bg-ink/[0.02] p-3">
+          <p className="mb-2 text-[11px] font-medium text-ink/60">
+            演示账号（点击自动填入）
+            <span className="ml-1 font-normal text-ink/40">教师 / 管理员账号才具备贡献审核权限</span>
+          </p>
+          <div className="space-y-1.5">
+            {DEMO_ACCOUNTS.map((acc) => (
+              <button
+                key={acc.email}
+                type="button"
+                onClick={() => {
+                  setMode('login');
+                  setEmail(acc.email);
+                  setPassword(acc.password);
+                  setMsg(null);
+                }}
+                className="flex w-full items-center justify-between gap-2 rounded-xl border border-ink/10 bg-paper px-2.5 py-1.5 text-left text-[11px] transition hover:border-accent/40"
+              >
+                <span className="font-medium text-ink">{acc.label}</span>
+                <span className="truncate text-ink/45">{acc.email}</span>
+                <span className="shrink-0 text-ink/35">{acc.role}</span>
+              </button>
+            ))}
+          </div>
+        </div>
 
         <Link
           href="/"

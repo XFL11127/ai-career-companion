@@ -1,0 +1,83 @@
+name: Refresh Hub Data
+
+# 让「岗位库」保持实时最新：定时重新采集 + 清理过期岗位
+# 需要在仓库 Settings → Secrets 配置 BOCHA_API_KEY
+
+on:
+  schedule:
+    # 每周一 02:00 UTC = 北京时间 10:00
+    - cron: '0 2 * * 1'
+  workflow_dispatch:
+    inputs:
+      freshness:
+        description: '检索时效范围'
+        required: false
+        default: oneWeek
+        type: choice
+        options: [oneDay, oneWeek, oneMonth, oneYear]
+      presets:
+        description: '预设检索词文件（空格分隔）'
+        required: false
+        default: 'scripts/harvest-preset-fresh.txt scripts/harvest-preset.txt'
+
+jobs:
+  refresh:
+    name: Refresh jobs & evidence
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 22.22.2
+          cache: 'npm'
+
+      - name: Pin npm
+        run: npm install --global npm@10.9.7
+
+      - name: Install dependencies
+        run: npm ci --registry=https://registry.npmjs.org
+
+      - name: 检查 BOCHA_API_KEY 是否配置
+        run: |
+          if [ -z "${{ secrets.BOCHA_API_KEY }}" ]; then
+            echo "::error::缺少仓库密钥 BOCHA_API_KEY，请在 Settings → Secrets and variables → Actions 中添加"
+            exit 1
+          fi
+
+      - name: 采集岗位证据（按预设文件逐个跑）
+        env:
+          BOCHA_API_KEY: ${{ secrets.BOCHA_API_KEY }}
+          HUB_SEARCH_FRESHNESS: ${{ github.event.inputs.freshness || 'oneWeek' }}
+        run: |
+          for preset in ${{ github.event.inputs.presets || 'scripts/harvest-preset-fresh.txt' }}; do
+            echo "=== 采集 $preset ==="
+            node scripts/harvest-evidence.mjs --preset --preset-file "$preset" --deep --merge
+          done
+
+      - name: 采集政策证据（免 Key）
+        run: node scripts/harvest-policy-gov.mjs --pages 2 --limit 120 --merge
+
+      - name: 清理过期/陈旧岗位
+        run: node scripts/prune-stale-jobs.mjs --write
+
+      - name: 门禁校验
+        run: |
+          npm run type-check
+          npm test
+
+      - name: 提交数据变更
+        run: |
+          git config user.name "hub-refresh-bot"
+          git config user.email "actions@github.com"
+          git add apps/web/src/lib/hub-seed.json
+          if git diff --quiet --cached; then
+            echo "数据无变化，跳过提交"
+          else
+            git commit -m "chore(hub): 自动刷新岗位与证据数据 [skip ci]"
+            git push
+          fi

@@ -1,426 +1,401 @@
 'use client';
 
-import { useMemo, useState } from 'react';
-import { panelCls } from '@/components/skill-ui';
+/**
+ * 信息中枢（/jobs）
+ *
+ * 本页的立身之本：只展示能核对的证据，不编岗位、不造检索结果。
+ * - 证据库：每条证据都有原文摘录 + 来源链接 + 抓取时间；
+ * - 岗位：只收录真实岗位；「双非友好」标签由 deriveFriendlyLevel 计算，无证据就不显示；
+ * - 来源导航：白名单官方站点直达；
+ * - 贡献：投稿必须带原文摘录，经审核后才公开。
+ */
+
+import { useEffect, useMemo, useState } from 'react';
 import Link from 'next/link';
 import {
+  BookOpenCheck,
   Building2,
-  MapPin,
-  Banknote,
   ExternalLink,
-  SlidersHorizontal,
-  Sparkles,
-  Search,
   Library,
-  WifiOff,
+  Search,
+  ShieldCheck,
+  Sparkles,
 } from 'lucide-react';
-import jobsData from '@/lib/jobs-data.json';
-import { loadProfile } from '@/lib/profile';
-import { demoSearch, type SourceCardData } from '@/lib/infobase';
-import { SourceCard } from '@/components/source-card';
-import { ResourceLibrary } from '@/components/resource-library';
+import { panelCls } from '@/components/skill-ui';
+import { EvidenceCard, FriendlyBadge } from '@/components/evidence-panel';
+import { HubSearch } from '@/components/hub-search';
 import { ContributionPanel } from '@/components/contribution-panel';
+import { deriveFriendlyLevel, hasRestrictionEvidence, type EvidenceItem, type HubJob } from '@ai-career-companion/types';
 
-type Job = {
+interface HubSource {
   id: string;
-  company: string;
-  role: string;
-  salary: string;
-  location: string;
-  industry: string;
-  degree: string;
-  firstDegreeFriendly: boolean;
-  tags: string[];
+  name: string;
   url: string;
-  description: string;
-  requirements: string[];
-  deadline: string;
-};
-
-const JOBS = jobsData.jobs as Job[];
-const ALL = '全部';
-
-function calcMatch(job: Job, targetRole: string, major: string): number {
-  let score = 62;
-  if (targetRole && job.role.includes(targetRole)) score += 28;
-  else if (targetRole && job.industry.includes(targetRole)) score += 14;
-  if (major && job.requirements.some((r) => r.includes(major))) score += 6;
-  if (job.firstDegreeFriendly) score += 4;
-  return Math.min(95, score);
+  category: string;
+  desc: string;
 }
 
-function FilterGroup({
-  label,
-  options,
-  value,
-  onChange,
-}: {
-  label: string;
-  options: string[];
-  value: string;
-  onChange: (v: string) => void;
-}) {
-  return (
-    <div className="mb-4">
-      <div className="mb-1.5 text-xs font-medium text-ink/40">{label}</div>
-      <div className="flex flex-wrap gap-1.5">
-        {options.map((o) => {
-          const active = value === o;
-          return (
-            <button
-              key={o}
-              type="button"
-              onClick={() => onChange(o)}
-              aria-pressed={active}
-              className={`rounded-full px-2.5 py-1 text-xs transition ${
-                active
-                  ? 'bg-accent text-paper'
-                  : 'border border-ink/15 text-ink/60 hover:border-accent/40 hover:text-accent'
-              }`}
-            >
-              {o}
-            </button>
-          );
-        })}
-      </div>
-    </div>
-  );
+interface HubStats {
+  evidenceTotal: number;
+  evidenceApproved: number;
+  evidencePending: number;
+  verifiedJobs: number;
+  restrictedEvidence: number;
+  verifiedSources: number;
 }
 
-const HOT_WORDS = [
-  '2027 校招',
-  '双非 友好',
-  '实习 转正',
-  '软件工程',
-  '数据分析',
-  '国企 校招',
-  '秋招 时间',
-  '内推 渠道',
+interface HubPayload {
+  stats: HubStats;
+  sources: HubSource[];
+  evidence: EvidenceItem[];
+  jobs: HubJob[];
+  meta: {
+    evidenceSource: string;
+    jobsSource: string;
+    degraded: boolean;
+    notice?: string;
+    generatedAt: string;
+  };
+}
+
+const SIGNAL_FILTERS = [
+  { value: 'all', label: '全部' },
+  { value: 'policy', label: '政策依据' },
+  { value: 'degree_barrier', label: '学历门槛' },
+  { value: 'school_list', label: '院校要求' },
+  { value: 'bonus', label: '加分项' },
+  { value: 'historical_admit', label: '历史录取' },
 ];
 
-/**
- * 联网检索：嵌入「岗位预览」右侧栏。
- * 搜索框下加热门搜索词段（点击即检索）；结果以来源卡片（标题+链接+摘要+来源+时间）呈现。
- * 本期不接真实 Key，用 demoSearch 返回示例卡片（见 项目说明.md 资源库调用技术线）。
- */
-function WebSearchBox({
-  defaultQuery,
-  onGoContribute,
-}: {
-  defaultQuery: string;
-  onGoContribute: () => void;
-}) {
-  const [query, setQuery] = useState(defaultQuery);
-  const [results, setResults] = useState<SourceCardData[]>(() => demoSearch(defaultQuery));
-
-  function run(e: React.FormEvent) {
-    e.preventDefault();
-    setResults(demoSearch(query));
-  }
-
-  function runHot(word: string) {
-    setQuery(word);
-    setResults(demoSearch(word));
-  }
-
-  return (
-    <div className="rounded-xl border border-ink/10 bg-ink/[0.015] p-3">
-      <div className="mb-2 flex items-center gap-1.5 text-xs font-semibold text-ink/70">
-        <Search className="h-3.5 w-3.5 text-accent" />
-        联网检索
-        <span className="ml-auto inline-flex items-center gap-1 rounded-full bg-gold/10 px-2 py-0.5 text-[10px] font-medium text-gold">
-          <WifiOff className="h-3 w-3" />
-          待接入 Key
-        </span>
-      </div>
-      <form onSubmit={run} className="flex gap-1.5">
-        <div className="flex flex-1 items-center gap-1.5 rounded-lg border border-ink/15 bg-paper px-2.5 py-1.5">
-          <Search className="h-3.5 w-3.5 text-ink/40" />
-          <input
-            value={query}
-            onChange={(e) => setQuery(e.target.value)}
-            placeholder="检索学校 / 企业官网最新信息"
-            className="w-full bg-transparent text-xs text-ink outline-none placeholder:text-ink/30"
-          />
-        </div>
-        <button
-          type="submit"
-          className="rounded-lg bg-accent px-3 py-1.5 text-xs font-medium text-paper transition hover:bg-[#c94a23]"
-        >
-          检索
-        </button>
-      </form>
-      <div className="mt-2 flex flex-wrap gap-1">
-        {HOT_WORDS.map((w) => (
-          <button
-            key={w}
-            type="button"
-            onClick={() => runHot(w)}
-            className="rounded-full border border-ink/10 px-2 py-0.5 text-[10px] text-ink/50 transition hover:border-accent/40 hover:text-accent"
-          >
-            {w}
-          </button>
-        ))}
-      </div>
-      <div className="mt-2.5 space-y-2">
-        {results.map((r, i) => (
-          <SourceCard
-            key={i}
-            title={r.title}
-            url={r.url}
-            summary={r.summary}
-            sourceSite={r.sourceSite}
-            datePublished={r.datePublished}
-            demo
-            onContribute={onGoContribute}
-          />
-        ))}
-      </div>
-    </div>
-  );
-}
-
-/** 岗位浏览（原三栏式，保留为「信息中枢」第一个 Tab）。 */
-function JobBrowser({ onGoContribute }: { onGoContribute: () => void }) {
-  const [city, setCity] = useState(ALL);
-  const [industry, setIndustry] = useState(ALL);
-  const [degree, setDegree] = useState(ALL);
-  const [onlyFriendly, setOnlyFriendly] = useState(false);
-  const [keyword, setKeyword] = useState('');
-  const [selectedId, setSelectedId] = useState<string | null>(JOBS[0]?.id ?? null);
-
-  const profile = useMemo(() => loadProfile(), []);
-  const targetRole = profile?.targetRole ?? '';
-  const major = profile?.major ?? '';
-
-  const cities = useMemo(() => [ALL, ...Array.from(new Set(JOBS.map((j) => j.location)))], []);
-  const industries = useMemo(() => [ALL, ...Array.from(new Set(JOBS.map((j) => j.industry)))], []);
-  const degrees = useMemo(() => [ALL, ...Array.from(new Set(JOBS.map((j) => j.degree)))], []);
-
-  const filtered = useMemo(() => {
-    const kw = keyword.trim();
-    return JOBS.filter((j) => {
-      if (city !== ALL && j.location !== city) return false;
-      if (industry !== ALL && j.industry !== industry) return false;
-      if (degree !== ALL && j.degree !== degree) return false;
-      if (onlyFriendly && !j.firstDegreeFriendly) return false;
-      if (kw) {
-        const hay = `${j.company}${j.role}${j.industry}${j.location}${j.tags.join('')}`;
-        if (!hay.toLowerCase().includes(kw.toLowerCase())) return false;
-      }
-      return true;
-    })
-      .map((j) => ({ ...j, match: calcMatch(j, targetRole, major) }))
-      .sort((a, b) => b.match - a.match);
-  }, [city, industry, degree, onlyFriendly, keyword, targetRole, major]);
-
-  const selected = filtered.find((j) => j.id === selectedId) ?? filtered[0] ?? null;
-
-  return (
-    <div className="grid gap-4 lg:grid-cols-[210px_minmax(0,1fr)_360px]">
-      <aside className={`${panelCls} p-4`}>
-        <div className="mb-3 flex items-center gap-1.5 text-sm font-semibold text-ink">
-          <SlidersHorizontal className="h-4 w-4 text-accent" />
-          筛选
-        </div>
-        <div className="mb-4">
-          <div className="mb-1.5 text-xs font-medium text-ink/40">搜索</div>
-          <div className="flex items-center gap-1.5 rounded-xl border border-ink/15 px-2.5 py-1.5">
-            <Search className="h-3.5 w-3.5 text-ink/40" />
-            <input
-              value={keyword}
-              onChange={(e) => setKeyword(e.target.value)}
-              placeholder="公司 / 岗位 / 技能"
-              className="w-full bg-transparent text-sm text-ink outline-none placeholder:text-ink/30"
-            />
-          </div>
-        </div>
-        <FilterGroup label="城市" options={cities} value={city} onChange={setCity} />
-        <FilterGroup label="行业" options={industries} value={industry} onChange={setIndustry} />
-        <FilterGroup label="类型" options={degrees} value={degree} onChange={setDegree} />
-        <label className="flex cursor-pointer items-center gap-2 text-xs text-ink/70">
-          <input
-            type="checkbox"
-            checked={onlyFriendly}
-            onChange={(e) => setOnlyFriendly(e.target.checked)}
-            className="h-3.5 w-3.5 accent-[#E0592E]"
-          />
-          只看双非友好
-        </label>
-        <button
-          type="button"
-          onClick={() => {
-            setCity(ALL);
-            setIndustry(ALL);
-            setDegree(ALL);
-            setOnlyFriendly(false);
-            setKeyword('');
-          }}
-          className="mt-4 w-full rounded-full border border-ink/15 py-1.5 text-xs text-ink/60 transition hover:border-accent/40 hover:text-accent"
-        >
-          重置筛选
-        </button>
-      </aside>
-
-      <section className={panelCls}>
-        <div className="border-b border-ink/10 px-4 py-2.5 text-xs text-ink/40">
-          共 {filtered.length} 个岗位
-        </div>
-        {filtered.length === 0 ? (
-          <div className="p-10 text-center text-sm text-ink/40">
-            没有符合条件的岗位，试试放宽筛选条件。
-          </div>
-        ) : (
-          <ul className="divide-y divide-ink/5">
-            {filtered.map((j) => {
-              const active = selected?.id === j.id;
-              return (
-                <li key={j.id}>
-                  <button
-                    type="button"
-                    onClick={() => setSelectedId(j.id)}
-                    className={`w-full px-4 py-3 text-left transition ${
-                      active ? 'bg-accent/[0.06]' : 'hover:bg-ink/[0.02]'
-                    }`}
-                    aria-current={active}
-                  >
-                    <div className="flex items-baseline justify-between gap-2">
-                      <span className="truncate text-sm font-medium text-ink">{j.role}</span>
-                      <span className="shrink-0 text-sm font-semibold text-accent">{j.salary}</span>
-                    </div>
-                    <div className="mt-1 flex items-center gap-2 text-xs text-ink/50">
-                      <span className="truncate">{j.company}</span>
-                      <span className="text-ink/25">|</span>
-                      <span className="shrink-0">{j.location}</span>
-                    </div>
-                    <div className="mt-1.5 flex flex-wrap items-center gap-1.5">
-                      <span className="inline-flex items-center gap-0.5 rounded bg-accent/10 px-1.5 py-0.5 text-[11px] font-medium text-accent">
-                        <Sparkles className="h-3 w-3" />
-                        AI 匹配 {j.match}%
-                      </span>
-                      {j.firstDegreeFriendly && (
-                        <span className="rounded bg-forest/10 px-1.5 py-0.5 text-[11px] font-medium text-forest">
-                          双非友好
-                        </span>
-                      )}
-                      <span className="rounded bg-ink/5 px-1.5 py-0.5 text-[11px] text-ink/50">
-                        {j.degree}
-                      </span>
-                    </div>
-                  </button>
-                </li>
-              );
-            })}
-          </ul>
-        )}
-      </section>
-
-      <aside className={`${panelCls} p-5`}>
-        {!selected ? (
-          <div className="py-16 text-center text-sm text-ink/40">从左侧选择一个岗位查看详情</div>
-        ) : (
-          <div>
-            <WebSearchBox
-              key={selected.id}
-              defaultQuery={`${selected.company} ${selected.role}`}
-              onGoContribute={onGoContribute}
-            />
-            <div className="mt-5 border-t border-ink/10 pt-4">
-              <div className="flex items-start justify-between gap-2">
-                <div>
-                  <h2 className="font-serif text-lg font-bold text-ink">{selected.role}</h2>
-                  <p className="mt-0.5 text-sm text-ink/60">{selected.company}</p>
-                </div>
-                <span className="shrink-0 text-lg font-bold text-accent">{selected.salary}</span>
-              </div>
-              <div className="mt-3 flex flex-wrap gap-1.5 text-xs text-ink/55">
-                <span className="inline-flex items-center gap-1 rounded-full bg-ink/5 px-2 py-0.5">
-                  <MapPin className="h-3 w-3" />
-                  {selected.location}
-                </span>
-                <span className="inline-flex items-center gap-1 rounded-full bg-ink/5 px-2 py-0.5">
-                  <Building2 className="h-3 w-3" />
-                  {selected.industry}
-                </span>
-                <span className="inline-flex items-center gap-1 rounded-full bg-ink/5 px-2 py-0.5">
-                  <Banknote className="h-3 w-3" />
-                  {selected.degree}
-                </span>
-              </div>
-              <p className="mt-4 text-sm leading-relaxed text-ink/75">{selected.description}</p>
-              <div className="mt-4">
-                <div className="mb-1.5 text-xs font-medium text-ink/40">岗位要求</div>
-                <ul className="space-y-1">
-                  {selected.requirements.map((r, i) => (
-                    <li
-                      key={i}
-                      className="flex gap-2 rounded-lg bg-ink/[0.02] px-2.5 py-1.5 text-xs leading-relaxed text-ink/70"
-                    >
-                      <span className="text-accent">·</span>
-                      {r}
-                    </li>
-                  ))}
-                </ul>
-              </div>
-              <div className="mt-4 flex flex-wrap gap-1.5">
-                {selected.tags.map((t) => (
-                  <span
-                    key={t}
-                    className="rounded-full border border-ink/10 px-2 py-0.5 text-[11px] text-ink/50"
-                  >
-                    {t}
-                  </span>
-                ))}
-              </div>
-              <p className="mt-3 text-xs text-ink/40">截止：{selected.deadline}</p>
-              <a
-                href={selected.url}
-                target="_blank"
-                rel="noopener noreferrer"
-                className="mt-4 flex items-center justify-center gap-1.5 rounded-full bg-accent px-4 py-2 text-sm font-medium text-paper transition hover:bg-[#c94a23]"
-              >
-                前往投递
-                <ExternalLink className="h-3.5 w-3.5" />
-              </a>
-            </div>
-          </div>
-        )}
-      </aside>
-    </div>
-  );
-}
-
 const TABS = [
-  { key: 'jobs', label: '岗位浏览', icon: Building2 },
-  { key: 'resources', label: '资源库', icon: Library },
-  { key: 'contribute', label: '贡献', icon: Sparkles },
+  { key: 'evidence', label: '证据库', icon: BookOpenCheck },
+  { key: 'jobs', label: '岗位', icon: Building2 },
+  { key: 'sources', label: '来源导航', icon: Library },
+  { key: 'contribute', label: '贡献与审核', icon: Sparkles },
+  { key: 'search', label: '联网检索', icon: Search },
 ] as const;
 
 type TabKey = (typeof TABS)[number]['key'];
 
-export default function InfoHubPage() {
-  const [tab, setTab] = useState<TabKey>('jobs');
-  // 提交贡献 / 审核后递增，强制相关面板重新从 localStorage 读取
-  const [dataVersion, setDataVersion] = useState(0);
-  const bump = () => setDataVersion((v) => v + 1);
+function StatCard({ label, value, hint }: { label: string; value: number | string; hint?: string }) {
+  return (
+    <div className="rounded-xl border border-ink/10 bg-paper px-3 py-2.5">
+      <div className="text-lg font-bold text-ink">{value}</div>
+      <div className="text-[11px] text-ink/50">{label}</div>
+      {hint && <div className="mt-0.5 text-[10px] text-ink/35">{hint}</div>}
+    </div>
+  );
+}
 
-  function goContribute() {
-    setTab('contribute');
+function EvidenceLibrary({ evidence, total }: { evidence: EvidenceItem[]; total: number }) {
+  const [filter, setFilter] = useState('all');
+  const [showAll, setShowAll] = useState(false);
+  const filtered = useMemo(
+    () => (filter === 'all' ? evidence : evidence.filter((e) => e.signal === filter)),
+    [evidence, filter]
+  );
+
+  return (
+    <section className="space-y-3">
+      <div className="flex flex-wrap gap-1.5">
+        {SIGNAL_FILTERS.map((f) => (
+          <button
+            key={f.value}
+            type="button"
+            onClick={() => setFilter(f.value)}
+            aria-pressed={filter === f.value}
+            className={`rounded-full px-2.5 py-1 text-xs transition ${
+              filter === f.value
+                ? 'bg-accent text-paper'
+                : 'border border-ink/15 text-ink/60 hover:border-accent/40 hover:text-accent'
+            }`}
+          >
+            {f.label}
+          </button>
+        ))}
+        <span className="ml-auto self-center text-[11px] text-ink/40">
+          {showAll ? filtered.length : Math.min(36, filtered.length)} / {filtered.length} 条
+        </span>
+      </div>
+
+      {filtered.length === 0 ? (
+        <div className={`${panelCls} p-8 text-center text-sm text-ink/40`}>
+          该分类下还没有证据。可以到「贡献与审核」提交带原文摘录的来源。
+        </div>
+      ) : (
+        <>
+          <div className="grid gap-2.5 lg:grid-cols-2">
+            {(showAll ? filtered : filtered.slice(0, 36)).map((item) => (
+              <EvidenceCard key={item.id} item={item} />
+            ))}
+          </div>
+          {!showAll && filtered.length > 36 && (
+            <button
+              type="button"
+              onClick={() => setShowAll(true)}
+              className="w-full rounded-xl border border-ink/15 py-2 text-xs text-ink/60 transition hover:border-accent/40 hover:text-accent"
+            >
+              显示全部 {filtered.length} 条（共核实 {total} 条）
+            </button>
+          )}
+        </>
+      )}
+    </section>
+  );
+}
+
+/** 取该岗位证据里最新的发布日期（用于排序与「最新」标记） */
+function newestEvidenceDate(job: HubJob): string {
+  const dates = (job.evidence ?? []).map((e) => e.publishedAt ?? '').filter(Boolean).sort();
+  return dates.length ? dates[dates.length - 1] : '';
+}
+
+function daysAgo(dateStr: string): number {
+  if (!dateStr) return Number.POSITIVE_INFINITY;
+  const d = new Date(dateStr.slice(0, 10));
+  if (Number.isNaN(d.getTime())) return Number.POSITIVE_INFINITY;
+  return Math.floor((Date.now() - d.getTime()) / 86_400_000);
+}
+
+function JobLibrary({ jobs }: { jobs: HubJob[] }) {
+  const [showAll, setShowAll] = useState(false);
+  if (jobs.length === 0) {
+    return (
+      <section className={`${panelCls} p-6`}>
+        <h2 className="text-base font-semibold text-ink">岗位库正在按「证据优先」重建</h2>
+        <p className="mt-2 text-sm leading-relaxed text-ink/60">
+          旧版岗位库是 24 条匿名占位数据（公司名写作「某电商独角兽」、链接指向搜索页），
+          对用户和评委都没有价值，已整体下架。
+        </p>
+        <p className="mt-2 text-sm leading-relaxed text-ink/60">
+          新版规则只有一条：
+          <span className="font-medium text-ink">没有原文证据的岗位，不进岗位库。</span>
+        </p>
+        <div className="mt-4 grid gap-2 text-xs text-ink/60 sm:grid-cols-3">
+          <div className="rounded-xl bg-ink/[0.03] p-3">
+            <div className="font-medium text-ink">① 配好检索 Key</div>
+            <p className="mt-1 leading-relaxed">
+              配置 <code className="rounded bg-ink/5 px-1">BOCHA_API_KEY</code> 后，「联网检索」可在白名单域名内实时取证。
+            </p>
+          </div>
+          <div className="rounded-xl bg-ink/[0.03] p-3">
+            <div className="font-medium text-ink">② 批量采集</div>
+            <p className="mt-1 leading-relaxed">
+              运行 <code className="rounded bg-ink/5 px-1">node scripts/harvest-evidence.mjs</code>，自动摘录原文并入库。
+            </p>
+          </div>
+          <div className="rounded-xl bg-ink/[0.03] p-3">
+            <div className="font-medium text-ink">③ 人工补录</div>
+            <p className="mt-1 leading-relaxed">
+              在「贡献与审核」提交岗位公告链接 + 原文摘录，审核通过即入库。
+            </p>
+          </div>
+        </div>
+        <p className="mt-4 text-xs text-ink/45">
+          现阶段先做窄：目标是一个城市 × 一类岗位 × 100 条可核验记录，而不是铺六个赛道的泛泛内容。
+        </p>
+      </section>
+    );
   }
+
+  // 默认按最新发布排序：用户打开就能看到「实时最新」的岗位
+  const sorted = [...jobs].sort((x, y) =>
+    newestEvidenceDate(y).localeCompare(newestEvidenceDate(x))
+  );
+  const visible = showAll ? sorted : sorted.slice(0, 24);
+
+  return (
+    <div className="space-y-3">
+      <p className="text-[11px] text-ink/45">
+        共 {jobs.length} 条岗位/公告，按发布时间倒序 · 全部来自官方来源且带原文证据（默认展示前 24 条）
+      </p>
+      <div className="grid gap-3 lg:grid-cols-2">
+        {visible.map((job) => {
+        const evidence = job.evidence ?? [];
+        const level = deriveFriendlyLevel(evidence);
+        const restricted = hasRestrictionEvidence(evidence);
+        return (
+          <article key={job.id} className={`${panelCls} p-4`}>
+            <div className="flex items-start justify-between gap-2">
+              <div className="min-w-0">
+                <h3 className="font-medium text-ink">{job.role}</h3>
+                <p className="mt-0.5 text-xs text-ink/55">
+                  {job.company} · {job.location} · {job.industry}
+                </p>
+              </div>
+              <span className="shrink-0 text-sm font-semibold text-accent">{job.salary}</span>
+            </div>
+            <div className="mt-2 flex flex-wrap items-center gap-1.5">
+              {daysAgo(newestEvidenceDate(job)) <= 7 && (
+                <span className="rounded bg-accent/10 px-1.5 py-0.5 text-[11px] font-medium text-accent">
+                  最新
+                </span>
+              )}
+              <FriendlyBadge level={level} />
+              {restricted && (
+                <span className="rounded bg-red-100 px-1.5 py-0.5 text-[11px] text-red-600">
+                  含限制性表述
+                </span>
+              )}
+              {job.degree && (
+                <span className="rounded bg-ink/5 px-1.5 py-0.5 text-[11px] text-ink/50">
+                  {job.degree}
+                </span>
+              )}
+              {(job.tags ?? [])
+                .filter((tag) => tag === '已过期' || tag === '公告较早')
+                .map((tag) => (
+                  <span
+                    key={tag}
+                    className="rounded bg-amber-100 px-1.5 py-0.5 text-[11px] text-amber-700"
+                  >
+                    {tag}
+                  </span>
+                ))}
+            </div>
+            <div className="mt-2 flex flex-wrap items-center gap-2 text-[11px] text-ink/50">
+              <span>发布：{newestEvidenceDate(job).slice(0, 10) || '见原文'}</span>
+              {job.location && job.location !== '见原文' && <span>· {job.location}</span>}
+              {job.deadline && <span>· {job.deadline}</span>}
+            </div>
+            <p className="mt-2 line-clamp-3 text-xs leading-relaxed text-ink/70">{job.description}</p>
+            <div className="mt-3 space-y-2">
+              {evidence.map((e) => (
+                <EvidenceCard key={e.id} item={e} />
+              ))}
+            </div>
+            <a
+              href={job.url}
+              target="_blank"
+              rel="noopener noreferrer"
+              className="mt-3 inline-flex items-center gap-1 rounded-full bg-accent px-3 py-1.5 text-xs font-medium text-paper transition hover:bg-[#c94a23]"
+            >
+              打开官方页面
+              <ExternalLink className="h-3 w-3" />
+            </a>
+          </article>
+        );
+        })}
+      </div>
+      {!showAll && jobs.length > 24 && (
+        <button
+          type="button"
+          onClick={() => setShowAll(true)}
+          className="w-full rounded-xl border border-ink/15 py-2 text-xs text-ink/60 transition hover:border-accent/40 hover:text-accent"
+        >
+          显示全部 {jobs.length} 条
+        </button>
+      )}
+    </div>
+  );
+}
+
+function SourceDirectory({ sources }: { sources: HubSource[] }) {
+  const groups: { key: string; label: string }[] = [
+    { key: 'gov', label: '政府与公共就业服务' },
+    { key: 'company', label: '企业官方校招站' },
+    { key: 'platform', label: '招聘平台与社区' },
+  ];
+  return (
+    <div className="space-y-4">
+      {groups.map((g) => {
+        const items = sources.filter((s) => s.category === g.key);
+        if (items.length === 0) return null;
+        return (
+          <section key={g.key} className={`${panelCls} p-4`}>
+            <h2 className="mb-3 flex items-center gap-1.5 text-sm font-semibold text-ink">
+              <ShieldCheck className="h-4 w-4 text-accent" />
+              {g.label}
+              <span className="text-xs font-normal text-ink/40">（{items.length}）</span>
+            </h2>
+            <div className="grid gap-2 sm:grid-cols-2">
+              {items.map((s) => (
+                <a
+                  key={s.id}
+                  href={s.url}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="group rounded-xl border border-ink/10 bg-ink/[0.02] p-3 transition hover:border-accent/40"
+                >
+                  <div className="flex items-center justify-between gap-2">
+                    <span className="text-sm font-medium text-ink">{s.name}</span>
+                    <ExternalLink className="h-3.5 w-3.5 text-ink/30 transition group-hover:text-accent" />
+                  </div>
+                  <p className="mt-1 text-[11px] leading-relaxed text-ink/55">{s.desc}</p>
+                </a>
+              ))}
+            </div>
+          </section>
+        );
+      })}
+    </div>
+  );
+}
+
+export default function InfoHubPage() {
+  const [tab, setTab] = useState<TabKey>('evidence');
+  const [payload, setPayload] = useState<HubPayload | null>(null);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState('');
+  const [version, setVersion] = useState(0);
+
+  useEffect(() => {
+    let alive = true;
+    setLoading(true);
+    fetch('/api/hub/evidence', { cache: 'no-store' })
+      .then((r) => r.json() as Promise<HubPayload>)
+      .then((data) => {
+        if (!alive) return;
+        setPayload(data);
+        setError('');
+      })
+      .catch(() => {
+        if (alive) setError('证据库加载失败，请刷新重试。');
+      })
+      .finally(() => {
+        if (alive) setLoading(false);
+      });
+    return () => {
+      alive = false;
+    };
+  }, [version]);
+
+  const stats = payload?.stats;
 
   return (
     <main className="mx-auto max-w-6xl px-4 py-10">
       <header className="mb-5">
         <h1 className="font-serif text-2xl font-bold tracking-tight text-ink">信息中枢</h1>
-        <p className="mt-1 text-sm text-ink/60">岗位浏览 · 资源库 · 用户贡献（双非垂直信息底座）</p>
+        <p className="mt-1 text-sm text-ink/60">
+          只收录可核对的证据：每条「双非友好」都能点开看到原文摘录与来源。
+        </p>
         <p className="mt-1.5 text-xs text-ink/45">
-          这里是你自己检索、浏览的信息底座；需要 AI 帮你筛选匹配机会，去{' '}
+          需要 AI 帮你把这些信息转成行动方案，去{' '}
           <Link href="/assistant?tab=info" className="font-medium text-accent hover:underline">
             助手 → 信息差
           </Link>
           。
         </p>
       </header>
+
+      {stats && (
+        <div className="mb-5 grid grid-cols-2 gap-2.5 sm:grid-cols-4">
+          <StatCard label="已核实证据" value={stats.evidenceApproved} hint="带原文摘录 + 来源链接" />
+          <StatCard label="待审核" value={stats.evidencePending} hint="机器摘录，等待人工核对" />
+          <StatCard label="白名单来源" value={stats.verifiedSources} hint="政府 / 企业官方 / 权威平台" />
+          <StatCard
+            label="有据岗位"
+            value={stats.verifiedJobs}
+            hint={stats.verifiedJobs === 0 ? '宁缺毋滥，暂未收录' : '证据充分'}
+          />
+        </div>
+      )}
+
+      {payload?.meta.degraded && payload.meta.notice && (
+        <p className="mb-4 rounded-xl bg-gold/10 p-3 text-[11px] text-ink/60">
+          数据源提示：{payload.meta.notice}
+        </p>
+      )}
 
       <div className="mb-5 flex flex-wrap gap-1.5 border-b border-ink/10 pb-3">
         {TABS.map((t) => {
@@ -443,9 +418,25 @@ export default function InfoHubPage() {
         })}
       </div>
 
-      {tab === 'jobs' && <JobBrowser onGoContribute={goContribute} />}
-      {tab === 'resources' && <ResourceLibrary key={dataVersion} onGoContribute={goContribute} />}
-      {tab === 'contribute' && <ContributionPanel key={dataVersion} onChanged={bump} />}
+      {error && <p className="mb-4 rounded-xl bg-red-50 p-3 text-sm text-red-600">{error}</p>}
+
+      {loading && !payload && (
+        <p className="py-10 text-center text-sm text-ink/40">正在加载证据库…</p>
+      )}
+
+      {payload && (
+        <>
+          {tab === 'evidence' && (
+            <EvidenceLibrary evidence={payload.evidence} total={stats?.evidenceApproved ?? 0} />
+          )}
+          {tab === 'jobs' && <JobLibrary jobs={payload.jobs} />}
+          {tab === 'sources' && <SourceDirectory sources={payload.sources} />}
+          {tab === 'contribute' && (
+            <ContributionPanel key={version} onChanged={() => setVersion((v) => v + 1)} />
+          )}
+          {tab === 'search' && <HubSearch />}
+        </>
+      )}
     </main>
   );
 }

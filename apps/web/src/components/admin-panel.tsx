@@ -1,6 +1,7 @@
 'use client';
 
 import { useEffect, useState } from 'react';
+import { useSession } from 'next-auth/react';
 import { panelCls } from '@/components/skill-ui';
 import {
   ShieldCheck,
@@ -13,8 +14,10 @@ import {
   Upload,
   Lock,
   Megaphone,
+  AlertTriangle,
 } from 'lucide-react';
-import { loadContributions, reviewContribution, type InfoItem } from '@/lib/infobase';
+import { loadContributions, type InfoItem } from '@/lib/infobase';
+import { submitReview } from '@/lib/hub-review-client';
 import {
   loadFeedbacks,
   loadPosts,
@@ -62,8 +65,40 @@ export function AdminPanel() {
   const [feedbacks, setFeedbacks] = useState<Feedback[]>([]);
   const [handled, setHandled] = useState<string[]>([]);
   const [posts, setPosts] = useState<Post[]>([]);
+  const [reviewNotice, setReviewNotice] = useState('');
+  const [reviewBusy, setReviewBusy] = useState('');
+  const { data: session, status: sessionStatus } = useSession();
 
   const refreshContribs = () => setContribs(loadContributions());
+
+  const sessionRole = (session?.user as { role?: string } | undefined)?.role;
+  const signedIn = sessionStatus === 'authenticated';
+  const canReviewNow = signedIn && (sessionRole === 'teacher' || sessionRole === 'admin');
+
+  /**
+   * 审核统一走 hub-review-client：
+   * 已登录审核者走 BFF（服务端再次校验会话角色）；基础设施故障才回退本机队列。
+   */
+  async function runReview(item: InfoItem, decision: InfoItem['status']) {
+    setReviewBusy(item.id);
+    const result = await submitReview({
+      id: item.id,
+      status: decision,
+      credibility: (item.credibility as 'A' | 'B' | 'C') ?? 'C',
+      ownerId: item.ownerId,
+      localReviewer: session?.user?.name ?? ROLE_LABEL[role],
+    });
+    setReviewBusy('');
+    const via = result.via === 'cloud' ? '云端' : '本机';
+    setReviewNotice(
+      result.ok
+        ? decision === 'published'
+          ? `${via}通过：${item.title}（+${result.points ?? 0} 积分）`
+          : `${via}已标记为${decision === 'needs_info' ? '待补充证据' : '已驳回'}`
+        : (result.error ?? '审核失败')
+    );
+    refreshContribs();
+  }
   const refreshPosts = () => setPosts(loadPosts());
 
   useEffect(() => {
@@ -89,11 +124,24 @@ export function AdminPanel() {
     localStorage.setItem(TASKS_KEY, JSON.stringify(next));
   };
 
-  if (role === 'student') {
+  if (!canReviewNow) {
     return (
       <div className="rounded-2xl border border-amber-300/40 bg-amber-50 p-6 text-center text-sm text-ink/70">
         <Lock className="mx-auto mb-2 h-6 w-6 text-amber-500" />
-        管理员后台仅对「高校老师 / 系统维护员」开放。请到「设置」切换测试账号身份后查看。
+        {sessionStatus === 'loading'
+          ? '正在确认登录状态…'
+          : signedIn
+            ? `当前登录账号角色为「${sessionRole ?? 'student'}」，管理员后台仅对「高校老师 / 系统维护员」开放。`
+            : '管理员后台需要登录：请用教师 / 管理员演示账号登录后访问。'}
+        <div className="mt-3 text-xs text-ink/50">
+          演示账号：teacher@aicc.com / teacher1234 · admin@aicc.com / admin1234
+        </div>
+        <a
+          href="/login"
+          className="mt-3 inline-flex items-center gap-1 rounded-full bg-accent px-3 py-1.5 text-xs font-medium text-paper"
+        >
+          去登录
+        </a>
       </div>
     );
   }
@@ -129,6 +177,9 @@ export function AdminPanel() {
       {tab === 'review' && (
         <>
           <div className="space-y-3">
+            {reviewNotice && (
+              <p className="rounded-lg bg-ink/[0.04] p-2.5 text-[11px] text-ink/70">{reviewNotice}</p>
+            )}
             {contribs.length === 0 && (
               <div className="rounded-xl border border-dashed border-ink/15 p-8 text-center text-sm text-ink/40">
                 暂无贡献待处理。
@@ -140,11 +191,11 @@ export function AdminPanel() {
                   <div className="min-w-0">
                     <p className="truncate text-sm font-medium text-ink">{c.title}</p>
                     <p className="mt-0.5 line-clamp-2 text-xs text-ink/50">{c.summary}</p>
-                    <p className="mt-1 text-[11px] text-ink/30">
+                    <p className="mt-1 break-all text-[11px] text-ink/30">
                       {c.url} · 状态：
                       <span
                         className={
-                          c.status === 'pending'
+                          c.status === 'pending' || c.status === 'needs_info'
                             ? 'text-amber-600'
                             : c.status === 'published'
                               ? 'text-green-600'
@@ -153,27 +204,46 @@ export function AdminPanel() {
                       >
                         {c.status === 'pending'
                           ? '待审核'
-                          : c.status === 'published'
-                            ? '已发布'
-                            : '已驳回'}
+                          : c.status === 'needs_info'
+                            ? '待补充证据'
+                            : c.status === 'published'
+                              ? '已通过'
+                              : '已驳回'}
                       </span>
                     </p>
+                    {(c.quote ?? '').trim().length >= 8 ? (
+                      <p className="mt-1.5 rounded-lg bg-ink/[0.03] p-2 text-[11px] leading-relaxed text-ink/60">
+                        原文摘录：{c.quote}
+                        {c.credibility ? ` · 可信度 ${c.credibility}` : ''}
+                      </p>
+                    ) : (
+                      <p className="mt-1.5 rounded-lg bg-amber-50 p-2 text-[11px] text-amber-700">
+                        缺少原文摘录，无法通过审核（数据库层会拒绝置为 approved）。
+                      </p>
+                    )}
                   </div>
-                  {c.status === 'pending' && (
-                    <div className="flex shrink-0 gap-2">
+                  {(c.status === 'pending' || c.status === 'needs_info') && (
+                    <div className="flex shrink-0 flex-wrap gap-2">
                       <button
                         onClick={() => {
-                          reviewContribution(c.id, 'published');
-                          refreshContribs();
+                          void runReview(c, 'published');
                         }}
-                        className="inline-flex items-center gap-1 rounded-full bg-green-600 px-2.5 py-1 text-xs text-white"
+                        disabled={(c.quote ?? '').trim().length < 8 || reviewBusy === c.id}
+                        className="inline-flex items-center gap-1 rounded-full bg-green-600 px-2.5 py-1 text-xs text-white disabled:opacity-40"
                       >
                         <Check className="h-3 w-3" /> 通过
                       </button>
                       <button
                         onClick={() => {
-                          reviewContribution(c.id, 'rejected');
-                          refreshContribs();
+                          void runReview(c, 'needs_info');
+                        }}
+                        className="inline-flex items-center gap-1 rounded-full bg-amber-500 px-2.5 py-1 text-xs text-white"
+                      >
+                        <AlertTriangle className="h-3 w-3" /> 待补充
+                      </button>
+                      <button
+                        onClick={() => {
+                          void runReview(c, 'rejected');
                         }}
                         className="inline-flex items-center gap-1 rounded-full bg-red-500 px-2.5 py-1 text-xs text-white"
                       >

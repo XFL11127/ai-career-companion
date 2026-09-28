@@ -19,3 +19,9 @@ coverage
 .wrangler/
 apps/worker/.wrangler/
 .turbo/
+
+# 采集产物（可重跑生成）：node scripts/harvest-*.mjs
+data/
+
+# npm cache generated in-repo
+.npm-cache/

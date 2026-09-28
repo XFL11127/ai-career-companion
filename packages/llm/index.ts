@@ -140,27 +140,11 @@ export function stubFor(name: SkillName): unknown {
         feedback: '建议用 STAR 法则组织回答：先讲背景与你的角色，再讲行动与量化结果。',
       };
     case 'info':
+      // 降级时不再编造岗位：宁可为空，也不给用户假机会。
       return {
-        jobs: [
-          {
-            company: '某双非友好科技公司',
-            role: '前端开发实习',
-            salary: '200/天',
-            location: '远程',
-            tags: ['双非友好', '远程'],
-            url: 'https://example.com/job/1',
-            doubleNonFriendly: true,
-          },
-          {
-            company: '某地市国企信息岗',
-            role: '软件开发',
-            salary: '8-12K',
-            location: '二线城市',
-            tags: ['稳定', '校招'],
-            url: 'https://example.com/job/2',
-            doubleNonFriendly: true,
-          },
-        ],
+        jobs: [],
+        reply:
+          '（降级模式）当前未接入真实检索，因此不生成任何岗位，避免给你假机会。请到「信息中枢」查看已核实证据，或配置检索 Key 后再试。',
       };
     case 'package':
       return {
@@ -352,14 +336,14 @@ function buildPracticePrompt(input: PracticeInput): string {
 }
 
 function buildInfoPrompt(context?: string[], profile?: string): string {
-  return `你是信息差填平引擎，专门帮双非同学找「够得着」的机会。你推荐的是真实可投的渠道，不是天价大厂幻梦。
+  return `你是信息差填平引擎，专门帮双非同学找「够得着」的机会。
 
-要求：
-1. 聚合 2-4 个双非友好的校招 / 实习 / 竞赛 / 项目机会。
-2. 每个 job：company、role、salary、location、tags(数组)、url(必须是合法 https URL，指向该机会或对应平台如实习僧/学校就业网/牛客竞赛页)、doubleNonFriendly=true。
-3. 优先推荐这些渠道：学校就业指导中心官网、实习僧、BOSS直聘（筛选远程/二线城市）、牛客竞赛、GitHub 开源项目、地方政府/国企校招。salary 写区间或「面议」均可，但不要编造离谱高薪。
-4. 如果无法确定确切链接，url 填该平台的搜索页或官网首页（合法 https 即可），并在 tags 标注「需自行搜索」。
-5. 顶层 reply（2-4 句中文）：说明这批信息的价值 + 一句本周可做的行动（如「先在学校就业网登记简历」）。
+硬性要求（违反即视为无效输出）：
+1. 只允许输出「来源明确、可点击核对」的机会。company / role / url 必须来自真实公告，禁止使用「某公司」「某双非友好科技公司」这类占位名。
+2. 每个 job 必须填 evidenceQuote：从该公告原文逐字复制的依据句（例如「本科及以上学历，不限毕业院校」「不限专业」）。摘不出原文依据就不要输出这一条。
+3. 禁止编造 url，也不要用平台搜索页或首页充当具体岗位链接。
+4. 不要给 job 打「双非友好」标签——标签由系统依据 evidenceQuote + 来源可信度自动判定。
+5. 如果上下文中没有可用的真实信息，jobs 直接返回空数组，并在 reply 里说明「先去信息中枢检索或补充来源」，不要用猜测填充。
 
 只输出符合 schema 的 JSON，不要额外解释。${withMemory(context)}${withProfile(profile)}`;
 }

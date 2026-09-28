@@ -18,7 +18,10 @@
     "lint": "eslint .",
     "lint:fix": "eslint . --fix",
     "format": "prettier --write \"**/*.{ts,js,json}\"",
-    "format:check": "prettier --check \"**/*.{ts,js,json}\""
+    "format:check": "prettier --check \"**/*.{ts,js,json}\"",
+    "hub:harvest": "node scripts/harvest-evidence.mjs",
+    "hub:harvest-policy": "node scripts/harvest-policy-gov.mjs",
+    "hub:verify-whitelist": "node scripts/verify-whitelist.mjs"
   },
   "keywords": [],
   "author": "",

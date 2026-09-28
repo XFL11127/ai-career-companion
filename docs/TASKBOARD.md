@@ -271,6 +271,8 @@
 - **路径**：`apps/web/src/app/(main)/profile/page.tsx` + `apps/web/src/lib/growth.ts`
 - **说明**：⚠️ 原定持久化到 Supabase `checkins`/`points`/`profiles` 表，因 A 未交付 Supabase 而改用 **localStorage 草稿版**。数据层已抽象在 `growth.ts`，Supabase 就绪后只需替换该文件的读写实现，**页面无需改动**。
 
+> ⚠️ 2026-09-25 更新：R-007 的「24 条匿名占位岗位库」已被 R-011 的证据链方案**整体下架**（匿名公司与搜索页链接无法核对）。
+
 ### R-007 招聘机会三栏统览页 `/jobs`
 
 - **负责人**：B
@@ -311,6 +313,86 @@
 
 ---
 
+### R-011 信息中枢证据链（第一层：数据深度）
+
+- **负责人**：AI 实施（本次会话）
+- **需求来源**：竞品对比与产品深度分析（2026-09-25）第一层「把信息中枢从壳变成资产」
+- **做了什么**：
+  - 共享契约新增证据链模型（signal / direction / quote / sourceUrl / credibility / status）与 `deriveFriendlyLevel()` 三级标签门禁；`jobPostingSchema` 删除 `doubleNonFriendly` 布尔字段
+  - 新增 `supabase/migrations/007_evidence_hub.sql`：evidence_items / hub_jobs / hub_contributions / hub_points_ledger / hub_whitelist_domains；**DB 层强制「approved 必须有 ≥8 字原文摘录」**，并加状态机触发器
+  - 新增真实检索适配层（博查 Web Search）+ 38 域名白名单（JSON 单一数据源）；未配 Key 时返回空结果并说明原因，删除 `demoSearch()` 假结果
+  - `/jobs` 重构为「证据库 / 岗位 / 来源导航 / 贡献与审核 / 联网检索」五个 Tab；匿名岗位库整体下架
+  - 新增 `scripts/harvest-evidence.mjs`（采集+可选入库）、`scripts/verify-whitelist.mjs`（域名复核）
+  - 新增回归测试 `tests/evidence-gate.test.mjs`：门禁三态、种子数据合规、白名单合规、防回退
+- **验收标准**：type-check / lint / test / build 全绿；`/api/hub/evidence` 返回 2 条已核实政策证据；未配 Key 时 `/api/hub/search` 返回 degraded 且 results 为空
+- **当前数据**：已核实证据 2 条（gov.cn 2026 政策原文）、来源导航 14 个、白名单 38 域名；岗位级证据 0 条（有意为空，待采集）
+- **后续**：申请 BOCHA_API_KEY 后按 `docs/信息中枢_证据链实现说明.md` §七 扩到 100 条；审核接口改用 Supabase Auth 会话
+- **分支/PR**：—
+
+### R-012 审核权限改为真实会话 + 政策证据采集（R-011 后续）
+
+- **负责人**：AI 实施（本次会话）
+- **需求来源**：R-011 遗留项「审核接口用 x-hub-role 头做门禁」+ 用户授权完成三项收尾
+- **做了什么**：
+  - 角色进入 NextAuth 会话：auth-users.ts 增加 role 字段与三个演示账号（学生/教师/管理员），auth.ts 的 jwt/session 回调写入角色，GitHub 登录可用 HUB_REVIEWER_EMAILS 白名单引导
+  - 新增 lib/session-role.ts（getSessionRole）：审核接口权限**只来自会话**，未登录 401、非教师/管理员 403，彻底移除 x-hub-role
+  - 新增 lib/hub-review-client.ts：已登录走云端审核，401/403 不回退（权限问题要暴露），503/网络故障才回退本机队列
+  - 贡献面板与管理后台的审核按钮改由会话角色控制；登录页增加演示账号一键填充
+  - 删除 orphaned 的 jobs-data.json（24 条匿名占位岗位）
+  - 新增 scripts/harvest-policy-gov.mjs：从国务院政策文件库（sousuo.www.gov.cn）采集政策原文并摘句，含主题相关性过滤与近似去重
+  - 检索适配层增加免 Key 的 Bing RSS 次级通道（未配 BOCHA_API_KEY 时自动降级使用）
+- **验收标准**：type-check / lint / test（13 条）/ build 全绿；未登录调用 PATCH /api/hub/contributions 返回 401；以学生账号返回 403；教师/管理员可审核
+- **数据结果**：证据库由 2 条增至 **7 条政策证据**（gov.cn 原文，A 级）；岗位证据仍为 0 条——**BOCHA_API_KEY 缺失，无法采集岗位级证据**（已实测 Bing RSS / DeepSeek 联网 / NCSS 接口三条替代路径均不成立，见 docs/信息中枢_证据链实现说明.md §7.2）
+- **阻塞项**：需要 BOCHA_API_KEY 才能继续扩到 100 条岗位证据
+- **分支/PR**：—
+### R-013 岗位证据采集落地：112 条岗位 / 130 条证据（R-011/R-012 后续）
+
+- **负责人**：AI 实施（本次会话）
+- **需求来源**：用户授权「把岗位证据扩到 100 条」，并已充值博查额度
+- **做了什么**：
+  - 白名单从「枚举域名」升级为「域名空间规则」：`gov.cn` 全站 + `edu.cn` 的 job./career./jyb./jy./jobinfo. 等就业子站 → 命中率从 2/20 提升到覆盖全国高校就业网
+  - 岗位库三条准入硬规则：只收官方来源 / 必须解析出真实企业名 / 排除列表页与过滤页
+  - 两层跨来源去重：先按原文摘录、再按「企业+岗位」，重复时优先保留能解析出企业名的条目
+  - `--deep` 抓取岗位详情页提取企业全称；`--preset-file` 支持分批采集；修正单条检索失败导致整批中断的缺陷
+  - 采集脚本自动读取 `apps/web/.env.local` 的 BOCHA_API_KEY
+  - 页面加分页（岗位默认 24 条、证据默认 36 条），避免一次性渲染数百张卡片
+  - 5 个预设检索词文件（共 148 词），覆盖城市/职能/行业三类切分
+- **成果**：**112 条岗位/公告 + 130 条证据（128 已核实）+ 45 个来源站点**；其中 39 条为「双非友好 · 有据」，其余为「门槛可及」
+- **验收标准**：type-check / lint / test(13) / build 全绿；`/api/hub/evidence` 返回 112 岗位、130 证据；页面全部 200
+- **成本**：约 148 次博查调用（148 个检索词）
+- **后续**：企业名解析仍有少量截断需人工审核修正；企业官方校招站多为 JS 渲染，正文抓取待补
+- **分支/PR**：—
+### R-014 用户检索的成本护栏（防止博查余额被刷空）
+
+- **负责人**：AI 实施（本次会话）
+- **需求来源**：用户提问「用户使用时是不是又要花我充的钱？用完了用户是不是就用不了？」
+- **结论**：`/api/hub/search` 是**唯一**会按次扣博查余额的用户入口；余额耗尽只影响联网检索，静态的岗位库/证据库不受影响
+- **做了什么**（`apps/web/src/lib/hub-search-guard.ts` + 改写 `api/hub/search/route.ts`）：
+  - 结果缓存：相同检索词命中缓存不产生新调用（`HUB_SEARCH_CACHE_HOURS`）
+  - 每 IP 每日配额：默认 3 次真实调用，超出返回 429（`HUB_SEARCH_DAILY_LIMIT`）
+  - 总开关：`HUB_USER_SEARCH=off|limited|unlimited`，默认 `limited`
+  - 调用计量 `searchUsage()`，便于自行审计花了多少次
+  - 前端展示「今日检索剩余 N/M」「命中缓存 · 未消耗额度」
+- **验收标准**：实测 limit=3 时 —— 首次调用扣 1、同词命中缓存不扣、第 4 次被 429 拦下；新增 4 条回归测试（共 17 条）
+- **推荐档位**：正式对外用 `off`（运营侧定时采集），比赛演示用 `limited`
+- **已知局限**：护栏与计量均为进程内存实现，Vercel 多实例下为近似值，生产化需换 Upstash/KV
+- **分支/PR**：—
+
+### R-015 岗位时效性治理：从「2023 年旧公告」到「实时最新」
+
+- **负责人**：AI 实施（本次会话）
+- **需求来源**：用户明确要求「我要岗位是实时最新的」
+- **发现的问题**：第一轮采集用了 `freshness: noLimit`，112 条岗位中 2023 年 17 条、2024 年 36 条、16 条页面已标注「已过期」
+- **做了什么**：
+  - 采集脚本时效参数化：`HUB_SEARCH_FRESHNESS` 默认 `oneYear`，实时批次用 `oneMonth`
+  - 新增 `scripts/prune-stale-jobs.mjs`：清理「已过期」与「证据年份早于去年」的岗位
+  - 前端：岗位按发布时间倒序、显示发布日期、7 天内打「最新」、陈旧/过期打琥珀标记
+  - 新增 `.github/workflows/refresh-hub.yml`：每周一自动重采 + 采集政策 + 清理 + 门禁 + 提交
+  - 新增 `scripts/enrich-jobs.mjs`：直接抓已知 URL 补全薪资/地点/学历/时间字段（**不消耗博查额度**）
+- **成果**：岗位库清理为 **39 条，全部 2026 年证据，最新 2026-09-24（2 天前）**；字段补全让薪资 38%、学历 41% 有值
+- **验收标准**：type-check / lint / test(17) / build 全绿；`/api/hub/evidence` 返回 39 岗位 / 164 证据；freshness 实测生效
+- **已知边界**：约 26 个页面是 JS 渲染或反爬，字段无法解析（保持空白，不猜测）；企业名仍有少量截断
+- **分支/PR**：—
 ## 移动卡片的规则
 
 1. 待办 → 进行中：认领时移动，填负责人 + 分支。

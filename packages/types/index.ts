@@ -216,7 +216,218 @@ export const practiceOutputSchema = z.object({
 export type PracticeInput = z.infer<typeof practiceInputSchema>;
 export type PracticeOutput = z.infer<typeof practiceOutputSchema>;
 
+// ---------- 信息中枢 · 证据链（Evidence Chain）----------
+// 本层最重要的一条约束：任何「双非友好」标签都必须能追溯到一条可点击、可核对的原文证据。
+// 没有原句 → 不允许出现该标签。标签由 deriveFriendlyLevel() 计算，不由模型断言。
+
+export const evidenceSignalSchema = z.enum([
+  'degree_barrier', // 学历门槛：公告明确「本科及以上」且未限定院校
+  'school_list', // 院校要求：公告列出院校清单，或明确「不限院校」
+  'bonus', // 加分项：明确「不限专业 / 项目经历优先 / 竞赛优先」
+  'historical_admit', // 历史录取：往届录取名单、生源院校公示
+  'policy', // 政策依据：禁止学历歧视的官方文件
+  'deadline', // 时间窗口：报名 / 投递截止
+]);
+export type EvidenceSignal = z.infer<typeof evidenceSignalSchema>;
+
+export const EVIDENCE_SIGNAL_LABEL: Record<EvidenceSignal, string> = {
+  degree_barrier: '学历门槛',
+  school_list: '院校要求',
+  bonus: '加分项',
+  historical_admit: '历史录取',
+  policy: '政策依据',
+  deadline: '时间窗口',
+};
+
+/** A=官方原文（企业/政府/高校官网）；B=权威平台且可回溯原文；C=UGC 投稿待复核 */
+export const credibilitySchema = z.enum(['A', 'B', 'C']);
+export type Credibility = z.infer<typeof credibilitySchema>;
+
+export const CREDIBILITY_LABEL: Record<Credibility, string> = {
+  A: 'A · 官方原文',
+  B: 'B · 权威来源',
+  C: 'C · 用户投稿',
+};
+
+/** 审核通过一条贡献可得的积分，按可信度分级 */
+export const CONTRIBUTION_POINTS: Record<Credibility, number> = { A: 30, B: 20, C: 10 };
+
+export const evidenceItemSchema = z.object({
+  id: z.string(),
+  company: z.string(),
+  role: z.string(),
+  signal: evidenceSignalSchema,
+  /** positive = 支持「双非友好」的信号；negative = 限制性表述（如仅限 985/211），用于风险提示 */
+  direction: z.enum(['positive', 'negative']).default('positive'),
+  /** 原文摘录：必须逐字来自 sourceUrl 页面，供人工核对 */
+  quote: z.string().trim().min(8),
+  sourceUrl: z.string().url(),
+  sourceSite: z.string(),
+  publishedAt: z.string().optional(),
+  fetchedAt: z.string(),
+  credibility: credibilitySchema,
+  /** 审核人标识；UGC 通过审核后写入 */
+  reviewer: z.string().optional(),
+  status: z.enum(['pending', 'approved', 'rejected']).default('approved'),
+});
+export type EvidenceItem = z.infer<typeof evidenceItemSchema>;
+
+export const friendlyLevelSchema = z.enum(['verified', 'reachable', 'unverified']);
+export type FriendlyLevel = z.infer<typeof friendlyLevelSchema>;
+
+export const FRIENDLY_LEVEL_LABEL: Record<FriendlyLevel, string> = {
+  verified: '双非友好 · 有据',
+  reachable: '门槛可及 · 未见院校限制',
+  unverified: '未见依据',
+};
+
+/**
+ * 强证据信号：只有这些信号才足以支撑「双非友好」结论。
+ * degree_barrier（如「本科及以上」）只说明门槛可及，不能单独断言不限院校。
+ */
+export const FRIENDLY_SIGNALS: readonly EvidenceSignal[] = [
+  'policy',
+  'bonus',
+  'school_list',
+  'historical_admit',
+];
+
+function isUsableEvidence(e: EvidenceItem): boolean {
+  return (
+    e.status === 'approved' &&
+    e.direction !== 'negative' &&
+    e.quote.trim().length >= 8 &&
+    /^https?:\/\//i.test(e.sourceUrl)
+  );
+}
+
+/**
+ * 标签门禁：任何渲染路径都必须走这个函数，禁止直接信任数据里的标签字段。
+ * verified = 有强证据；reachable = 仅有学历门槛证据；unverified = 无可用证据。
+ */
+export function deriveFriendlyLevel(evidence: readonly EvidenceItem[] = []): FriendlyLevel {
+  const usable = evidence.filter(isUsableEvidence);
+  if (usable.some((e) => FRIENDLY_SIGNALS.includes(e.signal))) return 'verified';
+  if (usable.some((e) => e.signal === 'degree_barrier')) return 'reachable';
+  return 'unverified';
+}
+
+export function safeHostname(url: string): string {
+  try {
+    return new URL(url).hostname.replace(/^www\./, '');
+  } catch {
+    return '';
+  }
+}
+
+// ---------- 信息中枢 · 岗位与贡献 ----------
+
+export const hubJobSchema = z.object({
+  id: z.string(),
+  company: z.string(),
+  role: z.string(),
+  salary: z.string(),
+  location: z.string(),
+  industry: z.string(),
+  degree: z.string(),
+  tags: z.array(z.string()),
+  url: z.string().url(),
+  description: z.string(),
+  requirements: z.array(z.string()),
+  deadline: z.string(),
+  evidence: z.array(evidenceItemSchema).default([]),
+});
+export type HubJob = z.infer<typeof hubJobSchema>;
+
+export const contributionKindSchema = z.enum([
+  'job',
+  'internship',
+  'policy',
+  'school',
+  'resource',
+  'interview_exp',
+]);
+export type ContributionKind = z.infer<typeof contributionKindSchema>;
+
+export const contributionStatusSchema = z.enum(['pending', 'needs_info', 'approved', 'rejected']);
+export type ContributionStatus = z.infer<typeof contributionStatusSchema>;
+
+export const CONTRIBUTION_STATUS_LABEL: Record<ContributionStatus, string> = {
+  pending: '待审核',
+  needs_info: '待补充证据',
+  approved: '已通过',
+  rejected: '已驳回',
+};
+
+/** 审核状态机：只允许这些流转，服务端与前端共用，防止任意改状态 */
+export const CONTRIBUTION_TRANSITIONS: Record<ContributionStatus, readonly ContributionStatus[]> = {
+  pending: ['approved', 'rejected', 'needs_info'],
+  needs_info: ['pending', 'rejected'],
+  approved: [],
+  rejected: ['pending'],
+};
+
+export function canTransitionContribution(
+  from: ContributionStatus,
+  to: ContributionStatus
+): boolean {
+  return CONTRIBUTION_TRANSITIONS[from].includes(to);
+}
+
+export const contributionSchema = z.object({
+  id: z.string(),
+  kind: contributionKindSchema,
+  title: z.string().trim().min(1),
+  summary: z.string().default(''),
+  url: z.string(),
+  company: z.string().optional(),
+  role: z.string().optional(),
+  signal: evidenceSignalSchema.optional(),
+  /** 投稿人粘贴的原文摘录；无摘录不得通过审核 */
+  quote: z.string().optional(),
+  contact: z.string().optional(),
+  status: contributionStatusSchema.default('pending'),
+  credibility: credibilitySchema.optional(),
+  reviewer: z.string().optional(),
+  reviewNote: z.string().optional(),
+  points: z.number().default(0),
+  ownerId: z.string().optional(),
+  ownerRole: z.string().optional(),
+  createdAt: z.string(),
+  updatedAt: z.string(),
+});
+export type Contribution = z.infer<typeof contributionSchema>;
+
+/** 限制性信号：出现即提示风险，且永远不能点亮「双非友好」 */
+export function hasRestrictionEvidence(evidence: readonly EvidenceItem[] = []): boolean {
+  return evidence.some((e) => e.direction === 'negative' && e.status === 'approved');
+}
+
+/** 贡献 → 证据：只有「审核通过 + 带原文摘录 + 合法链接」才能转成可展示证据 */
+export function contributionToEvidence(c: Contribution): EvidenceItem | null {
+  if (c.status !== 'approved') return null;
+  const quote = (c.quote ?? '').trim();
+  if (quote.length < 8) return null;
+  if (!/^https?:\/\//i.test(c.url)) return null;
+  return {
+    id: c.id,
+    company: c.company?.trim() || c.title,
+    role: c.role?.trim() || c.kind,
+    signal: c.signal ?? 'bonus',
+    quote,
+    sourceUrl: c.url,
+    sourceSite: safeHostname(c.url),
+    fetchedAt: c.updatedAt,
+    credibility: c.credibility ?? 'C',
+    reviewer: c.reviewer,
+    direction: 'positive',
+    status: 'approved',
+  };
+}
+
 // ---------- Skill 3：信息差填平（校招信息聚合）----------
+// 注意：模型输出的 job 只允许携带「原文摘录 + 来源」，不允许自带「双非友好」布尔标签。
+// 标签一律由 deriveFriendlyLevel() 依据 evidence 计算。
 
 export const jobPostingSchema = z.object({
   company: z.string(),
@@ -225,7 +436,11 @@ export const jobPostingSchema = z.object({
   location: z.string(),
   tags: z.array(z.string()),
   url: z.string().url(),
-  doubleNonFriendly: z.boolean().default(true), // 双非友好
+  sourceSite: z.string().optional(),
+  publishedAt: z.string().optional(),
+  /** 原文摘录：必须逐字来自 url 页面；缺失即视为未验证，前端不显示「双非友好」 */
+  evidenceQuote: z.string().optional(),
+  signal: evidenceSignalSchema.optional(),
 });
 export type JobPosting = z.infer<typeof jobPostingSchema>;
 
