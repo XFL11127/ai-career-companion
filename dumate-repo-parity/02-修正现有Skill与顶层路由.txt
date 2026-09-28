@@ -1,0 +1,53 @@
+执行仓库对齐任务，不运行任何 Skill，不联网搜索，不生成业务结果。只修改已有 Skill 的定义文件，完成后逐项报告。
+
+仓库基准：XFL11127/ai-career-companion，提交 6bfc3f6。
+
+一、修正 gap-diagnosis
+把五维维度改为仓库原定义：
+1. 技术栈
+2. 实习经历
+3. 项目经历
+4. 算法能力
+5. 信息差
+每个维度输出 current、target、gap；推荐 2-3 个岗位；reason 必须包含“为什么适合双非学生”和一个具体入手动作；输出 2-4 句口语化 reply。不得使用原来的技术能力/项目与实习/表达与面试/信息获取/执行稳定性五维。
+
+二、修正 career-plan-306090
+阶段改为 0-30 / 31-60 / 61-90。
+每阶段 1-3 个行动卡，类型只能是 study、project、apply、review。
+每个 action 必须写清完成程度和执行渠道。
+apply 类必须写投递数量和筛选标准。
+去掉与仓库不一致的强制 12 周总时长规则，但保留“不得排入不现实的时间”这一约束。
+
+三、修正 evidence-check / info
+- 输出岗位字段必须包含 company、role、salary、location、tags、url、sourceSite、publishedAt、evidenceQuote、signal。
+- evidenceQuote 必须逐字来自 url 页面。
+- 没有 evidenceQuote 或 url 不是独立详情页时，该条不得输出。
+- 不允许 Skill 自己给岗位打“双非友好”标签。
+- 没有真实信息时返回空 jobs，并说明先去信息中枢检索。
+- active-job-verifier 继续作为下游有效期核验能力。
+
+四、修正 artifact-pack / package
+必须至少输出：
+- optimizedResume：ATS 友好简历文案；
+- projectBullets：3 条项目亮点；
+- interviewReview：面试复盘和“被问学校时如何回答”的表达模板。
+保留现有“不新增事实”和原始事实对照规则。
+不要把 package 扩成课程、测评、面试舱等无关能力。
+
+五、更新顶层智能体路由
+新增以下能力路由：
+- practice：模拟面试、算法题、项目深挖；
+- resume：ATS 评分、关键词缺口、改写建议、简历优化；
+- interview：4-6 道面试题、STAR 提示、评分卡、追问、提升计划；
+- match：技能、经验、地域、行业、职业轨迹五维匹配；
+- course：资料摘要、概念、抽认卡、小测、学习计划；
+- assessment：职业探索画像、维度、特质、优势、待验证假设、职业方向、2-4 周计划。
+
+六、确认
+完成后只报告：
+1. 修改过的 SKILL.md 路径；
+2. 每项修改是否完成；
+3. gap-diagnosis 的五维名称；
+4. artifact-pack 的固定输出字段；
+5. 顶层智能体新增的路由。
+不要运行 Skill，不要联网，不要写业务输出。
