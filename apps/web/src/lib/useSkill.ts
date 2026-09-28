@@ -9,6 +9,7 @@ import { searchL3Knowledge } from './l3-knowledge';
 import { searchMemory } from './memory-api';
 import { appendSkillEvent } from './analytics-events';
 import { saveAbilitySnapshot } from './growth';
+import { trackEvent } from './track';
 import type { DiagnoseOutput } from '@ai-career-companion/types';
 
 /** 从 input 中提取可搜索的文本片段（用于 L3 关键词匹配）。 */
@@ -38,6 +39,7 @@ export function useSkill<N extends SkillName>(name: N) {
   }, [name]);
 
   const run = async (input: unknown) => {
+    const startedAt = Date.now();
     setLoading(true);
     setError(null);
     setRunMeta(null);
@@ -86,13 +88,37 @@ export function useSkill<N extends SkillName>(name: N) {
         () => {}
       );
       // L2 交互记忆：Skill 成功后自动更新用户画像
-      updateFromSkillResult(name as SkillNameInput, finalData, profileData);
+      const updatedProfile = updateFromSkillResult(name as SkillNameInput, finalData, profileData);
+      void trackEvent('skill_call', {
+        skillName: name,
+        metadata: { status: 'success', durationMs: Date.now() - startedAt },
+      });
+      void trackEvent('profile_update', { metadata: { profile: updatedProfile } });
+      if (name === 'diagnose') {
+        const diagnosis = finalData as unknown as {
+          radar?: unknown[];
+          recommendedRoles?: unknown[];
+        };
+        void trackEvent('diagnosis_result', {
+          skillName: name,
+          metadata: {
+            radar: diagnosis.radar ?? [],
+            recommendedRoles: diagnosis.recommendedRoles ?? [],
+            targetRole: updatedProfile.targetRole,
+            overallScore: updatedProfile.overallScore,
+          },
+        });
+      }
       // L1 埋点：记录本次 Skill 调用（结构对齐 Supabase skill_events 表）
       appendSkillEvent(name, {
         inputChars: inputText.length,
         usedSemanticRecall: l3Items.length > 0,
       });
     } catch (e) {
+      void trackEvent('skill_call', {
+        skillName: name,
+        metadata: { status: 'error', durationMs: Date.now() - startedAt },
+      });
       setError(e instanceof Error ? e.message : '请求失败');
     } finally {
       setLoading(false);

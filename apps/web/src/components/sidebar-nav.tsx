@@ -13,6 +13,12 @@ import {
   HelpCircle,
   Settings,
   LogIn,
+  FileText,
+  Mic2,
+  Crosshair,
+  BookOpen,
+  BrainCircuit,
+  ClipboardCheck,
   type LucideIcon,
 } from 'lucide-react';
 import { showToast } from '@/lib/feedback';
@@ -31,6 +37,12 @@ const TOP_NAV: NavItem[] = [
   { href: '/kb', label: '知识库', icon: Library },
   { href: '/community', label: '学职频道', icon: MessagesSquare },
   { href: '/profile', label: '成长', icon: User },
+  { href: '/resume', label: '简历工坊', icon: FileText },
+  { href: '/interview', label: '模拟面试', icon: Mic2 },
+  { href: '/match', label: '岗位匹配', icon: Crosshair },
+  { href: '/course', label: '课程学习', icon: BookOpen },
+  { href: '/assessment', label: '自我测评', icon: BrainCircuit },
+  { href: '/apply', label: '投递清单', icon: ClipboardCheck },
 ];
 
 const BOTTOM_NAV: NavItem[] = [

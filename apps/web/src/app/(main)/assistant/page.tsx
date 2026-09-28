@@ -26,6 +26,11 @@ const TITLES: Record<SkillName, { title: string; desc: string }> = {
   practice: { title: '实战练兵', desc: '模拟面试 / 算法刷题 / 项目实战，边练边纠偏' },
   info: { title: '信息差填平', desc: '聚合双非友好的校招 / 实习 / 竞赛信息' },
   package: { title: '成果包装', desc: '简历优化 / 项目润色 / 面试复盘，把经历讲成故事' },
+  resume: { title: '智能简历工坊', desc: 'ATS 评分、缺失关键词、改写与导出' },
+  interview: { title: '模拟面试舱', desc: '简历 + JD 定向出题、STAR 提示与评分' },
+  match: { title: '岗位匹配雷达', desc: '技能 / 经验 / 地域 / 行业 / 轨迹五维评分' },
+  course: { title: '课程学习助手', desc: '资料解析、抽认卡、小测与学习计划' },
+  assessment: { title: '自我认知测评', desc: '兴趣 / 价值观 / 工作方式探索画像' },
 };
 
 function AssistantContent() {

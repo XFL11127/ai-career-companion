@@ -28,6 +28,11 @@ export const SKILL_LABELS: Record<SkillName, string> = {
   practice: '实战练兵',
   info: '信息差填平',
   package: '成果包装',
+  resume: '智能简历工坊',
+  interview: '模拟面试舱',
+  match: '岗位匹配雷达',
+  course: '课程学习助手',
+  assessment: '自我认知测评',
 };
 
 function isBrowser(): boolean {

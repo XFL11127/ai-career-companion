@@ -13,11 +13,26 @@ import {
   infoOutputSchema,
   packageInputSchema,
   packageOutputSchema,
+  resumeInputSchema,
+  resumeOutputSchema,
+  interviewInputSchema,
+  interviewOutputSchema,
+  matchInputSchema,
+  matchOutputSchema,
+  courseInputSchema,
+  courseOutputSchema,
+  assessmentInputSchema,
+  assessmentOutputSchema,
   type SkillName,
   type DiagnoseInput,
   type PlanInput,
   type PracticeInput,
   type PackageInput,
+  type ResumeInput,
+  type InterviewInput,
+  type MatchInput,
+  type CourseInput,
+  type AssessmentInput,
   type SkillRunMeta,
 } from '@ai-career-companion/types';
 
@@ -125,33 +140,133 @@ export function stubFor(name: SkillName): unknown {
         feedback: '建议用 STAR 法则组织回答：先讲背景与你的角色，再讲行动与量化结果。',
       };
     case 'info':
+      // 降级时不再编造岗位：宁可为空，也不给用户假机会。
       return {
-        jobs: [
-          {
-            company: '某双非友好科技公司',
-            role: '前端开发实习',
-            salary: '200/天',
-            location: '远程',
-            tags: ['双非友好', '远程'],
-            url: 'https://example.com/job/1',
-            doubleNonFriendly: true,
-          },
-          {
-            company: '某地市国企信息岗',
-            role: '软件开发',
-            salary: '8-12K',
-            location: '二线城市',
-            tags: ['稳定', '校招'],
-            url: 'https://example.com/job/2',
-            doubleNonFriendly: true,
-          },
-        ],
+        jobs: [],
+        reply:
+          '（降级模式）当前未接入真实检索，因此不生成任何岗位，避免给你假机会。请到「信息中枢」查看已核实证据，或配置检索 Key 后再试。',
       };
     case 'package':
       return {
         optimizedResume: '（示例）突出项目成果与量化指标，弱化学校标签，强调实战能力与业务价值。',
         projectBullets: ['主导 X 项目，用户留存提升 30%', '用 Y 技术将首屏加载从 3s 降到 1s'],
         interviewReview: '准备 1 个深度项目，用 STAR 结构讲清背景、冲突、行动与结果。',
+      };
+    case 'resume':
+      return {
+        overallScore: 72,
+        atsScore: 68,
+        dimensions: [
+          { name: '关键词覆盖', score: 66, comment: '与目标岗位高频技能还有明显缺口' },
+          { name: '成果量化', score: 71, comment: '已有数据，但项目结果还能更具体' },
+          { name: '结构可读性', score: 79, comment: '结构清楚，可进一步压缩无效描述' },
+          { name: '岗位相关性', score: 70, comment: '需要把课程项目改写成岗位语言' },
+        ],
+        missingKeywords: ['性能优化', '工程化', '协作交付'],
+        strengths: ['项目经历完整', '技术栈与目标岗位有交集', '表达简洁'],
+        rewriteSuggestions: [
+          {
+            section: '项目经历',
+            before: '负责开发了一个管理系统。',
+            after: '主导 3 人小组开发课程管理系统，支撑 500+ 条数据。',
+            reason: '补充角色、技术和量化结果。',
+          },
+        ],
+        optimizedResume: '（示例优化稿）项目经历已按岗位关键词重写。',
+        projectBullets: ['主导课程管理系统开发，支撑 500+ 条数据。'],
+        nextActions: ['补充岗位关键词', '为项目增加量化结果'],
+      };
+    case 'interview':
+      return {
+        questions: [
+          {
+            id: 'q1',
+            category: '项目',
+            question: '请介绍一个你最熟悉的项目。',
+            intention: '确认项目真实性与个人贡献。',
+            starHint: 'S 背景 → T 目标 → A 行动 → R 结果。',
+            sampleAnswer: '讲清你的角色、关键决策和量化结果。',
+          },
+        ],
+        followUps: ['这个结果是如何测量的？'],
+        improvementPlan: ['用 STAR 复述项目', '补充量化指标'],
+      };
+    case 'match':
+      return {
+        overallScore: 74,
+        recommendation: 'caution',
+        summary: '方向匹配，但需要补齐关键能力证据后再投。',
+        dimensions: [
+          { key: 'skills', name: '技能匹配', score: 78, weight: 30, reason: '核心技能有重合' },
+          {
+            key: 'experience',
+            name: '经验相关',
+            score: 62,
+            weight: 25,
+            reason: '项目接近岗位但深度不足',
+          },
+          { key: 'location', name: '地域匹配', score: 85, weight: 15, reason: '地点匹配' },
+          { key: 'industry', name: '行业匹配', score: 70, weight: 15, reason: '方向一致' },
+          { key: 'trajectory', name: '职业轨迹', score: 76, weight: 15, reason: '成长路径合理' },
+        ],
+        strengths: ['技术栈有交集'],
+        missingKeywords: ['性能优化', '自动化测试'],
+        risks: ['成果量化不足'],
+        actions: ['补齐关键词后重新评分'],
+      };
+    case 'course':
+      return {
+        summary: '资料围绕核心概念和运行机制展开。',
+        concepts: [
+          {
+            term: '核心概念',
+            explanation: '基础定义。',
+            example: '最小案例。',
+            whyItMatters: '后续知识都建立在此。',
+          },
+        ],
+        flashcards: [
+          { id: 'c1', front: '核心定义是什么？', back: '用自己的话复述。', tags: ['基础'] },
+        ],
+        quiz: [
+          {
+            id: 'quiz1',
+            type: 'short-answer',
+            question: '解释该知识点。',
+            options: [],
+            answer: '定义、机制、应用条件。',
+            explanation: '检查迁移能力。',
+          },
+        ],
+        studyPlan: [{ dayRange: '1-2', goal: '建立框架', tasks: ['整理概念卡'] }],
+        misconceptions: ['只背定义，不理解边界。'],
+      };
+    case 'assessment':
+      return {
+        profileTitle: '务实探索型成长者',
+        profileCode: 'C-I-V',
+        disclaimer: '本结果仅作职业探索参考，不是心理诊断。',
+        dimensions: [
+          {
+            key: 'interest',
+            name: '兴趣驱动',
+            score: 76,
+            level: '高',
+            description: '愿意通过实践获得反馈。',
+          },
+        ],
+        traits: ['务实', '愿意学习'],
+        strengths: ['目标感较强'],
+        growthAreas: ['用真实任务验证偏好'],
+        recommendedCareers: [
+          {
+            role: '软件工程师',
+            fitScore: 82,
+            reason: '实践驱动与岗位特征接近。',
+            nextStep: '完成一个可展示的项目。',
+          },
+        ],
+        actionPlan: ['用一次真实任务验证兴趣', '两周后重新评估'],
       };
   }
 }
@@ -221,14 +336,14 @@ function buildPracticePrompt(input: PracticeInput): string {
 }
 
 function buildInfoPrompt(context?: string[], profile?: string): string {
-  return `你是信息差填平引擎，专门帮双非同学找「够得着」的机会。你推荐的是真实可投的渠道，不是天价大厂幻梦。
+  return `你是信息差填平引擎，专门帮双非同学找「够得着」的机会。
 
-要求：
-1. 聚合 2-4 个双非友好的校招 / 实习 / 竞赛 / 项目机会。
-2. 每个 job：company、role、salary、location、tags(数组)、url(必须是合法 https URL，指向该机会或对应平台如实习僧/学校就业网/牛客竞赛页)、doubleNonFriendly=true。
-3. 优先推荐这些渠道：学校就业指导中心官网、实习僧、BOSS直聘（筛选远程/二线城市）、牛客竞赛、GitHub 开源项目、地方政府/国企校招。salary 写区间或「面议」均可，但不要编造离谱高薪。
-4. 如果无法确定确切链接，url 填该平台的搜索页或官网首页（合法 https 即可），并在 tags 标注「需自行搜索」。
-5. 顶层 reply（2-4 句中文）：说明这批信息的价值 + 一句本周可做的行动（如「先在学校就业网登记简历」）。
+硬性要求（违反即视为无效输出）：
+1. 只允许输出「来源明确、可点击核对」的机会。company / role / url 必须来自真实公告，禁止使用「某公司」「某双非友好科技公司」这类占位名。
+2. 每个 job 必须填 evidenceQuote：从该公告原文逐字复制的依据句（例如「本科及以上学历，不限毕业院校」「不限专业」）。摘不出原文依据就不要输出这一条。
+3. 禁止编造 url，也不要用平台搜索页或首页充当具体岗位链接。
+4. 不要给 job 打「双非友好」标签——标签由系统依据 evidenceQuote + 来源可信度自动判定。
+5. 如果上下文中没有可用的真实信息，jobs 直接返回空数组，并在 reply 里说明「先去信息中枢检索或补充来源」，不要用猜测填充。
 
 只输出符合 schema 的 JSON，不要额外解释。${withMemory(context)}${withProfile(profile)}`;
 }
@@ -246,6 +361,25 @@ function buildPackagePrompt(input: PackageInput): string {
 5. 顶层 reply（2-4 句中文）：肯定这位同学的已有积累 + 一句最该先改的包装点。
 
 只输出符合 schema 的 JSON，不要额外解释。${withMemory(input.context)}${withProfile(input.profile)}`;
+}
+
+function buildResumePrompt(input: ResumeInput): string {
+  return `你是资深招聘官和 ATS 简历优化师。不得编造经历或数据。\n目标岗位：${input.targetRole}\n简历：${input.resumeText}\nJD：${input.jobDescription || '未提供'}\n输出综合分、ATS 分、维度评分、缺失关键词、改写建议、优化稿和下一步动作。只输出 JSON。${withMemory(input.context)}${withProfile(input.profile)}`;
+}
+function buildInterviewPrompt(input: InterviewInput): string {
+  const answers =
+    input.priorAnswers?.map((a, i) => `${i + 1}. ${a.question}\n${a.answer}`).join('\n') ||
+    '尚无回答';
+  return `你是校招面试官和教练。目标岗位：${input.targetRole}；模式：${input.mode}；语言：${input.language}。\n简历：${input.resumeText || '未提供'}\nJD：${input.jobDescription || '未提供'}\n用户回答：${answers}\n生成 4-6 道题、STAR 提示、参考框架；有回答时给出评分和追问。不得编造用户经历。只输出 JSON。${withMemory(input.context)}${withProfile(input.profile)}`;
+}
+function buildMatchPrompt(input: MatchInput): string {
+  return `你是校招岗位匹配分析师。简历：${input.resumeText}\nJD：${input.jobDescription}\n地点：${input.targetLocation || '未提供'}；行业：${input.targetIndustry || '未提供'}；目标：${input.careerGoal || '未提供'}\n按技能/经验/地域/行业/职业轨迹五维评分，权重合计 100；信息不足时建议慎投。输出优势、缺失词、风险和行动。只输出 JSON。${withMemory(input.context)}${withProfile(input.profile)}`;
+}
+function buildCoursePrompt(input: CourseInput): string {
+  return `你是学习科学教练。资料名：${input.materialName || '未命名'}；目标：${input.goal || '掌握核心内容'}；水平：${input.level}\n资料：${input.materialText}\n生成摘要、概念解释、抽认卡、小测和多日学习计划。严格基于资料，未展开处注明。只输出 JSON。${withMemory(input.context)}${withProfile(input.profile)}`;
+}
+function buildAssessmentPrompt(input: AssessmentInput): string {
+  return `你是职业探索教练。根据 1-5 分作答生成探索画像，必须声明不是心理诊断。\n作答：${JSON.stringify(input.answers)}\n目标岗位：${input.targetRole || '未提供'}\n给出维度、特质、优势、待验证假设、5-10 个职业方向和 2-4 周计划。只输出 JSON。${withMemory(input.context)}${withProfile(input.profile)}`;
 }
 
 type PreparedSkill = { schema: z.ZodTypeAny; promptText: string };
@@ -278,6 +412,26 @@ function prepareSkill(name: SkillName, rawInput: unknown): PreparedSkill {
     case 'package': {
       const input = packageInputSchema.parse(rawInput);
       return { schema: packageOutputSchema, promptText: buildPackagePrompt(input) };
+    }
+    case 'resume': {
+      const input = resumeInputSchema.parse(rawInput);
+      return { schema: resumeOutputSchema, promptText: buildResumePrompt(input) };
+    }
+    case 'interview': {
+      const input = interviewInputSchema.parse(rawInput);
+      return { schema: interviewOutputSchema, promptText: buildInterviewPrompt(input) };
+    }
+    case 'match': {
+      const input = matchInputSchema.parse(rawInput);
+      return { schema: matchOutputSchema, promptText: buildMatchPrompt(input) };
+    }
+    case 'course': {
+      const input = courseInputSchema.parse(rawInput);
+      return { schema: courseOutputSchema, promptText: buildCoursePrompt(input) };
+    }
+    case 'assessment': {
+      const input = assessmentInputSchema.parse(rawInput);
+      return { schema: assessmentOutputSchema, promptText: buildAssessmentPrompt(input) };
     }
   }
 }

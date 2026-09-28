@@ -1,0 +1,45 @@
+执行仓库缺失 Skill 创建任务，不运行任何 Skill，不联网搜索，不生成业务结果。严格按照仓库提交 6bfc3f6 的 contracts 创建以下 6 个 SKILL.md。
+
+一、practice · 实战练兵
+用途：面试、算法、项目深挖训练。
+输入：mode（interview/algorithm/project）、topic、context、profile。
+输出：reply、questions（2-4 个具体问题）、feedback（亮点 + 一个纠偏点 + 可执行练习方法）。
+规则：问题贴合双非校招现实；算法题只出数组、字符串、简单动态规划等可手撕题；不得泛泛提问。
+
+二、resume · 智能简历工坊
+用途：ATS 简历评分、关键词缺口和改写。
+输入：resumeText、targetRole、jobDescription、context、profile。
+输出：overallScore、atsScore、dimensions[{name,score,comment}]、missingKeywords、strengths、rewriteSuggestions[{section,before,after,reason}]、optimizedResume、projectBullets、nextActions。
+规则：不得编造经历或数据；每项改写必须能回指原文；无量化结果不得虚构数字。
+
+三、interview · 模拟面试舱
+用途：根据简历和 JD 定向出题、STAR 提示和评分。
+输入：targetRole、resumeText、jobDescription、mode（technical/behavioral/mixed）、language（zh/en/bilingual）、priorAnswers、context、profile。
+输出：questions[{id,category,question,intention,starHint,sampleAnswer}]、scoreCard{clarity,structure,relevance,depth,overall,feedback}、followUps、improvementPlan。
+category 只能是自我介绍、技术、项目、行为、反问。
+规则：生成 4-6 道题；不得编造用户经历；有回答时给出评分和追问。
+
+四、match · 岗位匹配雷达
+用途：评估简历与具体 JD 的匹配度。
+输入：resumeText、jobDescription、targetLocation、targetIndustry、careerGoal、context、profile。
+输出：overallScore、recommendation（recommend/caution/avoid）、summary、dimensions、strengths、missingKeywords、risks、actions。
+dimensions 固定五维：skills、experience、location、industry、trajectory；总权重为100；信息不足时建议慎投。
+
+五、course · 课程学习助手
+用途：把 PDF/DOCX/PPTX/TXT/Markdown 学习资料转成学习工具。
+输入：materialText、materialName、goal、level（beginner/intermediate/advanced）、context、profile。
+输出：summary、concepts[{term,explanation,example,whyItMatters}]、flashcards[{id,front,back,tags}]、quiz[{id,type,question,options,answer,explanation}]、studyPlan[{dayRange,goal,tasks}]、misconceptions。
+规则：严格基于资料；资料未展开处必须注明，不得编造教材内容。
+
+六、assessment · 自我认知测评
+用途：根据 1-5 分作答生成职业探索画像。
+输入：answers（题号到1-5分）、targetRole、context、profile。
+输出：profileTitle、profileCode、disclaimer、dimensions[{key,name,score,level,description}]、traits、strengths、growthAreas、recommendedCareers[{role,fitScore,reason,nextStep}]、actionPlan。
+规则：必须声明不是心理诊断；职业方向只是探索建议；生成5-10个方向和2-4周验证计划。
+
+创建要求：
+- 每个 Skill 都必须包含 frontmatter 的 name 和 description；
+- description 要说明触发场景；
+- 每个 SKILL.md 包含用途、输入、输出、工作流、硬性规则、验收标准；
+- 创建完成后只报告6个文件路径、frontmatter 和是否全部同步；
+- 不要运行任何 Skill，不要联网，不要生成简历、面试题、课程或测评结果。
