@@ -1,0 +1,161 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>AI学职同伴 · 岗位推荐展示（2026-10-10 全流程闭环验收运行）</title>
+<style>
+  :root { --primary:#2563eb; --active:#16a34a; --closing:#d97706; --risk:#dc2626; --bg:#f8fafc; --card:#ffffff; --border:#e2e8f0; --text:#0f172a; --muted:#64748b; }
+  * { box-sizing:border-box; margin:0; padding:0; }
+  body { font-family:-apple-system,BlinkMacSystemFont,"Segoe UI","PingFang SC","Microsoft YaHei",sans-serif; background:var(--bg); color:var(--text); line-height:1.6; padding:24px; }
+  .container { max-width:1080px; margin:0 auto; }
+  header { background:linear-gradient(135deg,#1e3a8a,#2563eb); color:#fff; border-radius:16px; padding:28px 32px; margin-bottom:24px; }
+  header h1 { font-size:24px; margin-bottom:8px; }
+  header p { font-size:14px; opacity:.9; }
+  .badge { display:inline-block; background:rgba(255,255,255,.18); border:1px solid rgba(255,255,255,.35); border-radius:999px; padding:4px 12px; font-size:12px; margin:4px 6px 0 0; }
+  .section { background:var(--card); border:1px solid var(--border); border-radius:12px; padding:20px 24px; margin-bottom:20px; }
+  .section h2 { font-size:18px; margin-bottom:16px; padding-bottom:10px; border-bottom:2px solid var(--border); color:#1e3a8a; }
+  table { width:100%; border-collapse:collapse; font-size:14px; }
+  th, td { text-align:left; padding:10px 10px; border-bottom:1px solid var(--border); vertical-align:top; }
+  th { background:#f1f5f9; font-weight:600; white-space:nowrap; }
+  .status-active { color:var(--active); font-weight:700; }
+  .status-closing { color:var(--closing); font-weight:700; }
+  .cred-A { background:#dcfce7; color:#166534; border-radius:6px; padding:2px 8px; font-size:12px; font-weight:600; }
+  .cred-B { background:#dbeafe; color:#1e40af; border-radius:6px; padding:2px 8px; font-size:12px; font-weight:600; }
+  .cred-C { background:#fef3c7; color:#92400e; border-radius:6px; padding:2px 8px; font-size:12px; font-weight:600; }
+  .quote { background:#f8fafc; border-left:4px solid var(--primary); padding:8px 12px; font-size:12.5px; color:#334155; border-radius:0 6px 6px 0; margin-top:6px; }
+  .url { color:var(--primary); word-break:break-all; font-size:12.5px; text-decoration:none; }
+  .url:hover { text-decoration:underline; }
+  .note { font-size:13px; color:var(--muted); margin-top:12px; }
+  .warn { background:#fef2f2; border:1px solid #fecaca; color:#991b1b; border-radius:8px; padding:10px 14px; font-size:13px; margin-top:12px; }
+  .grid2 { display:grid; grid-template-columns:1fr 1fr; gap:16px; }
+  @media (max-width:720px){ .grid2{ grid-template-columns:1fr; } body{ padding:12px; } }
+  .footer { text-align:center; font-size:12px; color:var(--muted); margin-top:24px; }
+</style>
+</head>
+<body>
+<div class="container">
+
+<header>
+  <h1>AI学职同伴 · 岗位推荐展示</h1>
+  <p>全流程闭环验收运行 · 2026-10-10（数据主表：05-active-jobs.csv + 15-active-jobs-source.md）</p>
+  <span class="badge">测试画像：2027届本科 · 数据科学与大数据技术 · 杭州/上海</span>
+  <span class="badge">每周5天 · 连续6个月 · 兼顾2027届校招</span>
+</header>
+
+<div class="section">
+  <h2>当前有效岗位（5 条 · 4 条 verified_active + 1 条 verified_closing_soon）</h2>
+  <table>
+    <thead>
+      <tr>
+        <th>公司 / 岗位</th>
+        <th>城市</th>
+        <th>类型</th>
+        <th>截止日</th>
+        <th>状态</th>
+        <th>最近核验</th>
+        <th>下次复核</th>
+        <th>可信度</th>
+      </tr>
+    </thead>
+    <tbody>
+      <tr>
+        <td>上海人工智能实验室 · 科学数据治理实习生</td>
+        <td>上海</td>
+        <td>实习</td>
+        <td>未标注</td>
+        <td class="status-active">verified_active</td>
+        <td>2026-10-09</td>
+        <td>2026-10-16</td>
+        <td><span class="cred-A">A · 官方原文</span></td>
+      </tr>
+      <tr>
+        <td>中国移动 · 大数据工程师-杭州</td>
+        <td>杭州</td>
+        <td>全职校招</td>
+        <td><strong>2026-10-11</strong></td>
+        <td class="status-closing">verified_closing_soon</td>
+        <td>2026-10-10</td>
+        <td><strong>2026-10-11</strong></td>
+        <td><span class="cred-B">B · 权威来源</span></td>
+      </tr>
+      <tr>
+        <td>信也科技 · 商业分析师</td>
+        <td>上海/深圳/非洲</td>
+        <td>全职</td>
+        <td>2026-11-29</td>
+        <td class="status-active">verified_active</td>
+        <td>2026-10-10</td>
+        <td>2026-10-17</td>
+        <td><span class="cred-A">A · 官方原文</span></td>
+      </tr>
+      <tr>
+        <td>崇劲（杭州）科技有限公司 · 数据分析</td>
+        <td>浙江省杭州市余杭区</td>
+        <td>实习</td>
+        <td>未标注</td>
+        <td class="status-active">verified_active</td>
+        <td>2026-10-10</td>
+        <td>2026-10-17</td>
+        <td><span class="cred-A">A · 官方原文</span></td>
+      </tr>
+      <tr>
+        <td>中控技术股份有限公司 · 数据运营实习生</td>
+        <td>浙江省杭州市滨江区</td>
+        <td>实习</td>
+        <td>未标注</td>
+        <td class="status-active">verified_active</td>
+        <td>2026-10-09</td>
+        <td>2026-10-16</td>
+        <td><span class="cred-C">C · 第三方转载</span></td>
+      </tr>
+    </tbody>
+  </table>
+  <p class="note">状态与日期字段逐字来自 <code>outputs-repo-parity/05-active-jobs.csv</code>；城市、截止日、状态与 CSV 完全一致。</p>
+</div>
+
+<div class="grid2">
+<div class="section">
+  <h2>原文摘录与来源（quote 逐字保留）</h2>
+  <p style="font-size:13px;margin-bottom:10px;"><strong>1. 上海AI实验室</strong></p>
+  <div class="quote">"信息管理、图书情报、数据科学等相关专业优先，本科或硕士在读；可连续实习半年及以上，每周至少到岗4天"</div>
+  <p style="font-size:13px;margin:12px 0 6px;">来源：<a class="url" href="https://www.shlab.org.cn/joinus/detail/7686361384142162212?mode=campus&amp;subject=7538649065812363566" target="_blank" rel="noopener">上海人工智能实验室官网</a></p>
+  <p style="font-size:13px;margin-bottom:14px;"><strong>2. 中国移动</strong></p>
+  <div class="quote">"2027届应届生及2026届未就业毕业生。大学本科及以上学历。大数据类、智能计算类、数学类、统计类、数据分析类、商业分析类、经济统计类、电子信息类等相关专业"</div>
+  <p style="font-size:13px;margin:12px 0 6px;">来源：<a class="url" href="https://job.10086.cn/touch/personal/job/detail.html?id=fb57da22-7f4b-4716-834d-77e926dc6fd9&amp;typess=1" target="_blank" rel="noopener">中国移动招聘官网</a></p>
+  <p style="font-size:13px;margin-bottom:14px;"><strong>3. 信也科技</strong></p>
+  <div class="quote">"最低学历要求：本科；专业：不限；面向毕业时间在2026年11月-2027年7月的全球本硕博毕业生"</div>
+  <p style="font-size:13px;margin:12px 0 6px;">来源：<a class="url" href="https://jy.scu.edu.cn/index/index/employjobdetail.html?data=MDAwMDAwMDAwMJG6n3_Ed6imi4qQtLh4Y5WKzrbSsnbddricp9CWi5qikaeWacSdqLqGfaK2w4iil5C4zNbGiL-E" target="_blank" rel="noopener">四川大学就业指导中心</a></p>
+</div>
+<div class="section">
+  <h2 style="visibility:hidden;">占位</h2>
+  <p style="font-size:13px;margin-bottom:10px;"><strong>4. 崇劲（杭州）科技</strong></p>
+  <div class="quote">"需求专业：【本科】人工智能、数学与应用数学、数据科学与大数据技术、计算机科学与技术"</div>
+  <p style="font-size:13px;margin:12px 0 6px;">来源：<a class="url" href="https://jyb.cjlu.edu.cn/job/view/id/429236" target="_blank" rel="noopener">中国计量大学智慧就业平台</a></p>
+  <p style="font-size:13px;margin-bottom:14px;"><strong>5. 中控技术</strong></p>
+  <div class="quote">"本科及以上在校生，专业不限；管理、统计、数据分析、计算机、信息管理、中文、市场等相关专业优先。实习时间：至少3个月，全职实习优先，可长期实习者优先。"</div>
+  <p style="font-size:13px;margin:12px 0 6px;">来源：<a class="url" href="https://m.yingjiesheng.com/job-008-087-707.html" target="_blank" rel="noopener">应届生求职网（转载自前程无忧51JOB）</a></p>
+  <div class="warn">⚠ 信也科技：详情页正文工作地点为"上海/深圳/非洲"（CSV 采用此值），但页面结构化地址另写"全国"，属于来源字段差异；投递前请以网申城市选项确认。</div>
+  <div class="warn">⚠ 中国移动：已于 2026-10-10 经官方详情页复核，当前仍显示招聘 17 人、杭州、校园招聘、截止 2026-10-11 和"投个简历"入口；截止后如岗位关闭，立即移出 active 或标记 expired，不得继续当作普通有效岗位。</div>
+</div>
+</div>
+
+<div class="section">
+  <h2>证据边界声明</h2>
+  <ul style="font-size:14px;padding-left:20px;">
+    <li>5 条岗位 friendlyLevel 均为 <strong>unverified</strong>；不把"本科及以上 / 本科"推断为"双非友好"。</li>
+    <li>无明确截止日期的岗位（上海AI实验室、崇劲、中控）按核验日起 7 天内复核，沿用 CSV 中 nextReviewAt，不改写核验日期。</li>
+    <li>中控技术原始来源为应届生求职网转载（credibility=C），智联同岗页交叉核对只补充状态信号。</li>
+    <li>来源页无法确认的事项保留"未标注 / 未明确"，不做补造。</li>
+    <li>本展示数据主表为 outputs-repo-parity/05-active-jobs.csv 与 15-active-jobs-source.md；岗位字段与当前 CSV 一致。</li>
+    <li>画像为合成测试数据（2027届本科 · 数据科学与大数据技术 · 普通本科双非语境），不代表真实个人。</li>
+  </ul>
+</div>
+
+<div class="footer">
+  AI学职同伴 DuMate 全流程闭环验收运行 · output/du-mate-run-2026-10-10-full-closure/final-job-recommendation.html · 2026-10-10
+</div>
+
+</div>
+</body>
+</html>
