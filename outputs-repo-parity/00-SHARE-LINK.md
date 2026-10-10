@@ -1,8 +1,16 @@
-# 最终 DuMate 产品展示链接
+# 当前 DuMate 主作品对话链接
 
-- 链接：https://www.dumate.cn/s/dqR3RLft
-- 会话：生成最终真实岗位推荐展示
-- 验证时间：2026-09-28
-- 状态：公开可访问，无需登录
-- 内容：5条已核验有效岗位 + final-job-recommendation.html
-- 数据基准：outputs-repo-parity/04-rejected-jobs.csv、05-active-jobs.csv、15-active-jobs-source.md、14-demo-summary.md
+- 链接：https://www.dumate.cn/s/6ZVGwI8h
+- 对话标题：双非大三如何准备数据分析实习
+- 生成日期：2026-10-10；2026-10-11 完成公开页面打开检查
+- 验收：页面直接显示完整对话，未见登录页或登录提示；包含 7 个 Skill 的多轮运行记录
+- 分享范围：仅分享会话，没有分享 resume_template.md 文件
+- 页面截图：output/contest/evidence/share-link-public-conversation.png
+- 附加岗位展示页：https://www.dumate.cn/artifacts/2umsto0d4krz（此前已发布，更新版尚待重新发布）
+
+## 历史链接
+
+- https://www.dumate.cn/s/dqR3RLft：2026-09-28 历史分享，保持原样不动。
+- https://www.dumate.cn/s/y5UfGt5w：此前分享，保留为历史链接。
+
+主作品链接使用 DuMate 对话分享 /s/ 格式；岗位 HTML 展示页仅作附加展示。

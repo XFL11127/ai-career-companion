@@ -1,20 +1,25 @@
 项目：AI学职同伴
 GitHub：XFL11127/ai-career-companion
 分支：feat/today-delivery-supabase-dashboard
-本次复核与交付资料已在仓库分支补齐；最新提交 hash 以推送后的分支 HEAD 为准。
 
-现有对话分享（/s/，不是本次更新后新生成）：https://www.dumate.cn/s/y5UfGt5w
-该链接此前可访问并展示 DuMate 对话；本次更新后的新对话分享链接尚未生成。
+主作品对话（DuMate /s/）：https://www.dumate.cn/s/6ZVGwI8h
+2026-10-11 在浏览器中直接打开，页面显示完整对话，未见登录页或登录提示。分享范围仅为会话，没有公开 resume_template.md。截图：output/contest/evidence/share-link-public-conversation.png。
 
-岗位展示页（附加展示）：https://www.dumate.cn/artifacts/2umsto0d4krz
-验证：公开页面可访问，显示 5 条岗位、原文摘录与来源；4 条 verified_active，1 条 verified_closing_soon。
+历史分享：https://www.dumate.cn/s/dqR3RLft（保持不动）；此前分享：https://www.dumate.cn/s/y5UfGt5w。
 
-DuMate 作品广场：已发布到「搭子时刻」的「职场求职」分类。作品标题：AI学职同伴｜全流程验收岗位推荐展示。个人发布页已显示该作品卡片；凭证见 screenshots/dumate-works-plaza-result.jpg。
+岗位展示附加页（DuMate 作品广场）：https://www.dumate.cn/artifacts/2umsto0d4krz
+该页面已发布，但仍是 2026-10-10 快照。本地岗位展示页已更新至 2026-10-11；更新版尚未重新发布。
 
-200 字作品简介：186 字，见「作品简介-186字.txt」。
-应用方案 PDF：19 页，约 1.0 MB，包含 8 个方案板块、岗位复核附录、现有分享链接及真实运行/发布截图。
+中国移动官网岗位详情：https://job.10086.cn/touch/personal/job/detail.html?id=fb57da22-7f4b-4716-834d-77e926dc6fd9&typess=1
+2026-10-11 截止日当天仍显示招聘17人、截止日期和“投个简历”入口，状态 verified_closing_soon。页面截图：output/contest/evidence/china-mobile-official-detail-2026-10-11.png。
 
-iCAN 报名：未提交。报名系统需要报名账号登录，并要求参赛协议与原创承诺；尚未提供账号验证码和参赛人/团队授权事实，不能代替参赛人作法律声明。登录、确认团队归属及承诺后可继续完成。
+作品简介：186 字，见「作品简介-186字.txt」。
+应用方案 PDF：2026-10-11 更新版，20 页、1,192,446 字节（约 1.14 MB）；包含 8 个方案板块、岗位复核附录、七步运行截图和截止日官网证据。
 
-最新运行补充：2026-10-10 七步闭环 Skill 均已实际调用，首次模糊自然语言路由未自动追问画像；未录屏，改附真实平台流程截图。
-新 /s/ 分享链接待生成；iCAN 报名未提交，需报名账号和参赛协议/原创承诺确认。
+运行状态：2026-10-10 已完成七步闭环 Skill 多轮运行；当前 DuMate 提示积分已用完，本轮不再运行生成类 Skill，未充值或升级。完整过程截图随材料包提供，没有录屏。
+
+iCAN 报名：未提交。报名账号归属、组队信息和参赛协议/原创承诺需参赛人确认，不能代替参赛人作法律声明。
+
+提交材料压缩包：output/AI学职同伴-DuMate提交材料-2026-10-11.zip（本轮重打包）。
+
+交付状态：公开主作品链接已生成并检查；最终材料尚未发送给组长，待公开展示页更新及报名事项处理后再发送。
