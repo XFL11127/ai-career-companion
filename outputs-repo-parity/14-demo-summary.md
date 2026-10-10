@@ -3,7 +3,7 @@
 执行日期：2026-10-10（Asia/Shanghai）
 仓库：XFL11127/ai-career-companion
 分支：feat/today-delivery-supabase-dashboard
-当前基线：d66f36c（本次修改待提交）
+本次修订起点：2cb4f3e；修订提交以分支最新 HEAD 为准。
 
 ## 一、岗位状态（以 05-active-jobs.csv 为准）
 
@@ -29,8 +29,9 @@
 
 ## 三、DuMate 接入状态
 
-DuMate 桌面端已安装并登录，项目工作区已关联本地仓库，12个目标 Skill 已导入启用。此前真实运行确认 evidence-check、active-job-verifier 两个 Skill 的调用路径。当前新要求涉及完整闭环路由、真实平台运行证据和新 /s/ 分享链接；只有本次实际运行与链接验收完成后才更新为完成，不将设计图或旧运行记录当作完整路由证明。
+DuMate 桌面端已安装并登录，项目工作区已关联本地仓库，12个目标 Skill 已导入启用。2026-10-10 使用合成测试画像完成真实桌面端多轮运行，实际调用 profile-intake → gap-diagnosis → evidence-check → active-job-verifier → career-plan-306090 → practice → artifact-pack；evidence-check 在 DuMate 内置浏览器打开中国移动官方岗位详情并核对原文。practice 已生成 SQL 练习题，未提交答案。artifact-pack 已生成简历模板，已纳入本次交付材料。
 
+路由验收发现：首次仅用自然语言提出模糊需求时，顶层路由没有进入画像追问，而给出一次性回复并调用 WebSearch；随后显式调用 profile-intake 才进入多轮澄清并跑通后续闭环。因此七项 Skill 的执行证据齐全，但“模糊需求自动追问画像”的顶层路由仍需修正。真实界面截图随材料包提供；未制作运行录屏。当前已有对话分享 `https://www.dumate.cn/s/y5UfGt5w` 属于此前链接，本次新运行的 `/s/` 链接尚未生成；旧 `/s/dqR3RLft` 未改动。已有岗位展示页已发布至 DuMate 作品广场。iCAN 报名未提交，需报名账号、团队归属和参赛协议/原创承诺确认。
 ## 四、提交一致性检查
 
 CSV、岗位展示页和应用方案 PDF 必须一致：

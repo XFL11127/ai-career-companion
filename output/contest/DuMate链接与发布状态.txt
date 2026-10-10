@@ -1,0 +1,20 @@
+项目：AI学职同伴
+GitHub：XFL11127/ai-career-companion
+分支：feat/today-delivery-supabase-dashboard
+本次复核与交付资料已在仓库分支补齐；最新提交 hash 以推送后的分支 HEAD 为准。
+
+现有对话分享（/s/，不是本次更新后新生成）：https://www.dumate.cn/s/y5UfGt5w
+该链接此前可访问并展示 DuMate 对话；本次更新后的新对话分享链接尚未生成。
+
+岗位展示页（附加展示）：https://www.dumate.cn/artifacts/2umsto0d4krz
+验证：公开页面可访问，显示 5 条岗位、原文摘录与来源；4 条 verified_active，1 条 verified_closing_soon。
+
+DuMate 作品广场：已发布到「搭子时刻」的「职场求职」分类。作品标题：AI学职同伴｜全流程验收岗位推荐展示。个人发布页已显示该作品卡片；凭证见 screenshots/dumate-works-plaza-result.jpg。
+
+200 字作品简介：186 字，见「作品简介-186字.txt」。
+应用方案 PDF：19 页，约 1.0 MB，包含 8 个方案板块、岗位复核附录、现有分享链接及真实运行/发布截图。
+
+iCAN 报名：未提交。报名系统需要报名账号登录，并要求参赛协议与原创承诺；尚未提供账号验证码和参赛人/团队授权事实，不能代替参赛人作法律声明。登录、确认团队归属及承诺后可继续完成。
+
+最新运行补充：2026-10-10 七步闭环 Skill 均已实际调用，首次模糊自然语言路由未自动追问画像；未录屏，改附真实平台流程截图。
+新 /s/ 分享链接待生成；iCAN 报名未提交，需报名账号和参赛协议/原创承诺确认。
