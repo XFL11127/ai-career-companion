@@ -14,7 +14,7 @@
 
 export type InfoKind = 'job' | 'school' | 'learning' | 'policy' | 'note';
 export type Visibility = 'public' | 'private';
-export type ReviewStatus = 'published' | 'pending' | 'rejected';
+export type ReviewStatus = 'pending' | 'needs_info' | 'published' | 'rejected';
 
 export interface InfoItem {
   id: string;
@@ -33,6 +33,18 @@ export interface InfoItem {
   ownerRole?: string;
   /** 系统资源库受保护（仅高校老师/系统维护员可改） */
   protected?: boolean;
+  /** ---- 证据链字段（UC-B5 起）---- */
+  company?: string;
+  role?: string;
+  /** 信号类型，见 packages/types 的 evidenceSignalSchema */
+  signal?: string;
+  /** 投稿人粘贴的原文摘录；无摘录不得通过审核 */
+  quote?: string;
+  /** A=官方原文 B=权威来源 C=用户投稿 */
+  credibility?: 'A' | 'B' | 'C';
+  reviewer?: string;
+  reviewNote?: string;
+  points?: number;
   createdAt: number;
   updatedAt: number;
 }
@@ -82,7 +94,7 @@ const SEED_RESOURCES: InfoItem[] = [
     title: '腾讯校园招聘官方站',
     summary: '腾讯校招岗位、实习与官方解读，含各事业群招聘维度说明。',
     url: 'https://join.qq.com',
-    tags: ['校招', '大厂', '双非友好'],
+    tags: ['校招', '大厂', '官方来源'],
     sourceSite: 'join.qq.com',
     category: '岗位',
     protected: true,
@@ -123,6 +135,9 @@ export function saveResource(item: InfoItem): void {
 }
 
 // ---------- 用户贡献（UC-B5）----------
+// 证据规则：投稿必须带「来源链接 + 原文摘录」才可能通过审核；
+// 状态流转沿用 packages/types 的 CONTRIBUTION_TRANSITIONS（此处用 published 表示 approved）。
+
 export interface ContributionInput {
   kind: InfoKind;
   title: string;
@@ -130,11 +145,19 @@ export interface ContributionInput {
   summary: string;
   contact?: string;
   category?: string;
+  company?: string;
+  role?: string;
+  signal?: string;
+  quote?: string;
   ownerId?: string;
   ownerRole?: string;
 }
 
-/** 提交一条贡献，默认 status=pending（需审核队列，见 项目说明.md 身份制度）。 */
+function isHttpUrl(value: string): boolean {
+  return /^https?:\/\//i.test(value.trim());
+}
+
+/** 提交一条贡献，默认 status=pending（需审核队列）。 */
 export function addContribution(input: ContributionInput): InfoItem {
   const item: InfoItem = {
     id: uid(),
@@ -144,10 +167,15 @@ export function addContribution(input: ContributionInput): InfoItem {
     title: input.title.trim(),
     summary: input.summary.trim(),
     url: input.url.trim(),
-    tags: input.contact ? ['待审核'] : [],
+    tags: input.quote && input.quote.trim().length >= 8 ? ['已附原文摘录'] : ['待补原文摘录'],
     category: input.category,
+    company: input.company?.trim() || undefined,
+    role: input.role?.trim() || undefined,
+    signal: input.signal,
+    quote: input.quote?.trim() || undefined,
     ownerId: input.ownerId,
     ownerRole: input.ownerRole,
+    points: 0,
     createdAt: Date.now(),
     updatedAt: Date.now(),
   };
@@ -161,19 +189,74 @@ export function loadContributions(): InfoItem[] {
   return readList<InfoItem>(CONTRIBUTIONS_KEY);
 }
 
-/** 审核（未来由高校老师/系统维护员在后台执行；此处仅为本地占位）。 */
+export interface ReviewOptions {
+  credibility?: 'A' | 'B' | 'C';
+  reviewer?: string;
+  reviewNote?: string;
+  /** 审核通过时给贡献者记分 */
+  ownerId?: string;
+}
+
+export interface ReviewOutcome {
+  ok: boolean;
+  item?: InfoItem;
+  error?: string;
+}
+
+const ALLOWED_TRANSITIONS: Record<ReviewStatus, ReviewStatus[]> = {
+  pending: ['published', 'rejected', 'needs_info'],
+  needs_info: ['pending', 'rejected'],
+  published: [],
+  rejected: ['pending'],
+};
+
+/** 积分：与 packages/types 的 CONTRIBUTION_POINTS 保持一致 */
+const POINTS_BY_CREDIBILITY: Record<'A' | 'B' | 'C', number> = { A: 30, B: 20, C: 10 };
+
+/**
+ * 审核（本地兜底实现）。规则与数据库层一致：
+ * 1) 只允许约定内的状态流转；
+ * 2) 置为 published 必须有 ≥8 字原文摘录，否则拒绝。
+ */
 export function reviewContribution(
   id: string,
-  decision: 'published' | 'rejected'
-): InfoItem | null {
+  decision: ReviewStatus,
+  options: ReviewOptions = {}
+): ReviewOutcome {
   const list = loadContributions();
   const idx = list.findIndex((c) => c.id === id);
-  if (idx < 0) return null;
-  list[idx] = { ...list[idx], status: decision, updatedAt: Date.now() };
+  if (idx < 0) return { ok: false, error: '贡献不存在' };
+
+  const current = list[idx];
+  const allowed = ALLOWED_TRANSITIONS[current.status] ?? [];
+  if (!allowed.includes(decision)) {
+    return { ok: false, error: `不允许的状态流转：${current.status} → ${decision}` };
+  }
+
+  const quote = (current.quote ?? '').trim();
+  if (decision === 'published') {
+    if (!isHttpUrl(current.url)) return { ok: false, error: '来源链接必须是 http(s) 地址' };
+    if (quote.length < 8) {
+      return {
+        ok: false,
+        error: '该贡献没有原文摘录，不能通过审核。请驳回或标记为「待补充证据」。',
+      };
+    }
+  }
+
+  const credibility = options.credibility ?? current.credibility ?? 'C';
+  const updated: InfoItem = {
+    ...current,
+    status: decision,
+    credibility: decision === 'published' ? credibility : current.credibility,
+    reviewer: options.reviewer ?? current.reviewer,
+    reviewNote: options.reviewNote ?? current.reviewNote,
+    points: decision === 'published' ? POINTS_BY_CREDIBILITY[credibility] : 0,
+    updatedAt: Date.now(),
+  };
+  list[idx] = updated;
   writeList(CONTRIBUTIONS_KEY, list);
-  // 已发布贡献由资源库自动聚合（loadContributions().filter(published)），不再 saveResource 复制，
-  // 避免同一网址在资源库重复出现（审核通过显示两个网址的 bug）。
-  return list[idx];
+  return { ok: true, item: updated };
 }
 
 // ---------- 我的笔记（private）----------

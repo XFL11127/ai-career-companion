@@ -9,7 +9,12 @@
  * - 用户发送消息后 → extractUserInfoFromMessage()（提取学校/年级/专业/目标岗位）
  */
 
-import type { DiagnoseOutput, PlanOutput, PracticeOutput } from '@ai-career-companion/types';
+import type {
+  DiagnoseOutput,
+  PlanOutput,
+  PracticeOutput,
+  SkillName,
+} from '@ai-career-companion/types';
 import { saveUserProfile } from './memory';
 
 // ---------- 结构化画像数据结构 ----------
@@ -37,6 +42,11 @@ export interface UserProfileData {
   totalPractices: number;
   totalInfo: number;
   totalPackages: number;
+  totalResumes: number;
+  totalInterviews: number;
+  totalMatches: number;
+  totalCourses: number;
+  totalAssessments: number;
   summary: string;
   updatedAt: number;
 }
@@ -50,6 +60,11 @@ export function defaultProfile(): UserProfileData {
     totalPractices: 0,
     totalInfo: 0,
     totalPackages: 0,
+    totalResumes: 0,
+    totalInterviews: 0,
+    totalMatches: 0,
+    totalCourses: 0,
+    totalAssessments: 0,
     summary: '',
     updatedAt: Date.now(),
   };
@@ -187,6 +202,11 @@ function generateSummary(profile: UserProfileData): string {
   if (profile.totalPractices > 0) activity.push('练兵' + profile.totalPractices + '次');
   if (profile.totalInfo > 0) activity.push('查信息' + profile.totalInfo + '次');
   if (profile.totalPackages > 0) activity.push('包装' + profile.totalPackages + '次');
+  if (profile.totalResumes > 0) activity.push('简历工坊' + profile.totalResumes + '次');
+  if (profile.totalInterviews > 0) activity.push('模拟面试' + profile.totalInterviews + '次');
+  if (profile.totalMatches > 0) activity.push('岗位匹配' + profile.totalMatches + '次');
+  if (profile.totalCourses > 0) activity.push('课程学习' + profile.totalCourses + '次');
+  if (profile.totalAssessments > 0) activity.push('认知测评' + profile.totalAssessments + '次');
   if (activity.length > 0) {
     parts.push('使用行为：' + activity.join('，'));
   }
@@ -196,7 +216,7 @@ function generateSummary(profile: UserProfileData): string {
 
 // ---------- 主入口 ----------
 
-export type SkillNameInput = 'diagnose' | 'plan' | 'practice' | 'info' | 'package';
+export type SkillNameInput = SkillName;
 
 export function updateFromSkillResult(
   skill: SkillNameInput,
@@ -221,6 +241,21 @@ export function updateFromSkillResult(
       break;
     case 'package':
       updated = { ...profile, totalPackages: profile.totalPackages + 1 };
+      break;
+    case 'resume':
+      updated = { ...profile, totalResumes: profile.totalResumes + 1 };
+      break;
+    case 'interview':
+      updated = { ...profile, totalInterviews: profile.totalInterviews + 1 };
+      break;
+    case 'match':
+      updated = { ...profile, totalMatches: profile.totalMatches + 1 };
+      break;
+    case 'course':
+      updated = { ...profile, totalCourses: profile.totalCourses + 1 };
+      break;
+    case 'assessment':
+      updated = { ...profile, totalAssessments: profile.totalAssessments + 1 };
       break;
     default:
       updated = profile;

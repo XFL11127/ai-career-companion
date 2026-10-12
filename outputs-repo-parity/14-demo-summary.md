@@ -1,0 +1,46 @@
+# AI学职同伴 · DuMate 应用与岗位复核总览
+
+执行日期：2026-10-12（Asia/Shanghai）  
+仓库：XFL11127/ai-career-companion  
+分支：feat/today-delivery-supabase-dashboard
+
+## 一、岗位状态（以 05-active-jobs.csv 为准）
+
+| 公司 / 岗位 | 城市 | 截止 | 状态 | 最近核验 | 下次复核 |
+|---|---|---|---|---|---|
+| 上海人工智能实验室 · 科学数据治理实习生 | 上海 | 未标注 | verified_active | 2026-10-09 | 2026-10-16 |
+| 中国移动 · 大数据工程师-杭州 | 杭州 | 2026-10-11 | verified_expired / expired | 2026-10-12 | — |
+| 信也科技 · 商业分析师 | 上海/深圳/非洲 | 2026-11-29 | verified_active | 2026-10-10 | 2026-10-17 |
+| 崇劲（杭州）科技 · 数据分析 | 浙江省杭州市余杭区 | 未标注 | verified_active | 2026-10-10 | 2026-10-17 |
+| 中控技术 · 数据运营实习生 | 浙江省杭州市滨江区 | 未标注 | verified_active | 2026-10-09 | 2026-10-16 |
+
+共 4 条 verified_active，1 条 verified_expired。2026-10-12 经 Edge 再次打开中国移动原始链接，跳转后的官网职位详情页仍可访问，显示明确截止日期 2026-10-11；页面未显示延期信息或当前可投递状态。该岗位已过截止日期，标记 expired，不再作为有效岗位推荐。10 月 11 日当天显示的投递入口只反映当日状态。
+
+信也科技截止日为 2026-11-29，地点按正文记录为上海/深圳/非洲；页面结构化地址另写“全国”，投递前应以网申城市选项确认。CSV、当前本地展示页和 PDF 使用同一城市与截止日期。
+
+## 二、证据统计与边界
+
+- 中国移动最近核验于 2026-10-12，状态 expired；上海人工智能实验室和中控技术最近核验于 10 月 9 日；信也科技和崇劲科技最近核验于 10 月 10 日。
+- 中控技术原始来源为应届生求职网转载，credibility=C；交叉来源只补充状态信号。
+- 5 条岗位 friendlyLevel 均为 unverified；不从学历门槛推断“双非友好”。
+- 无明确截止日期的岗位按最近核验日起 7 天内复核；中国移动按明确截止日单独控制。
+- 页面关闭、到期或正文发生实质变化后，不得继续作为普通有效岗位展示。
+
+## 三、DuMate 接入、运行与分享状态
+
+DuMate 桌面端已安装并登录，项目工作区已关联本地仓库，12 个目标 Skill 已导入启用。2026-10-10 使用合成测试画像完成真实桌面端多轮运行，按 profile-intake → gap-diagnosis → evidence-check → active-job-verifier → career-plan-306090 → practice → artifact-pack 执行；分享对话中可查看逐步追问、Skill 调用、岗位证据卡、行动计划和材料模板。未提交练习答案，简历和课程项目中的未知信息仍保留待补。
+
+最新主作品对话链接：[https://www.dumate.cn/s/6ZVGwI8h](https://www.dumate.cn/s/6ZVGwI8h)。2026-10-11 在浏览器直接打开后显示完整对话，未出现登录页或登录提示；本次只分享对话，没有公开简历模板文件。旧分享 https://www.dumate.cn/s/dqR3RLft 保持不动；此前链接 https://www.dumate.cn/s/y5UfGt5w 保留为历史链接。
+
+岗位展示页于 2026-10-12 作为新作品发布：[https://www.dumate.cn/artifacts/l2gzsmfq4e8u](https://www.dumate.cn/artifacts/l2gzsmfq4e8u)。Edge 页面已核验标题“AI学职同伴｜岗位推荐展示”、更新日期 2026-10-12、4 条有效和 1 条过期；中国移动截止日为 2026-10-11，已标记过期。旧链接 [https://www.dumate.cn/artifacts/2umsto0d4krz](https://www.dumate.cn/artifacts/2umsto0d4krz) 保持原样，仍是 2026-10-10 快照。
+
+本轮公开分享和官网复核截图保存在 output/contest/evidence/。完整运行截图随材料包提供；未制作录屏。2026-10-10 实际执行了七步闭环；resume、interview、match、course、assessment 未在该次任务中调用，组长提出的补充技能展示仍未完成。一次先前模糊需求试验出现单次回复，未进入画像追问；当前公开运行展示了多轮追问和七步执行，但仍需修正该次路由缺陷并留存失败路由证据。
+
+DuMate 当前显示积分已用完。本轮没有再次调用 AI Skill，也没有购买、升级或充值。
+
+## 四、提交一致性与剩余事项
+
+- CSV、当前本地岗位展示页和 PDF 已同步为 4 条有效、1 条过期；信也科技城市为上海/深圳/非洲，截止为 2026-11-29。更新版 PDF 为 20 页、约 1.2 MB。
+- 中国移动：2026-10-12 官网详情仍可访问，但明示截止日 2026-10-11，且未显示延期或当前可投递状态；已标记 verified_expired / expired，核验日期为 2026-10-12。
+- iCAN 报名未提交。官网创新赛页面显示报名、作品制作及材料提交期为 2026-04-01 至 2026-08-31，早于本次核验日 2026-10-12；参赛要求 2–5 人组队，赛区按队长所在院校确定。用户已明确决定不再尝试补报名。官网：https://www.g-ican.com/competition/ican。
+- 岗位数据最近一次推送到 feat/today-delivery-supabase-dashboard 的提交为 `19afe4b`。新作品页已发布并通过 Edge 核验；更新后的 PDF 和 ZIP 均包含新页面链接。最终材料待向组长发送，消息将如实列出尚未录制运行视频、resume/interview/match/course/assessment 未在该次演示中调用，以及早期路由问题和失败截图仍待处理。

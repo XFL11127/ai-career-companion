@@ -59,7 +59,12 @@ export function MemoryPanel({ skill }: { skill: SkillName }) {
         profile.totalPlans +
         profile.totalPractices +
         profile.totalInfo +
-        profile.totalPackages >
+        profile.totalPackages +
+        profile.totalResumes +
+        profile.totalInterviews +
+        profile.totalMatches +
+        profile.totalCourses +
+        profile.totalAssessments >
         0) ||
     turns.length > 0;
 
@@ -134,6 +139,11 @@ export function MemoryPanel({ skill }: { skill: SkillName }) {
                     {profile.totalPractices > 0 && <Tag label={`练兵 ${profile.totalPractices}`} />}
                     {profile.totalInfo > 0 && <Tag label={`信息 ${profile.totalInfo}`} />}
                     {profile.totalPackages > 0 && <Tag label={`包装 ${profile.totalPackages}`} />}
+                    {profile.totalResumes > 0 && <Tag label={`简历 ${profile.totalResumes}`} />}
+                    {profile.totalInterviews > 0 && <Tag label={`面试 ${profile.totalInterviews}`} />}
+                    {profile.totalMatches > 0 && <Tag label={`匹配 ${profile.totalMatches}`} />}
+                    {profile.totalCourses > 0 && <Tag label={`学习 ${profile.totalCourses}`} />}
+                    {profile.totalAssessments > 0 && <Tag label={`测评 ${profile.totalAssessments}`} />}
                   </>
                 )}
               </div>

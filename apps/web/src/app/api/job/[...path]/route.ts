@@ -1,58 +1,34 @@
 import { type NextRequest, NextResponse } from 'next/server';
-import jobsData from '@/lib/jobs-data.json';
+import { getJobsFeed } from '@/lib/hub-store';
+import { deriveFriendlyLevel } from '@ai-career-companion/types';
 
 /**
- * 岗位详情数据源：src/lib/jobs-data.json
+ * 岗位详情数据源：信息中枢证据库（Supabase hub_jobs → 内置种子）。
  *
- * 说明：
- * - 取代原先硬编码在路由里的 MOCK_JOBS（"某双非友好科技公司"等占位数据）。
- * - 数据带 industry / city / firstDegreeFriendly 等筛选字段，供后续 /jobs 三栏页使用。
- * - 投递链接指向招聘平台搜索页，非伪造的具体岗位链接；技能要求基于行业真实行情整理。
+ * 与 2026-09-25 的证据链改造保持一致：
+ * - 不再读取 jobs-data.json 的匿名占位岗位（「某电商独角兽」等无法核对）；
+ * - 不再下发任何「是否双非友好」的布尔字段，标签一律由 deriveFriendlyLevel() 计算；
+ * - 未收录时返回明确的「未收录」卡片，而不是编造岗位信息。
  */
-
-type Job = {
-  id: string;
-  company: string;
-  role: string;
-  salary: string;
-  location: string;
-  industry: string;
-  degree: string;
-  firstDegreeFriendly: boolean;
-  tags: string[];
-  url: string;
-  description: string;
-  requirements: string[];
-  deadline: string;
-};
-
-const JOBS = jobsData.jobs as Job[];
-
 export async function GET(
   request: NextRequest,
   { params }: { params: Promise<{ path: string[] }> }
 ) {
-  // Next 15：params 为异步 Promise，需 await 后取出
   const { path } = await params;
-
-  // path[0] 是公司名或岗位 id（可能经过 URL 编码），安全解码避免畸形输入导致崩溃
   const keyword = path?.[0] ? safeDecodeURIComponent(path[0]) : '';
 
   if (!keyword) {
     return NextResponse.json({ error: '公司名不能为空' }, { status: 400 });
   }
 
-  // 1) 按 id 精确匹配
-  let job = JOBS.find((j) => j.id === keyword);
-  // 2) 按公司名精确匹配
-  if (!job) job = JOBS.find((j) => j.company === keyword);
-  // 3) 模糊匹配（双向包含）
-  if (!job) {
-    job = JOBS.find((j) => j.company.includes(keyword) || keyword.includes(j.company));
-  }
+  const feed = await getJobsFeed();
+  const job =
+    feed.items.find((j) => j.id === keyword) ??
+    feed.items.find((j) => j.company === keyword) ??
+    feed.items.find((j) => j.company.includes(keyword) || keyword.includes(j.company));
 
-  // 4) 兜底：未收录时返回带搜索链接的通用卡片，而不是编造岗位信息
   if (!job) {
+    // 未收录时返回带搜索链接的通用卡片，而不是编造岗位信息
     return NextResponse.json({
       id: 'not-found',
       company: keyword,
@@ -61,16 +37,21 @@ export async function GET(
       location: '详见招聘平台',
       industry: '未知',
       degree: '未知',
-      firstDegreeFriendly: false,
       tags: ['未收录'],
       url: `https://www.zhipin.com/web/geek/job?query=${encodeURIComponent(keyword)}`,
-      description: `${keyword} 的岗位暂未收录进我们的岗位库。可以点击下方链接前往招聘平台搜索该企业的最新岗位。`,
-      requirements: ['请前往招聘平台查看具体岗位要求'],
-      deadline: '以招聘平台公布为准',
+      description: `${keyword} 暂未被信息中枢收录。信息中枢只收录能核对原文证据的岗位，你可以到「信息中枢 → 联网检索」或「贡献与审核」补充来源。`,
+      requirements: ['请前往官方页面查看具体岗位要求'],
+      deadline: '以官方公布为准',
+      evidence: [],
+      friendlyLevel: 'unverified',
     });
   }
 
-  return NextResponse.json(job);
+  return NextResponse.json({
+    ...job,
+    evidence: job.evidence ?? [],
+    friendlyLevel: deriveFriendlyLevel(job.evidence ?? []),
+  });
 }
 
 // 安全 URI 解码：畸形字符串（如 % 后无合法序列）直接原样返回，避免抛出导致接口崩溃

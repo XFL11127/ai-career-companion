@@ -267,7 +267,38 @@ npm run lint         # eslint
 
 ---
 
-## 十、项目约定
+## 十、信息中枢 · 证据链（2026-09-25 新增）
+
+信息中枢只收录**可核对的证据**，规则一条：**没有原文摘录，就没有「双非友好」**。
+
+- 三级标签：`双非友好 · 有据` / `门槛可及` / `未见依据`；限制性表述（仅限 985/211）单独标红，且永远不会点亮友好标签
+- 标签由 `deriveFriendlyLevel()` 计算，**不由模型断言、不存布尔字段**（`jobPostingSchema` 已删除 `doubleNonFriendly`）
+- 检索走白名单（38 域名，`apps/web/src/lib/whitelist.json`）；未配 `BOCHA_API_KEY` 时返回空结果并说明，**不再返回 demoSearch 假结果**
+- 数据库 `supabase/migrations/007_evidence_hub.sql` 在 DB 层强制「通过审核必须有 ≥8 字原文摘录」+ 审核状态机 + 贡献积分
+- 详细设计与验收清单：`docs/信息中枢_证据链实现说明.md`
+
+- **审核权限来自登录会话**（NextAuth）：未登录 401、非教师/管理员 403；本机身份切换只影响界面，不授予权限
+  - 演示账号：`demo@aicc.com / demo1234`（学生）、`teacher@aicc.com / teacher1234`（高校老师）、`admin@aicc.com / admin1234`（系统维护员）
+  - 当前数据：**39 条岗位/公告（全部 2026 年，最新 2 天内）+ 164 条证据**（162 已核实），覆盖 49 个来源站点；全部来自官方来源且带原文摘录
+  - 岗位**按发布时间倒序**，7 天内的标「最新」；陈旧/过期岗位由 `scripts/prune-stale-jobs.mjs` 定期清理
+  - 自动刷新：`.github/workflows/refresh-hub.yml` 每周一自动重采（需配置仓库密钥 `BOCHA_API_KEY`）
+  - 标签分三级：双非友好 · 有据 / 门槛可及 / 未见依据
+  - 白名单 = 38 个显式域名 + 2 条域名空间规则（`gov.cn` 全站、`edu.cn` 就业子站）
+
+  **成本护栏**：`/api/hub/search` 是唯一按次扣博查余额的用户入口，已加三层保护 —— 结果缓存（同词不重复扣费）、每 IP 每日限额（默认 3 次）、总开关 `HUB_USER_SEARCH=off` 可对用户关闭检索。**余额耗尽只影响联网检索，岗位库与证据库照常可用。**
+
+  常用命令：
+
+```bash
+npm run hub:harvest-policy                          # 政策证据采集（免 Key，国务院政策文件库）
+npm run hub:harvest -- "不限院校 校招 本科及以上"      # 岗位证据采集（需 BOCHA_API_KEY）
+npm run hub:verify-whitelist                        # 复核白名单域名可达性
+npm test                                            # 含证据门禁回归测试
+```
+
+---
+
+## 十一、项目约定
 
 - **归档**：废弃原型 / 临时报告统一放项目外的 `Desktop/ican/_archive/`，不进项目根。
 - **设计系统**：暖色编辑风 + lucide-react 图标 + loading/error/empty 三态，是前端默认规范。
