@@ -6,7 +6,8 @@
 - 验收：页面直接显示完整对话，未见登录页或登录提示；包含 7 个 Skill 的多轮运行记录
 - 分享范围：仅分享会话，没有分享 resume_template.md 文件
 - 页面截图：output/contest/evidence/share-link-public-conversation.png
-- 附加岗位展示页：https://www.dumate.cn/artifacts/2umsto0d4krz（此前已发布，更新版尚待重新发布）
+- 当前岗位展示页：https://www.dumate.cn/artifacts/l2gzsmfq4e8u（2026-10-12 发布；Edge 核验 4 条有效、1 条过期）
+- 历史岗位展示页：https://www.dumate.cn/artifacts/2umsto0d4krz（保留不动，仍为 2026-10-10 快照）
 
 ## 历史链接
 

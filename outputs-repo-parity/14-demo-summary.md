@@ -32,7 +32,7 @@ DuMate 桌面端已安装并登录，项目工作区已关联本地仓库，12 �
 
 最新主作品对话链接：[https://www.dumate.cn/s/6ZVGwI8h](https://www.dumate.cn/s/6ZVGwI8h)。2026-10-11 在浏览器直接打开后显示完整对话，未出现登录页或登录提示；本次只分享对话，没有公开简历模板文件。旧分享 https://www.dumate.cn/s/dqR3RLft 保持不动；此前链接 https://www.dumate.cn/s/y5UfGt5w 保留为历史链接。
 
-岗位展示附加页仍在 DuMate 作品广场：[https://www.dumate.cn/artifacts/2umsto0d4krz](https://www.dumate.cn/artifacts/2umsto0d4krz)。本地展示页和 PDF 已更新至 2026-10-12；公开作品广场仍展示 2026-10-10 旧快照。用户已确认发布更新版，但当前 computer-use 会话只提供 Edge 浏览器、没有可操作的 DuMate 桌面窗口，作品页也未显示编辑/更新入口，故尚未替换公开页面。
+岗位展示页于 2026-10-12 作为新作品发布：[https://www.dumate.cn/artifacts/l2gzsmfq4e8u](https://www.dumate.cn/artifacts/l2gzsmfq4e8u)。Edge 页面已核验标题“AI学职同伴｜岗位推荐展示”、更新日期 2026-10-12、4 条有效和 1 条过期；中国移动截止日为 2026-10-11，已标记过期。旧链接 [https://www.dumate.cn/artifacts/2umsto0d4krz](https://www.dumate.cn/artifacts/2umsto0d4krz) 保持原样，仍是 2026-10-10 快照。
 
 本轮公开分享和官网复核截图保存在 output/contest/evidence/。完整运行截图随材料包提供；未制作录屏。2026-10-10 实际执行了七步闭环；resume、interview、match、course、assessment 未在该次任务中调用，组长提出的补充技能展示仍未完成。一次先前模糊需求试验出现单次回复，未进入画像追问；当前公开运行展示了多轮追问和七步执行，但仍需修正该次路由缺陷并留存失败路由证据。
 
@@ -43,4 +43,4 @@ DuMate 当前显示积分已用完。本轮没有再次调用 AI Skill，也没�
 - CSV、当前本地岗位展示页和 PDF 已同步为 4 条有效、1 条过期；信也科技城市为上海/深圳/非洲，截止为 2026-11-29。更新版 PDF 为 20 页、约 1.2 MB。
 - 中国移动：2026-10-12 官网详情仍可访问，但明示截止日 2026-10-11，且未显示延期或当前可投递状态；已标记 verified_expired / expired，核验日期为 2026-10-12。
 - iCAN 报名未提交。官网创新赛页面显示报名、作品制作及材料提交期为 2026-04-01 至 2026-08-31，早于本次核验日 2026-10-12；参赛要求 2–5 人组队，赛区按队长所在院校确定。用户已明确决定不再尝试补报名。官网：https://www.g-ican.com/competition/ican。
-- 组长材料尚未发送；本次岗位数据、来源说明、总览、展示页和 PDF 已推送到 feat/today-delivery-supabase-dashboard，commit 6c1a370。更新版提交包已在本地生成；公开作品页更新、补充演示证据后，再发给组长。公开作品广场仍是 2026-10-10 快照，须在 DuMate 客户端重新发布；目前 computer-use 没有可操作的 DuMate 原生窗口。另需补录屏或工作流截图，并按组长意见补充 match、resume、interview 等技能的真实运行证据，修复一次未进入追问的路由问题。上述外部演示和发送完成后，再把材料发给组长。
+- 岗位数据最近一次推送到 feat/today-delivery-supabase-dashboard 的提交为 `19afe4b`。新作品页已发布并通过 Edge 核验；更新后的 PDF 和 ZIP 均包含新页面链接。最终材料待向组长发送，消息将如实列出尚未录制运行视频、resume/interview/match/course/assessment 未在该次演示中调用，以及早期路由问题和失败截图仍待处理。

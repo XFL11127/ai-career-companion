@@ -3,11 +3,12 @@ AI学职同伴 DuMate 交付包（更新于 2026-10-12）
 当前岗位数据：4 条 verified_active，1 条 verified_expired。
 中国移动岗位截止日为 2026-10-11；2026-10-12 官方详情页仍可访问，但未显示延期或当前可投递状态，已标记过期。
 主作品对话：https://www.dumate.cn/s/6ZVGwI8h
-岗位展示附加页：https://www.dumate.cn/artifacts/2umsto0d4krz（线上作品广场仍是 2026-10-10 快照；更新版尚未重新发布）
+岗位展示页（2026-10-12 新发布，Edge 已核验 4 条有效、1 条过期）：https://www.dumate.cn/artifacts/l2gzsmfq4e8u
+历史岗位展示页（保持不动，2026-10-10 快照）：https://www.dumate.cn/artifacts/2umsto0d4krz
 仓库：XFL11127/ai-career-companion
 分支：feat/today-delivery-supabase-dashboard
-更新提交：6c1a370
+岗位数据最近一次推送提交：19afe4b
 
-本包包含：岗位 CSV、来源说明、项目总览、岗位展示 HTML、20 页应用方案 PDF、186 字作品简介、过程材料截图及 2026-10-10 七步闭环运行记录。
+本包包含：岗位 CSV、来源说明、项目总览、岗位展示 HTML、20 页应用方案 PDF、186 字作品简介、过程材料截图及 2026-10-10 七步闭环运行记录。PDF 与总览已同步新公开页链接；材料待发给组长，消息将如实说明未录屏及补充 Skill/路由问题。
 过程截图对应 2026-10-10 的演示运行，不代表所有 12 个 Skill 均已在本轮执行；本包没有运行录屏。
 报名：iCAN 未提交；报名期已结束，用户决定不再尝试补报名。

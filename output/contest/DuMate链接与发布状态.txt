@@ -7,8 +7,8 @@ GitHub：XFL11127/ai-career-companion
 
 历史分享：https://www.dumate.cn/s/dqR3RLft（保持不动）；此前分享：https://www.dumate.cn/s/y5UfGt5w。
 
-岗位展示附加页（DuMate 作品广场）：https://www.dumate.cn/artifacts/2umsto0d4krz
-该页面已发布，但仍是 2026-10-10 快照。本地岗位展示页已更新至 2026-10-11；用户已确认发布更新版，但当前页面没有编辑/更新入口，且本轮未检测到可操作的 DuMate 桌面客户端窗口，尚未重新发布。
+当前岗位展示页（DuMate 作品广场）：https://www.dumate.cn/artifacts/l2gzsmfq4e8u
+该新版于 2026-10-12 发布，Edge 页面核验标题、更新日期、4 条有效和 1 条过期岗位均正确。旧页面 https://www.dumate.cn/artifacts/2umsto0d4krz 保持不动，仍是 2026-10-10 快照。
 
 中国移动官网岗位详情：https://job.10086.cn/touch/personal/job/detail.html?id=fb57da22-7f4b-4716-834d-77e926dc6fd9&typess=1
 2026-10-11 截止日当天仍显示招聘17人、截止日期和“投个简历”入口，状态 verified_closing_soon。页面截图：output/contest/evidence/china-mobile-official-detail-2026-10-11.png。
@@ -20,6 +20,6 @@ GitHub：XFL11127/ai-career-companion
 
 iCAN 报名：未提交。官网创新赛页面显示报名、作品制作及材料提交期为 2026-04-01 至 2026-08-31，早于本次核验日 2026-10-11；参赛要求 2-5 人组队，赛区按队长所在院校确定。用户已明确决定不再尝试补报名。官网：https://www.g-ican.com/competition/ican。
 
-提交材料压缩包：output/AI学职同伴-DuMate提交材料-2026-10-11.zip（本轮重打包）。
+提交材料压缩包：output/AI学职同伴-DuMate提交材料-2026-10-12.zip（包含更新版展示页、岗位数据、来源说明、总览、PDF 与截图）。
 
-交付状态：公开主作品链接已生成并检查；GitHub 更新已推送。iCAN 报名事项已按用户决定结项（不补报名）。最终材料尚未发送给组长；作品广场线上页仍为 2026-10-10 快照，本地展示页为 2026-10-11 版，当前桌面控制未提供可操作的 DuMate 客户端窗口，待重新发布该页后发送材料包。
+交付状态：公开主作品链接已生成并检查；新版岗位展示页已发布并通过 Edge 核验；GitHub 岗位数据更新已推送。iCAN 报名事项已按用户决定结项（不补报名）。更新后的材料包待发送给组长，消息应说明尚未录制运行视频、五个补充 Skill 未覆盖、早期路由问题仍待修复。
