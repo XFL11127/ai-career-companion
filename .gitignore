@@ -25,3 +25,6 @@ data/
 
 # npm cache generated in-repo
 .npm-cache/
+
+# Local Netlify folder
+.netlify

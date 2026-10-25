@@ -19,6 +19,7 @@ import {
   BookOpen,
   BrainCircuit,
   ClipboardCheck,
+  BarChart3,
   type LucideIcon,
 } from 'lucide-react';
 import { showToast } from '@/lib/feedback';
@@ -43,6 +44,7 @@ const TOP_NAV: NavItem[] = [
   { href: '/course', label: '课程学习', icon: BookOpen },
   { href: '/assessment', label: '自我测评', icon: BrainCircuit },
   { href: '/apply', label: '投递清单', icon: ClipboardCheck },
+  { href: '/insight', label: '需求洞察', icon: BarChart3 },
 ];
 
 const BOTTOM_NAV: NavItem[] = [

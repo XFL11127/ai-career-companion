@@ -36,7 +36,8 @@ ai-career-companion/
 │   │       │   ├── practice/     # 实战练兵（真实交互）
 │   │       │   ├── info/         # 信息差（真实交互）
 │   │       │   └── package/      # 成果包装（真实交互）
-│   │       ├── analytics/        # 数据看板（运营端，骨架占位）
+│   │       ├── analytics/        # 数据看板（运营端）
+│   │       ├── insight/          # 大学生AI学职需求洞察大屏（174份问卷）
 │   │       └── api/skill/[...path]/  # BFF 代理（catch-all）：前端 → Worker；Worker 连不上自动 fallback 直连 LLM
 │   │   └── src/components/
 │   │       ├── chat-shell.tsx    # Kimi 式聊天壳（消息流 + 输入框 + Skill 切换 + 抽屉开关）
@@ -62,6 +63,17 @@ ai-career-companion/
 - `packages/llm`：封装 Vercel AI SDK + DeepSeek，统一 5 个 Skill 的 prompt 与 zod 输出校验；无 `DEEPSEEK_API_KEY` 时返回 stub 演示数据，保证链路可演示。
 - `packages/types`：前后端共享的 zod 契约，避免类型漂移。
 - `supabase`：学生画像、Skill 会话、三层记忆（含向量）的持久化。
+
+### 需求洞察大屏（/insight）
+
+`/insight` 是基于 174 份问卷的独立可视化大屏，不需要登录即可打开。
+
+- 三个标签页：用户画像、需求与功能、付费与信任。
+- 支持用户类型、学校层次、专业类别和求职紧迫度筛选。
+- 采用暖色纸张视觉体系，1920×1080 一屏展示，并提供全屏和重置。
+- 数据文件：`apps/web/src/lib/survey-insight.json`。
+- 页面组件：`apps/web/src/components/insight-dashboard.tsx`。
+- 分支口径：A=77、B=67、C=30；分支未采集题目显示空态，不合并不同题项。
 
 ---
 
